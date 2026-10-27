@@ -23,21 +23,23 @@ export default async function HomePage() {
       {/* Apertura: titolo grande al centro, poi il "prodotto" su un palco verde */}
       <section className="overflow-hidden">
         <div className="mx-auto max-w-[1080px] px-4 pt-16 text-center sm:px-6 sm:pt-24">
-          <p className="font-serif text-[19px] italic text-codice sm:text-[21px]">Preparazione all&apos;esame di avvocato</p>
-          <h1 className="mx-auto mt-4 max-w-4xl text-[44px] font-semibold leading-[1.04] tracking-[-0.035em] text-ink sm:text-[64px] lg:text-[76px]">
+          <p className="hero-in font-serif text-[19px] italic text-codice sm:text-[21px]">
+            Preparazione all&apos;esame di abilitazione alla professione forense
+          </p>
+          <h1 className="hero-in [animation-delay:120ms] mx-auto mt-4 max-w-4xl text-[44px] font-semibold leading-[1.04] tracking-[-0.035em] text-ink sm:text-[64px] lg:text-[76px]">
             {HERO.title}
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-[19px] leading-relaxed text-slate sm:text-[21px]">{HERO.body}</p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <p className="hero-in [animation-delay:260ms] mx-auto mt-6 max-w-2xl text-[19px] leading-relaxed text-slate sm:text-[21px]">{HERO.body}</p>
+          <div className="hero-in [animation-delay:400ms] mt-10 flex flex-wrap items-center justify-center gap-4">
             <Link href="#corsi" className="btn-primary btn-lg">Scegli il corso</Link>
             <Link href="#metodo" className="btn-ghost btn-lg">Come funziona</Link>
           </div>
         </div>
 
         <div className="mx-auto mt-16 max-w-[1180px] px-4 sm:mt-20 sm:px-6">
-          <div className="relative overflow-hidden rounded-[32px] bg-codice px-4 pb-0 pt-12 sm:rounded-[40px] sm:px-10 sm:pt-16">
+          <div className="stage-in relative overflow-hidden rounded-[32px] bg-codice px-4 pb-0 pt-12 sm:rounded-[40px] sm:px-10 sm:pt-16">
             {/* tempio in filigrana: richiama il marchio senza competere con il foglio */}
-            <svg aria-hidden viewBox="0 0 64 64" className="pointer-events-none absolute -right-16 -top-10 size-[420px] opacity-[0.07]">
+            <svg aria-hidden viewBox="0 0 64 64" className="temple-float pointer-events-none absolute -right-16 -top-10 size-[420px] opacity-[0.07]">
               <polygon points="12,22.6 32,11.2 52,22.6" fill="#f4eee2" />
               <rect x="13" y="23.8" width="38" height="2.2" fill="#f4eee2" />
               {[19, 27, 37, 45].map((c) => (
@@ -174,9 +176,9 @@ export default async function HomePage() {
       {/* Chiusura */}
       <section className="py-28 sm:py-32">
         <Reveal className="mx-auto flex max-w-[760px] flex-col items-center px-4 text-center sm:px-6">
-          <LogoMark className="size-20" />
+          <LogoMark className="temple-float size-20" />
           <h2 className="mt-8 text-[36px] font-semibold leading-tight sm:text-[48px]">La prova si prepara scrivendo.</h2>
-          <p className="mt-4 text-[19px] leading-relaxed text-slate">Inizia dal corso più adatto a te. {SITE.brand} ti accompagna fino all&apos;esame.</p>
+          <p className="mt-4 text-[19px] leading-relaxed text-slate">Inizia dal corso più adatto a te. {SITE.brand} ti accompagna fino all&apos;abilitazione.</p>
           <Link href="#corsi" className="btn-primary btn-lg mt-10">Scegli il corso</Link>
         </Reveal>
       </section>

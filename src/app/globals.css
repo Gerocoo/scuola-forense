@@ -132,6 +132,81 @@
   }
 }
 
+/* ---------- Animazioni ---------- */
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(28px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes stage-in {
+  from { opacity: 0; transform: translateY(80px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes ink {
+  from { background-size: 0% 100%; }
+  to { background-size: 100% 100%; }
+}
+@keyframes strike {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes write-in {
+  from { opacity: 0; clip-path: inset(0 100% 0 0); }
+  to { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+@keyframes progress {
+  from { width: 8%; }
+  to { width: 92%; }
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgb(29 87 71 / 0.45); }
+  100% { box-shadow: 0 0 0 10px rgb(29 87 71 / 0); }
+}
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+.hero-in { animation: hero-in 1s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.stage-in { animation: stage-in 1.3s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both; }
+.temple-float { animation: float 7s ease-in-out infinite; }
+
+/* Penna del correttore: si attiva quando il blocco diventa visibile (.is-visible) o, nell'apertura, al caricamento */
+.ink-mark {
+  background-image: linear-gradient(transparent 62%, rgb(163 48 29 / 0.2) 62%);
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+}
+.ink-strike { position: relative; color: var(--color-mute); }
+.ink-strike::after {
+  content: ""; position: absolute; left: -1px; right: -1px; top: 55%; height: 1.5px;
+  background: var(--color-ceralacca); transform: scaleX(0); transform-origin: left;
+}
+.ink-insert { display: inline-block; opacity: 0; }
+.ink-play .ink-mark, .is-visible .ink-mark { animation: ink 0.9s cubic-bezier(0.65, 0, 0.35, 1) var(--d, 1.6s) forwards; }
+.ink-play .ink-strike::after, .is-visible .ink-strike::after { animation: strike 0.5s ease-out calc(var(--d, 1.6s) + 0.8s) forwards; }
+.ink-play .ink-insert, .is-visible .ink-insert { animation: write-in 0.7s ease-out calc(var(--d, 1.6s) + 1.2s) forwards; }
+
+/* Riquadri della griglia: leggero sollevamento al passaggio del mouse */
+.lift { transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s; }
+@media (hover: hover) {
+  .lift:hover { transform: translateY(-4px) scale(1.005); box-shadow: 0 0 0 1px rgb(29 29 31 / 0.04), 0 24px 48px -20px rgb(29 29 31 / 0.25); }
+}
+.is-visible .anim-progress { animation: progress 6s linear 0.4s infinite alternate; }
+.is-visible .anim-pulse { animation: pulse-ring 1.6s ease-out 0.8s infinite; }
+.anim-bubble { opacity: 0; }
+.is-visible .anim-bubble { animation: bubble-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0.3s) forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-in, .stage-in, .temple-float { animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
+  .ink-mark { background-size: 100% 100% !important; }
+  .ink-strike::after { transform: scaleX(1) !important; }
+  .ink-insert, .anim-bubble { opacity: 1 !important; clip-path: none !important; transform: none !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

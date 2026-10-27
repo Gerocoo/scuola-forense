@@ -11,7 +11,7 @@ export const SITE = {
   name: "Pronao, Scuola di Alta Formazione Forense",
   shortName: "Pronao",
   description:
-    "Preparazione all'esame di avvocato con lezioni brevi, tracce settimanali e correzione personalizzata di ogni elaborato.",
+    "Preparazione all'esame di abilitazione alla professione forense: mini lezioni, tracce settimanali e correzione personalizzata di ogni elaborato.",
   email: "segreteria@esempio.it",
   phone: "+39 000 000 0000",
   address: "Via Esempio 1, Palermo",
@@ -21,7 +21,7 @@ export const SITE = {
 export const HERO = {
   title: "Scrivi l'atto. Noi lo correggiamo a margine, riga per riga.",
   body:
-    "Un percorso per l'esame di avvocato costruito sulla scrittura: ogni settimana una traccia, ogni elaborato restituito con le note del docente e un giudizio motivato.",
+    "Il percorso verso l'abilitazione alla professione di avvocato, costruito sulla scrittura: ogni settimana una traccia, ogni elaborato restituito con le note del docente e un giudizio motivato.",
 };
 
 export const ABOUT = {

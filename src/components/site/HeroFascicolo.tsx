@@ -4,7 +4,7 @@
  */
 export function HeroFascicolo() {
   return (
-    <figure className="relative mx-auto w-full max-w-[560px]" aria-label="Esempio di elaborato corretto dal docente">
+    <figure className="ink-play relative mx-auto w-full max-w-[560px]" aria-label="Esempio di elaborato corretto dal docente">
       {/* foglio sottostante: il fascicolo */}
       <div aria-hidden className="absolute inset-x-6 -bottom-3 top-6 rotate-[1.5deg] rounded-[6px] border border-line bg-surface" />
       <div className="relative rounded-[6px] border border-line bg-surface px-6 pb-7 pt-6 shadow-[0_1px_0_#d7dde4,0_18px_40px_-24px_rgba(23,33,47,0.35)] sm:px-8">
@@ -17,13 +17,13 @@ export function HeroFascicolo() {
           <div className="space-y-3 font-serif text-[15px] leading-[1.7] text-ink sm:text-[16px]">
             <p>
               Ciò premesso, occorre stabilire se il comportamento di Tizio integri un inadempimento{" "}
-              <span className="fascicolo-mark">di non scarsa importanza</span> ai sensi dell&apos;art. 1455 c.c.,
+              <span className="ink-mark" style={{ "--d": "1.8s" } as React.CSSProperties}>di non scarsa importanza</span> ai sensi dell&apos;art. 1455 c.c.,
               tale da giustificare la risoluzione del contratto.
             </p>
             <p>
               La giurisprudenza di legittimità ritiene che la valutazione debba essere condotta{" "}
-              <span className="fascicolo-strike">in astratto</span>{" "}
-              <span className="fascicolo-insert">in concreto</span>, avuto riguardo all&apos;interesse
+              <span className="ink-strike" style={{ "--d": "1.8s" } as React.CSSProperties}>in astratto</span>{" "}
+              <span className="ink-insert italic text-ceralacca" style={{ "--d": "1.8s" } as React.CSSProperties}>in concreto</span>, avuto riguardo all&apos;interesse
               del creditore all&apos;esatto adempimento.
             </p>
             <p className="text-slate">
@@ -32,16 +32,16 @@ export function HeroFascicolo() {
           </div>
 
           <div className="relative space-y-6 border-l border-dashed border-ceralacca/40 pl-3">
-            <p className="fascicolo-note" style={{ animationDelay: "350ms" }}>
+            <p className="fascicolo-note" style={{ animationDelay: "2.5s" }}>
               Bene: richiami subito la norma. Cita anche l&apos;orientamento prevalente.
             </p>
-            <p className="fascicolo-note" style={{ animationDelay: "900ms" }}>
+            <p className="fascicolo-note" style={{ animationDelay: "3.6s" }}>
               Attenzione: è il punto decisivo della traccia.
             </p>
           </div>
         </div>
 
-        <div className="fascicolo-note mt-6 flex items-start gap-3 rounded-[8px] bg-ceralacca-soft px-4 py-3 not-italic" style={{ animationDelay: "1450ms" }}>
+        <div className="fascicolo-note mt-6 flex items-start gap-3 rounded-[8px] bg-ceralacca-soft px-4 py-3 not-italic" style={{ animationDelay: "4.3s" }}>
           <span aria-hidden className="mt-0.5 font-serif text-xl leading-none text-ceralacca">§</span>
           <p className="font-sans text-sm leading-relaxed text-ink">
             <span className="font-semibold">Giudizio: discreto.</span> Struttura solida e conclusione coerente. Da
@@ -54,9 +54,6 @@ export function HeroFascicolo() {
       </figcaption>
 
       <style>{`
-        .fascicolo-mark { background-image: linear-gradient(transparent 62%, rgba(163,48,29,.18) 62%); }
-        .fascicolo-strike { text-decoration: line-through; text-decoration-color: #a3301d; text-decoration-thickness: 1.5px; color: #6b7585; }
-        .fascicolo-insert { color: #a3301d; font-style: italic; }
         .fascicolo-note {
           font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.45; color: #a3301d;
           opacity: 0; transform: translateY(4px); animation: fascicolo-in .6s ease-out forwards;
