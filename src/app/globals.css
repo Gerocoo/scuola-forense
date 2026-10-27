@@ -119,6 +119,12 @@
   .prose-legal p + p {
     @apply mt-4;
   }
+  .prose-legal h2 {
+    @apply mt-10 mb-3 font-sans text-[21px] font-semibold tracking-[-0.01em];
+  }
+  .prose-legal a {
+    @apply text-codice underline underline-offset-2;
+  }
 
   /* Comparsa allo scorrimento (vedi components/site/Reveal.tsx) */
   .reveal {
