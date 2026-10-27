@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+/*
+  Palette
+  carta     #F3F5F7  fondo applicazione, freddo e neutro
+  inchiostro#17212F  testo e titoli
+  ardesia   #4A5566  testo secondario
+  linea     #D7DDE4  bordi
+  codice    #1D5747  verde dei codici: azioni principali
+  ceralacca #A3301D  rosso della penna del correttore: correzioni, scadenze, promo
+*/
+@theme {
+  --color-paper: #f3f5f7;
+  --color-surface: #ffffff;
+  --color-ink: #17212f;
+  --color-slate: #4a5566;
+  --color-mute: #6b7585;
+  --color-line: #d7dde4;
+  --color-line-soft: #e7ebef;
+  --color-codice: #1d5747;
+  --color-codice-dark: #15433a;
+  --color-codice-soft: #e2eeea;
+  --color-ceralacca: #a3301d;
+  --color-ceralacca-soft: #f7e6e2;
+  --color-ambra: #8a5a00;
+  --color-ambra-soft: #f6ecd6;
+
+  --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+
+  --radius-panel: 12px;
+  --radius-control: 8px;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "tnum" 0;
+  }
+  ::selection {
+    background: var(--color-codice-soft);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-codice);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  h1, h2, h3 {
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer components {
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-[var(--radius-control)] px-4 py-2.5 text-[15px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-codice text-white hover:bg-codice-dark;
+  }
+  .btn-secondary {
+    @apply border border-line bg-surface text-ink hover:border-slate;
+  }
+  .btn-ghost {
+    @apply px-3 text-slate hover:bg-line-soft hover:text-ink;
+  }
+  .btn-danger {
+    @apply border border-ceralacca/30 bg-surface text-ceralacca hover:bg-ceralacca-soft;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .field {
+    @apply block w-full rounded-[var(--radius-control)] border border-line bg-surface px-3 py-2.5 text-[15px] text-ink placeholder:text-mute focus:border-codice focus:outline-none focus:ring-2 focus:ring-codice/15;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink;
+  }
+  .hint {
+    @apply mt-1 text-sm text-mute;
+  }
+
+  .panel {
+    @apply rounded-[var(--radius-panel)] border border-line bg-surface;
+  }
+
+  .link {
+    @apply font-medium text-codice underline decoration-codice/30 underline-offset-4 hover:decoration-codice;
+  }
+
+  /* Testo lungo (istruzioni, giudizi, messaggi) */
+  .prose-legal {
+    @apply font-serif text-[17px] leading-[1.65] text-ink;
+  }
+  .prose-legal p + p {
+    @apply mt-4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
