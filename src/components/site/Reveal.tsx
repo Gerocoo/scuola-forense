@@ -7,14 +7,12 @@ export function Reveal({
   children,
   className = "",
   delay = 0,
-  as: Tag = "div",
 }: {
   children: React.ReactNode;
   className?: string;
   delay?: number;
-  as?: "div" | "section" | "li" | "article";
 }) {
-  const ref = useRef<HTMLElement | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -39,14 +37,8 @@ export function Reveal({
   }, []);
 
   return (
-    <Tag
-      ref={(n: HTMLElement | null) => {
-        ref.current = n;
-      }}
-      className={`reveal ${className}`}
-      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
-    >
+    <div ref={ref} className={`reveal ${className}`} style={delay ? { transitionDelay: `${delay}ms` } : undefined}>
       {children}
-    </Tag>
+    </div>
   );
 }

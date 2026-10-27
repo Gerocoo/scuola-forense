@@ -72,11 +72,13 @@ export default async function HomePage() {
           </Reveal>
           <ol className="mt-16 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
             {METHOD.steps.map((s, i) => (
-              <Reveal as="li" key={s.title} delay={i * 90}>
-                <span className="font-serif text-[56px] leading-none text-codice tabular-nums">{i + 1}</span>
-                <h3 className="mt-5 text-[21px] font-semibold">{s.title}</h3>
-                <p className="mt-2 text-[16px] leading-relaxed text-slate">{s.body}</p>
-              </Reveal>
+              <li key={s.title}>
+                <Reveal delay={i * 90}>
+                  <span className="font-serif text-[56px] leading-none text-codice tabular-nums">{i + 1}</span>
+                  <h3 className="mt-5 text-[21px] font-semibold">{s.title}</h3>
+                  <p className="mt-2 text-[16px] leading-relaxed text-slate">{s.body}</p>
+                </Reveal>
+              </li>
             ))}
           </ol>
         </div>
@@ -106,7 +108,7 @@ export default async function HomePage() {
           </Reveal>
           <div className="mt-14 grid gap-4 md:grid-cols-3">
             {TEAM.map((t, i) => (
-              <Reveal as="article" key={t.name + t.role} delay={i * 90} className="rounded-[28px] bg-white/[0.07] p-8 ring-1 ring-white/10">
+              <Reveal key={t.name + t.role} delay={i * 90} className="rounded-[28px] bg-white/[0.07] p-8 ring-1 ring-white/10">
                 <span aria-hidden className="grid size-20 place-items-center rounded-full bg-ivory font-serif text-[28px] text-codice">
                   {initials(t.name.replace(/^(Avv\.|Dott\.|Prof\.)\s*/, ""))}
                 </span>
