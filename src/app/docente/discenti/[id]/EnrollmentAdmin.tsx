@@ -12,7 +12,7 @@ export function EnrollmentAdd({ userId, packages }: { userId: string; packages: 
 
   return (
     <form
-      className="panel space-y-3 p-5"
+      className="space-y-3"
       action={(fd) =>
         start(async () => {
           const res = await manualEnroll(userId, fd);
@@ -21,14 +21,13 @@ export function EnrollmentAdd({ userId, packages }: { userId: string; packages: 
         })
       }
     >
-      <h2 className="font-semibold">Iscrizione manuale</h2>
-      <p className="text-sm text-slate">Per pagamenti con bonifico, rate o borse di studio.</p>
+      <p className="text-[13px] text-slate">Per pagamenti con bonifico, rate o borse di studio.</p>
       <div>
         <label htmlFor="package_id" className="label">Corso</label>
         <select id="package_id" name="package_id" className="field" required defaultValue="">
           <option value="" disabled>Scegli</option>
           {packages.map((p) => (
-            <option key={p.id} value={p.id}>{p.title} ({p.period_label})</option>
+            <option key={p.id} value={p.id}>{p.title}{p.period_label ? ` (${p.period_label})` : ""}</option>
           ))}
         </select>
       </div>
@@ -46,7 +45,7 @@ export function EnrollmentStatus({ enrollmentId, status }: { enrollmentId: strin
   const router = useRouter();
   const [pending, start] = useTransition();
   return (
-    <label className="mt-1 flex items-center gap-2 text-sm text-slate">
+    <label className="mt-2 flex items-center gap-2 text-[13px] text-slate">
       Stato
       <select
         className="field w-auto py-1 text-sm"
