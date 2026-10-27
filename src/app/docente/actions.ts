@@ -534,6 +534,8 @@ export async function setRole(userId: string, role: Role): Promise<ActionResult>
   const { supabase, user } = await requireAdmin();
   if (userId === user.id) return { ok: false, error: "Non puoi modificare il tuo ruolo." };
   if (!["student", "teacher", "admin"].includes(role)) return { ok: false, error: "Ruolo non valido." };
+  const { data: target } = await supabase.from("profiles").select("is_super").eq("id", userId).maybeSingle();
+  if (target?.is_super) return { ok: false, error: "Il ruolo del super amministratore non si può modificare." };
   const { error } = await supabase.from("profiles").update({ role }).eq("id", userId);
   if (error) return { ok: false, error: "Modifica non riuscita." };
   revalidatePath("/docente/utenti");
@@ -644,10 +646,12 @@ export async function revokeInvite(email: string): Promise<ActionResult> {
 
 /** Cambia l'email di accesso di un utente (vale anche per l'accesso con password). */
 export async function changeUserEmail(userId: string, formData: FormData): Promise<ActionResult> {
-  await requireAdmin();
+  const { profile: me } = await requireAdmin();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "Scrivi un indirizzo email valido." };
   const admin = createAdminClient();
+  const { data: target } = await admin.from("profiles").select("is_super").eq("id", userId).maybeSingle();
+  if (target?.is_super && !me.is_super) return { ok: false, error: "L'email del super amministratore non si può modificare." };
   const { error } = await admin.auth.admin.updateUserById(userId, { email, email_confirm: true });
   if (error) {
     return {
@@ -670,8 +674,9 @@ export async function deleteUserAccount(userId: string): Promise<ActionResult> {
   if (userId === user.id) return { ok: false, error: "Non puoi eliminare il tuo account da qui." };
   const admin = createAdminClient();
 
-  const { data: target } = await admin.from("profiles").select("id, role").eq("id", userId).maybeSingle();
+  const { data: target } = await admin.from("profiles").select("id, role, is_super").eq("id", userId).maybeSingle();
   if (!target) return { ok: false, error: "Utente non trovato." };
+  if (target.is_super) return { ok: false, error: "Il super amministratore non si può eliminare." };
 
   if (target.role !== "student") {
     const { error } = await admin.rpc("reassign_staff", { old_id: userId, new_id: user.id });

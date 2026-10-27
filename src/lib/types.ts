@@ -9,6 +9,8 @@ export interface Profile {
   role: Role;
   bio: string | null;
   created_at: string;
+  /** Gestore tecnico della piattaforma: non può essere modificato né eliminato dal sito. */
+  is_super?: boolean;
 }
 
 export interface Package {

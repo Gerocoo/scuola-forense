@@ -86,10 +86,16 @@ export default async function UtentiPage({ searchParams }: Props) {
                 </td>
                 <td className="px-5 py-3 text-slate">{dateShort(p.created_at)}</td>
                 <td className="px-5 py-3">
-                  {p.id === user.id ? <span className="text-slate">Amministratore (tu)</span> : <RoleSelect userId={p.id} role={p.role} />}
+                  {p.is_super ? (
+                    <span className="rounded-full bg-ink px-2.5 py-1 text-[12px] font-medium text-white">Super amministratore{p.id === user.id ? " (tu)" : ""}</span>
+                  ) : p.id === user.id ? (
+                    <span className="text-slate">Amministratore (tu)</span>
+                  ) : (
+                    <RoleSelect userId={p.id} role={p.role} />
+                  )}
                 </td>
                 <td className="px-5 py-3 text-right">
-                  {p.id !== user.id && <DeleteUserButton userId={p.id} name={p.full_name || p.email} isStaff={p.role !== "student"} />}
+                  {p.id !== user.id && !p.is_super && <DeleteUserButton userId={p.id} name={p.full_name || p.email} isStaff={p.role !== "student"} />}
                 </td>
               </tr>
             ))}

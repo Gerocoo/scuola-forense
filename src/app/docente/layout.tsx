@@ -28,13 +28,14 @@ export default async function DocenteLayout({ children }: { children: React.Reac
     { href: "/docente/calendario", label: "Calendario" },
     { href: "/docente/messaggi", label: "Messaggi", badge: unread ?? 0 },
   ];
-  if (profile.role === "admin") {
+  if (profile.role === "admin" || profile.is_super) {
     nav.push({ href: "/docente/pacchetti", label: "Corsi in vendita" }, { href: "/docente/utenti", label: "Utenti e ruoli" });
   }
+  if (profile.is_super) nav.push({ href: "/docente/registro", label: "Registro attività" });
   nav.push({ href: "/docente/impostazioni", label: "Impostazioni" }, { href: "/docente/profilo", label: "Profilo" });
 
   return (
-    <AppShell profile={profile} nav={nav} home="/docente" areaLabel={profile.role === "admin" ? "Direzione" : "Area docenti"} notices={notices}>
+    <AppShell profile={profile} nav={nav} home="/docente" areaLabel={profile.is_super ? "Super amministratore" : profile.role === "admin" ? "Direzione" : "Area docenti"} notices={notices}>
       {children}
     </AppShell>
   );

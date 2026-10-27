@@ -35,7 +35,13 @@ export async function requireStaff() {
 
 export async function requireAdmin() {
   const s = await requireUser();
-  if (s.profile.role !== "admin") redirect("/docente");
+  if (s.profile.role !== "admin" && !s.profile.is_super) redirect("/docente");
+  return s;
+}
+
+export async function requireSuper() {
+  const s = await requireUser();
+  if (!s.profile.is_super) redirect("/docente");
   return s;
 }
 
