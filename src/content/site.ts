@@ -4,8 +4,12 @@
  * Prezzi e pacchetti invece si gestiscono dal database (pannello Pacchetti).
  */
 export const SITE = {
-  name: "Scuola di Alta Formazione Forense",
-  shortName: "Alta Formazione Forense",
+  /** Marchio: corto, è quello che compare nel logo */
+  brand: "Margine",
+  /** Sottotitolo sotto il marchio */
+  tagline: "Scuola di Alta Formazione Forense",
+  name: "Margine, Scuola di Alta Formazione Forense",
+  shortName: "Margine",
   description:
     "Preparazione all'esame di avvocato con lezioni brevi, tracce settimanali e correzione personalizzata di ogni elaborato.",
   email: "segreteria@esempio.it",

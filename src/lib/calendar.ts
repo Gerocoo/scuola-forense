@@ -47,7 +47,7 @@ export function icsFile(
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Scuola Alta Formazione Forense//Lezioni//IT",
+    "PRODID:-//Margine Scuola Forense//Lezioni//IT",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${esc(opts.calName)}`,
@@ -58,7 +58,7 @@ export function icsFile(
     const url = opts.pageUrl(l.id);
     lines.push(
       "BEGIN:VEVENT",
-      `UID:${l.id}@scuola-forense`,
+      `UID:${l.id}@margine-scuola-forense`,
       `DTSTAMP:${stamp(new Date())}`,
       `DTSTART:${stamp(new Date(l.scheduled_at))}`,
       `DTEND:${stamp(endOf(l))}`,

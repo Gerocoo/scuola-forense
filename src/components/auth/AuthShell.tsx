@@ -4,7 +4,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
   return (
     <main className="grid min-h-dvh lg:grid-cols-[1fr_520px]">
       <div className="hidden flex-col justify-between bg-codice p-12 text-white lg:flex">
-        <Logo href="/" />
+        <Logo href="/" inverted />
         <blockquote className="max-w-md">
           <p className="font-serif text-[28px] leading-snug">
             &laquo;Ogni elaborato torna con le note a margine e un giudizio motivato. È lì che si impara a scrivere
