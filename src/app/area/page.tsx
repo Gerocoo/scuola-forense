@@ -57,12 +57,11 @@ export default async function AreaHome({ searchParams }: Props) {
     ]);
 
   const active = (enrollments ?? []).filter((e) => !e.ends_at || e.ends_at > nowIso);
-  const firstName = profile.full_name.split(" ")[0];
 
   if (!active.length) {
     return (
       <>
-        <PageHeader title={firstName ? `Ciao ${firstName}` : "Benvenuto"} />
+        <PageHeader title={"La tua area"} />
         <EmptyState
           title="Non hai ancora un corso attivo"
           body="Scegli un corso per accedere alle lezioni, ricevere le tracce e inviare i tuoi elaborati ai docenti."
@@ -77,7 +76,7 @@ export default async function AreaHome({ searchParams }: Props) {
   return (
     <>
       <PageHeader
-        title={firstName ? `Ciao ${firstName}` : "Benvenuto"}
+        title={"La tua area"}
         description={active.map((e) => `${e.package?.title} (${e.package?.period_label})`).join(", ")}
       />
 

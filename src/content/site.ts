@@ -55,24 +55,20 @@ export const METHOD = {
   ],
 };
 
-export const TEAM = [
+export const TEAM: { name: string; role: string; bio: string; subjects: string[]; photo?: string }[] = [
   {
-    name: "Avv. Nome Cognome",
-    role: "Direttrice scientifica",
-    bio: "Avvocata cassazionista, diritto civile. Commissaria d'esame in più sessioni.",
-    subjects: ["Diritto civile", "Atto di citazione", "Pareri"],
+    name: "Avv. Luisa Di Fede",
+    role: "Avvocato penalista",
+    bio: "Segue la preparazione alla prova scritta di diritto penale: redazione del parere e dell'atto giudiziario.",
+    subjects: ["Diritto penale", "Parere", "Atto giudiziario"],
+    photo: "/docenti/luisa-di-fede.jpg",
   },
   {
-    name: "Dott. Nome Cognome",
-    role: "Docente di diritto penale",
-    bio: "Magistrato. Si occupa della parte penale: pareri, atti di appello e memorie difensive.",
-    subjects: ["Diritto penale", "Appello", "Memorie"],
-  },
-  {
-    name: "Avv. Nome Cognome",
-    role: "Docente di diritto amministrativo",
-    bio: "Avvocato amministrativista. Segue ricorsi al TAR e pareri in materia di pubblico impiego e appalti.",
-    subjects: ["Diritto amministrativo", "Ricorso al TAR"],
+    name: "Avv. Alan Iannello",
+    role: "Avvocato penalista",
+    bio: "Corregge gli elaborati di diritto penale e affianca i discenti nella preparazione all'esame.",
+    subjects: ["Diritto penale", "Procedura penale", "Parere"],
+    photo: "/docenti/alan-iannello.jpg",
   },
 ];
 

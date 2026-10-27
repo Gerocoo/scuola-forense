@@ -256,13 +256,12 @@ export default async function DiscentePage({ params }: Props) {
             <section className="panel p-5">
               <details className="group">
                 <summary className="flex cursor-pointer list-none items-center justify-between font-semibold">
-                  Gestione account
+                  Account
                   <svg aria-hidden viewBox="0 0 16 16" className="size-4 text-mute transition-transform group-open:rotate-180"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </summary>
                 <div className="mt-4 space-y-5">
                   <ChangeEmailForm userId={s.id} email={s.email} />
                   <div className="border-t border-line-soft pt-4">
-                    <p className="mb-2 text-[13px] text-mute">Zona pericolosa</p>
                     <DeleteUserButton userId={s.id} name={s.full_name || s.email} isStaff={false} redirectTo="/docente/discenti" />
                   </div>
                 </div>
