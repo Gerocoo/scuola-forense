@@ -307,6 +307,29 @@
 /* Marchio finale che "respira" */
 .glow { animation: glow 4.5s ease-in-out infinite; }
 
+/* Campanella delle notifiche */
+@keyframes bell-ring {
+  0% { transform: rotate(0); }
+  15% { transform: rotate(18deg); }
+  30% { transform: rotate(-15deg); }
+  45% { transform: rotate(11deg); }
+  60% { transform: rotate(-7deg); }
+  75% { transform: rotate(4deg); }
+  100% { transform: rotate(0); }
+}
+@keyframes badge-pop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+@keyframes bell-halo {
+  0% { box-shadow: 0 0 0 0 rgb(163 48 29 / 0.35); }
+  70%, 100% { box-shadow: 0 0 0 9px rgb(163 48 29 / 0); }
+}
+.bell-ring { transform-origin: 50% 12%; animation: bell-ring 1s cubic-bezier(0.36, 0.07, 0.19, 0.97) 2; }
+.badge-pop { animation: badge-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.bell-halo { animation: bell-halo 2.4s ease-out infinite; }
+
 /* Menu dell'utente */
 .menu-in { animation: menu-in 0.18s cubic-bezier(0.22, 1, 0.36, 1); transform-origin: top right; }
 
@@ -342,6 +365,7 @@
   .hero-in, .stage-in, .temple-float, .word-in, .glow, .marquee-row, .aurora::before, .aurora::after,
   .scroll-word, .stage-scroll, .parallax, .step-line, .step-dot { animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
   .spotlight { transform: none !important; }
+  .bell-ring, .badge-pop, .bell-halo { animation: none !important; }
   .ink-mark { background-size: 100% 100% !important; }
   .ink-strike::after { transform: scaleX(1) !important; }
   .ink-insert, .anim-bubble { opacity: 1 !important; clip-path: none !important; transform: none !important; }
