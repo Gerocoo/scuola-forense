@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app/AppShell";
 import { requireUser, isStaff } from "@/lib/auth";
+import { studentNotices } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +9,7 @@ export default async function AreaLayout({ children }: { children: React.ReactNo
   const { supabase, user, profile } = await requireUser();
   if (isStaff(profile)) redirect("/docente");
 
-  const [{ count: unread }, { count: todo }] = await Promise.all([
+  const [{ count: unread }, { count: todo }, notices] = await Promise.all([
     supabase
       .from("messages")
       .select("id", { count: "exact", head: true })
@@ -20,6 +21,7 @@ export default async function AreaLayout({ children }: { children: React.ReactNo
       .select("id", { count: "exact", head: true })
       .eq("student_id", user.id)
       .eq("status", "assegnato"),
+    studentNotices(supabase, user),
   ]);
 
   return (
@@ -27,6 +29,7 @@ export default async function AreaLayout({ children }: { children: React.ReactNo
       profile={profile}
       home="/area"
       areaLabel="Area discente"
+      notices={notices}
       nav={[
         { href: "/area", label: "Panoramica", exact: true },
         { href: "/area/lezioni", label: "Lezioni" },

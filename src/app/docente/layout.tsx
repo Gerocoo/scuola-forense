@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app/AppShell";
 import { requireStaff } from "@/lib/auth";
+import { staffNotices } from "@/lib/notifications";
 import type { NavItem } from "@/components/app/NavLinks";
 
 export const dynamic = "force-dynamic";
@@ -7,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function DocenteLayout({ children }: { children: React.ReactNode }) {
   const { supabase, user, profile } = await requireStaff();
 
-  const [{ count: unread }, { count: toCorrect }] = await Promise.all([
+  const [{ count: unread }, { count: toCorrect }, notices] = await Promise.all([
     supabase
       .from("messages")
       .select("id", { count: "exact", head: true })
@@ -15,6 +16,7 @@ export default async function DocenteLayout({ children }: { children: React.Reac
       .neq("sender_id", user.id)
       .is("read_at", null),
     supabase.from("assignments").select("id", { count: "exact", head: true }).eq("status", "consegnato"),
+    staffNotices(supabase, profile),
   ]);
 
   const nav: NavItem[] = [
@@ -32,7 +34,7 @@ export default async function DocenteLayout({ children }: { children: React.Reac
   nav.push({ href: "/docente/impostazioni", label: "Impostazioni" }, { href: "/docente/profilo", label: "Profilo" });
 
   return (
-    <AppShell profile={profile} nav={nav} home="/docente" areaLabel={profile.role === "admin" ? "Direzione" : "Area docenti"}>
+    <AppShell profile={profile} nav={nav} home="/docente" areaLabel={profile.role === "admin" ? "Direzione" : "Area docenti"} notices={notices}>
       {children}
     </AppShell>
   );

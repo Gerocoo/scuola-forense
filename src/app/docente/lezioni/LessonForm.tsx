@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { saveLesson } from "@/app/docente/actions";
 import { VideoUrlField } from "./VideoUrlField";
 import type { Lesson, LessonKind, Package } from "@/lib/types";
@@ -23,6 +23,14 @@ export function LessonForm({
   const [kind, setKind] = useState<LessonKind>(lesson?.kind ?? defaultKind);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
+  // niente date passate per un nuovo incontro (calcolato nel browser, con l'ora locale)
+  const [minDate, setMinDate] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    const nowLocal = d.toISOString().slice(0, 16);
+    if (!scheduledLocal || scheduledLocal >= nowLocal) setMinDate(nowLocal);
+  }, [scheduledLocal]);
 
   return (
     <form
@@ -86,7 +94,15 @@ export function LessonForm({
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label htmlFor="scheduled_at" className="label">Data e ora</label>
-            <input id="scheduled_at" name="scheduled_at" type="datetime-local" defaultValue={scheduledLocal} required className="field" />
+            <input
+              id="scheduled_at"
+              name="scheduled_at"
+              type="datetime-local"
+              defaultValue={scheduledLocal}
+              min={minDate}
+              required
+              className="field"
+            />
           </div>
           <div>
             <label htmlFor="duration_min" className="label">Durata (min)</label>
@@ -154,7 +170,7 @@ export function LessonForm({
 
       <div className="flex flex-wrap items-center gap-6 border-t border-line-soft pt-5">
         <label className="flex items-center gap-3 text-[15px] font-medium">
-          <input type="checkbox" name="published" defaultChecked={lesson?.published ?? false} className="size-4 accent-codice" />
+          <input type="checkbox" name="published" defaultChecked={lesson?.published ?? defaultKind === "in_presenza"} className="size-4 accent-codice" />
           Pubblica (visibile ai discenti)
         </label>
         <label className="flex items-center gap-2 text-sm text-slate">

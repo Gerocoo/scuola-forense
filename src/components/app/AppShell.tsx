@@ -1,6 +1,8 @@
 import { Logo } from "@/components/Logo";
 import { NavLinks, type NavItem } from "./NavLinks";
 import { UserMenu } from "@/components/UserMenu";
+import { NotificationBell } from "./NotificationBell";
+import type { Notice } from "@/lib/notifications";
 import type { Profile } from "@/lib/types";
 
 export function AppShell({
@@ -8,22 +10,27 @@ export function AppShell({
   nav,
   home,
   areaLabel,
+  notices = [],
   children,
 }: {
   profile: Profile;
   nav: NavItem[];
   home: string;
   areaLabel: string;
+  notices?: Notice[];
   children: React.ReactNode;
 }) {
   const menu = (
-    <UserMenu
+    <div className="flex items-center gap-3">
+      <NotificationBell items={notices} />
+      <UserMenu
       user={{ name: profile.full_name, email: profile.email, avatar: profile.avatar_url }}
       links={[
         { href: home, label: areaLabel },
         { href: `${home}/profilo`, label: "Profilo" },
       ]}
-    />
+      />
+    </div>
   );
 
   return (

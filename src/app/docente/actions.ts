@@ -326,6 +326,12 @@ export async function saveLesson(id: string | null, formData: FormData): Promise
   };
 
   if (kind === "in_presenza" && !row.scheduled_at) return { ok: false, error: "Indica data e ora dell'incontro." };
+  if (kind === "in_presenza" && row.scheduled_at && new Date(row.scheduled_at).getTime() < Date.now() - 5 * 60_000) {
+    // una data passata è ammessa solo se l'incontro esisteva già con quella data (modifica di un incontro svolto)
+    const { data: prev } = id ? await supabase.from("lessons").select("scheduled_at").eq("id", id).maybeSingle() : { data: null };
+    const unchanged = prev?.scheduled_at && new Date(prev.scheduled_at).getTime() === new Date(row.scheduled_at).getTime();
+    if (!unchanged) return { ok: false, error: "La data dell'incontro è già passata. Scegli una data futura." };
+  }
   if (kind === "registrata" && row.published && !row.video_url) {
     const { data: existing } = id
       ? await supabase.from("lessons").select("bunny_video_id").eq("id", id).maybeSingle()
