@@ -139,37 +139,21 @@ export default async function HomePage() {
               Avvocati che correggono personalmente ogni elaborato e rispondono ai tuoi messaggi.
             </p>
           </Reveal>
-          <div className={`mt-14 grid gap-5 ${TEAM.length === 2 ? "md:grid-cols-2 lg:mx-auto lg:max-w-[860px]" : "md:grid-cols-3"}`}>
+          <div className={`mt-14 grid gap-4 ${TEAM.length === 2 ? "md:grid-cols-2 lg:mx-auto lg:max-w-[760px]" : "md:grid-cols-3"}`}>
             {TEAM.map((t, i) => (
               <Reveal key={t.name + t.role} delay={i * 90} className="h-full">
-                <Spotlight tone="dark" tilt={false} className="h-full overflow-hidden rounded-[28px] bg-white/[0.07] ring-1 ring-white/10">
-                  {t.photo ? (
-                    <div className="aspect-[4/5] overflow-hidden bg-ivory">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={t.photo}
-                        alt={t.name}
-                        loading="lazy"
-                        className="size-full object-cover object-top transition-transform duration-700 ease-out hover:scale-[1.03]"
-                      />
-                    </div>
-                  ) : (
-                    <div className="px-8 pt-8">
-                      <span aria-hidden className="grid size-20 place-items-center rounded-full bg-ivory font-serif text-[28px] text-codice">
-                        {initials(t.name.replace(/^(Avv\.|Dott\.|Prof\.)\s*/, ""))}
-                      </span>
-                    </div>
-                  )}
-                  <div className="p-8">
-                    <h3 className="text-[22px] font-semibold">{t.name}</h3>
-                    <p className="text-[15px] text-ivory/80">{t.role}</p>
-                    <p className="mt-4 text-[15px] leading-relaxed text-white/80">{t.bio}</p>
-                    <ul className="mt-5 flex flex-wrap gap-2">
-                      {t.subjects.map((s) => (
-                        <li key={s} className="rounded-full bg-white/10 px-3 py-1 text-[13px] text-white/90">{s}</li>
-                      ))}
-                    </ul>
-                  </div>
+                <Spotlight tone="dark" className="h-full rounded-[28px] bg-white/[0.07] p-8 ring-1 ring-white/10">
+                  <span aria-hidden className="grid size-20 place-items-center rounded-full bg-ivory font-serif text-[28px] text-codice">
+                    {initials(t.name.replace(/^(Avv\.|Dott\.|Prof\.)\s*/, ""))}
+                  </span>
+                  <h3 className="mt-6 text-[21px] font-semibold">{t.name}</h3>
+                  <p className="text-[15px] text-ivory/80">{t.role}</p>
+                  <p className="mt-4 text-[15px] leading-relaxed text-white/80">{t.bio}</p>
+                  <ul className="mt-5 flex flex-wrap gap-2">
+                    {t.subjects.map((s) => (
+                      <li key={s} className="rounded-full bg-white/10 px-3 py-1 text-[13px] text-white/90">{s}</li>
+                    ))}
+                  </ul>
                 </Spotlight>
               </Reveal>
             ))}

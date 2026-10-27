@@ -55,20 +55,18 @@ export const METHOD = {
   ],
 };
 
-export const TEAM: { name: string; role: string; bio: string; subjects: string[]; photo?: string }[] = [
+export const TEAM: { name: string; role: string; bio: string; subjects: string[] }[] = [
   {
     name: "Avv. Luisa Di Fede",
     role: "Avvocato penalista",
     bio: "Segue la preparazione alla prova scritta di diritto penale: redazione del parere e dell'atto giudiziario.",
     subjects: ["Diritto penale", "Parere", "Atto giudiziario"],
-    photo: "/docenti/luisa-di-fede.jpg",
   },
   {
     name: "Avv. Alan Iannello",
     role: "Avvocato penalista",
     bio: "Corregge gli elaborati di diritto penale e affianca i discenti nella preparazione all'esame.",
     subjects: ["Diritto penale", "Procedura penale", "Parere"],
-    photo: "/docenti/alan-iannello.jpg",
   },
 ];
 
