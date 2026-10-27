@@ -125,6 +125,16 @@
   .prose-legal a {
     @apply text-codice underline underline-offset-2;
   }
+  .prose-legal ul {
+    @apply mt-4 list-disc space-y-2 pl-6;
+  }
+  .prose-legal ul + p,
+  .prose-legal p + ul + p {
+    @apply mt-4;
+  }
+  .prose-legal code {
+    @apply rounded bg-paper px-1 font-sans text-[15px];
+  }
 
   /* Comparsa allo scorrimento (vedi components/site/Reveal.tsx) */
   .reveal {

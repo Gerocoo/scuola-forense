@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   title: { default: SITE.name, template: `%s | ${SITE.shortName}` },
   description: SITE.description,
   openGraph: { title: SITE.name, description: SITE.description, locale: "it_IT", type: "website" },
+  // Verifica della proprietà del sito in Google Search Console (richiesta per la verifica dell'app Google)
+  ...(process.env.GOOGLE_SITE_VERIFICATION ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } } : {}),
 };
 
 export const viewport: Viewport = {
