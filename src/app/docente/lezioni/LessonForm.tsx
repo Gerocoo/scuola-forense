@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { saveLesson } from "@/app/docente/actions";
+import { VideoUrlField } from "./VideoUrlField";
 import type { Lesson, LessonKind, Package } from "@/lib/types";
 
 export function LessonForm({
@@ -68,15 +69,12 @@ export function LessonForm({
 
       {kind === "registrata" ? (
         <div className="grid gap-5 sm:grid-cols-[1fr_160px]">
-          <div>
-            <label htmlFor="video_url" className="label">Link a un video esterno (facoltativo)</label>
-            <input id="video_url" name="video_url" type="url" defaultValue={lesson?.video_url ?? ""} className="field" placeholder="https://youtu.be/…" />
-            <p className="hint">
-              {lesson
-                ? "Di norma carica il video con il riquadro qui sopra. In alternativa incolla il link di un video YouTube caricato come «Non in elenco»."
-                : "Salva la lezione: nella pagina successiva potrai caricare il file video. In alternativa incolla qui il link di un video YouTube caricato come «Non in elenco»."}
-            </p>
-          </div>
+          <VideoUrlField
+            defaultValue={lesson?.video_url ?? ""}
+            label="Video della lezione"
+            durationInputId="duration_min"
+            hint="Il video deve essere «Non in elenco» su YouTube. Se carichi i file su Bunny, usa invece il riquadro di caricamento in cima alla pagina."
+          />
           <div>
             <label htmlFor="duration_min" className="label">Durata (min)</label>
             <input id="duration_min" name="duration_min" type="number" min={1} defaultValue={lesson?.duration_min ?? ""} className="field" />
@@ -101,9 +99,11 @@ export function LessonForm({
             <input id="meeting_url" name="meeting_url" type="url" defaultValue={lesson?.meeting_url ?? ""} className="field" placeholder="https://meet.google.com/…" />
           </div>
           <div className="sm:col-span-2">
-            <label htmlFor="video_url_rec" className="label">Link alla registrazione (dopo l&apos;incontro)</label>
-            <input id="video_url_rec" name="video_url" type="url" defaultValue={lesson?.video_url ?? ""} className="field" placeholder="https://youtu.be/…" />
-            <p className="hint">Facoltativo. Video YouTube caricato come &laquo;Non in elenco&raquo;: i discenti lo rivedono nella pagina dell&apos;incontro.</p>
+            <VideoUrlField
+              defaultValue={lesson?.video_url ?? ""}
+              label="Registrazione dell'incontro (facoltativa)"
+              hint="Dopo l'incontro scegli il video della registrazione: i discenti lo rivedono nella pagina dell'incontro."
+            />
           </div>
           <div className="rounded-[10px] border border-line-soft bg-paper p-4 sm:col-span-2">
             <label className="flex items-center gap-3 text-[15px] font-medium">

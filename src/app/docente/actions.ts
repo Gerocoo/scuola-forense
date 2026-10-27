@@ -524,3 +524,15 @@ export async function setEnrollmentStatus(enrollmentId: string, status: "active"
   revalidatePath(`/docente/discenti/${data.user_id}`);
   return { ok: true };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Canale YouTube                                                      */
+/* ------------------------------------------------------------------ */
+
+export async function disconnectYoutube(): Promise<ActionResult> {
+  await requireStaff();
+  const { revoke } = await import("@/lib/youtube");
+  await revoke();
+  revalidatePath("/docente/impostazioni");
+  return { ok: true, message: "Canale scollegato." };
+}

@@ -28,7 +28,7 @@ export default async function DocenteLayout({ children }: { children: React.Reac
   if (profile.role === "admin") {
     nav.push({ href: "/docente/pacchetti", label: "Corsi in vendita" }, { href: "/docente/utenti", label: "Utenti e ruoli" });
   }
-  nav.push({ href: "/docente/profilo", label: "Profilo" });
+  nav.push({ href: "/docente/impostazioni", label: "Impostazioni" }, { href: "/docente/profilo", label: "Profilo" });
 
   return (
     <AppShell profile={profile} nav={nav} home="/docente" areaLabel={profile.role === "admin" ? "Direzione" : "Area docenti"}>

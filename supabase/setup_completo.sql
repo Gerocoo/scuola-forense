@@ -1,7 +1,7 @@
 -- =====================================================================
 --  INSTALLAZIONE COMPLETA: copia TUTTO questo file nell'SQL Editor di
 --  Supabase e premi Run. Si può rieseguire senza danni.
---  (contiene 0001_schema.sql + 0002_video_calendario.sql + 0003_appunti.sql + seed.sql)
+--  (contiene 0001_schema.sql + 0002_video_calendario.sql + 0003_appunti.sql + 0004_integrazioni.sql + seed.sql)
 -- =====================================================================
 
 -- =====================================================================
@@ -602,6 +602,26 @@ create policy "appunti: modifica propri" on public.lesson_notes for update to au
 drop policy if exists "appunti: eliminazione propri" on public.lesson_notes;
 create policy "appunti: eliminazione propri" on public.lesson_notes for delete to authenticated
   using (user_id = auth.uid());
+
+
+-- =====================================================================
+--  0004: collegamenti a servizi esterni (canale YouTube della scuola)
+--  I token sono cifrati dal server e la tabella non ha policy:
+--  nessun utente la legge dal browser, solo il server con la service role.
+-- =====================================================================
+create table if not exists public.integrations (
+  provider        text primary key check (provider in ('youtube')),
+  account_id      text,              -- id del canale
+  account_name    text,              -- nome del canale
+  account_image   text,              -- immagine del canale
+  extra           jsonb not null default '{}',   -- es. playlist dei caricamenti
+  secret          text not null,     -- refresh token cifrato
+  connected_by    uuid references public.profiles(id) on delete set null,
+  connected_at    timestamptz not null default now()
+);
+
+alter table public.integrations enable row level security;
+-- nessuna policy: accesso solo dal server
 
 
 -- Pacchetti di esempio: modificare testi e prezzi dal pannello "Pacchetti" o qui.

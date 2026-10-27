@@ -100,6 +100,21 @@ I docenti caricano i video dalla pagina della lezione: il file va direttamente d
 
 Senza chiavi Bunny resta disponibile il link esterno: Vimeo con privacy *Nascosto* o YouTube *non in elenco*.
 
+### 6-bis. Galleria dei video dal canale YouTube
+
+I docenti scelgono i video da una galleria con le miniature, senza copiare link. Si configura una volta:
+
+1. **Google Cloud Console** (stesso progetto del login con Google) › *API e servizi › Libreria* › cerca **YouTube Data API v3** › **Abilita**.
+2. *API e servizi › Credenziali* › apri il client OAuth già creato › in **URI di reindirizzamento autorizzati** aggiungi
+   `https://IL-TUO-SITO/api/youtube/callback` e salva. Copia **ID client** e **Client secret**.
+3. *Schermata consenso OAuth* › **Accesso ai dati** › aggiungi l'ambito `.../auth/youtube.readonly`.
+   Poi in **Pubblico** premi **Pubblica app** (stato "In produzione"): in modalità test Google scollega il canale ogni 7 giorni.
+4. Su **Vercel** › Environment Variables aggiungi `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` e `INTEGRATIONS_SECRET` (stringa casuale lunga), poi **Redeploy**.
+5. Nel sito: **Area docenti › Impostazioni › Collega il canale YouTube** e accedi con l'account Google del canale della scuola.
+   Finché Google non verifica l'app compare l'avviso "Google non ha verificato questa app": premi **Avanzate › Vai al sito** (serve solo la prima volta).
+
+I video devono essere caricati su YouTube come **Non in elenco**: i *privati* non si possono mostrare sul sito.
+
 ### 7. Calendario e promemoria
 
 - Ogni incontro in presenza ha data, luogo, eventuale link alla diretta e, se serve, **prenotazione del posto** con numero massimo di partecipanti.

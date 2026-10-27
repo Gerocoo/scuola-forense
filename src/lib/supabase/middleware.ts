@@ -7,7 +7,7 @@ export async function updateSession(request: NextRequest) {
   // Se Supabase rimanda alla Site URL (es. "/?code=...") invece che a /auth/callback,
   // completiamo comunque l'accesso.
   const code = request.nextUrl.searchParams.get("code");
-  if (code && !request.nextUrl.pathname.startsWith("/auth/")) {
+  if (code && !request.nextUrl.pathname.startsWith("/auth/") && !request.nextUrl.pathname.startsWith("/api/")) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/callback";
     url.search = `?code=${encodeURIComponent(code)}`;
