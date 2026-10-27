@@ -101,8 +101,8 @@ export function VideoUploader({
       <div className="panel p-5">
         <h2 className="font-semibold">{isRecording ? "Registrazione dell'incontro" : "Video"}</h2>
         <p className="mt-2 text-sm text-slate">
-          Il caricamento diretto dei video si attiva inserendo le chiavi di Bunny Stream (vedi README). Nel frattempo puoi incollare un link
-          Vimeo o YouTube nel modulo della lezione.
+          Il caricamento diretto dei video si attiva inserendo le chiavi di Bunny Stream (vedi README). Nel frattempo carica il video su YouTube
+          come &laquo;Non in elenco&raquo; e incolla il link nel modulo della lezione.
         </p>
       </div>
     );
