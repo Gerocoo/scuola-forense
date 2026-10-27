@@ -21,3 +21,21 @@ export function embedUrl(url: string | null | undefined): string | null {
     return null;
   }
 }
+
+/** Miniatura di anteprima di una lezione (YouTube o Bunny Stream); null se non disponibile. */
+export function thumbnailFor(lesson: { video_url: string | null; bunny_video_id?: string | null; video_status?: string }) {
+  if (lesson.bunny_video_id && lesson.video_status === "ready" && process.env.BUNNY_STREAM_CDN_HOSTNAME) {
+    return `https://${process.env.BUNNY_STREAM_CDN_HOSTNAME}/${lesson.bunny_video_id}/thumbnail.jpg`;
+  }
+  if (!lesson.video_url) return null;
+  try {
+    const u = new URL(lesson.video_url);
+    const host = u.hostname.replace(/^www\./, "");
+    let id: string | null | undefined = null;
+    if (host === "youtu.be") id = u.pathname.slice(1);
+    else if (host.endsWith("youtube.com")) id = u.searchParams.get("v") ?? u.pathname.split("/").filter(Boolean).pop();
+    return id ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : null;
+  } catch {
+    return null;
+  }
+}

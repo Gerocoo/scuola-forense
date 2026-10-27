@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/app/AppShell";
 import { LessonView } from "@/components/app/LessonView";
 import { StatusBadge } from "@/components/app/StatusBadge";
+import { LessonStrip, type StripItem } from "@/components/app/LessonStrip";
 import { BookingBox } from "./BookingBox";
 import { requireUser } from "@/lib/auth";
 import { bunnyConfigured, embedUrl } from "@/lib/bunny";
 import { googleCalendarUrl } from "@/lib/calendar";
 import { loadPath, DONE_STATUSES } from "@/lib/progress";
 import { siteUrl } from "@/lib/stripe";
+import { thumbnailFor } from "@/lib/video";
 import type { Lesson, StoredFile } from "@/lib/types";
 
 type Props = { params: Promise<{ id: string }> };
@@ -23,6 +25,17 @@ export default async function LezionePage({ params }: Props) {
   const live = lesson.kind === "in_presenza";
   const path = live ? [] : await loadPath(supabase, user.id);
   const step = path.find((s) => s.lesson.id === lesson.id) ?? null;
+  const strip: StripItem[] = path.map((s) => ({
+    id: s.lesson.id,
+    title: s.lesson.title,
+    index: s.index,
+    thumb: thumbnailFor(s.lesson),
+    percent: s.percent,
+    completed: s.completed,
+    unlocked: s.unlocked,
+    current: s.lesson.id === lesson.id,
+  }));
+  const stripEl = strip.length > 1 ? <LessonStrip items={strip} /> : null;
 
   /* ---------- lezione ancora bloccata ---------- */
   if (step && !step.unlocked) {
@@ -30,6 +43,7 @@ export default async function LezionePage({ params }: Props) {
     const pendingEx = prev ? prev.exercises.filter((e) => !DONE_STATUSES.includes(e.status)) : [];
     return (
       <>
+        {stripEl}
         <PageHeader back={{ href: "/area/lezioni", label: "Percorso" }} title={lesson.title} description={`Lezione ${step.index + 1}`} />
         <section className="panel mx-auto max-w-xl p-8 text-center">
           <span aria-hidden className="mx-auto grid size-16 place-items-center rounded-full bg-paper">
@@ -83,7 +97,6 @@ export default async function LezionePage({ params }: Props) {
   const past = !!(lesson.scheduled_at && new Date(lesson.scheduled_at) < new Date());
   const pageUrl = `${siteUrl()}/area/lezioni/${lesson.id}`;
   const gcal = live ? googleCalendarUrl(lesson, pageUrl) : null;
-  const next = step ? path[step.index + 1] : undefined;
 
   const aside = live ? (
     <>
@@ -100,9 +113,9 @@ export default async function LezionePage({ params }: Props) {
         </div>
       )}
     </>
-  ) : step ? (
+  ) : step && step.exercises.length > 0 ? (
     <>
-      {step.exercises.length > 0 && (
+      {(
         <div className="panel p-5">
           <h2 className="font-semibold">Esercitazioni della lezione</h2>
           <p className="mt-1 text-[13px] text-mute">Vanno consegnate per sbloccare la lezione successiva.</p>
@@ -118,30 +131,12 @@ export default async function LezionePage({ params }: Props) {
           </ul>
         </div>
       )}
-      <div className={`panel p-5 ${step.completed ? "ring-2 ring-codice" : ""}`}>
-        <h2 className="font-semibold">{step.completed ? "Lezione completata" : "Per completare la lezione"}</h2>
-        <ul className="mt-2 space-y-1 text-[14px] text-slate">
-          <li>{step.videoDone ? "✓" : "○"} Video visto per intero</li>
-          {step.exercises.length > 0 && (
-            <li>
-              {step.exercisesDone === step.exercises.length ? "✓" : "○"} Esercitazioni consegnate ({step.exercisesDone}/{step.exercises.length})
-            </li>
-          )}
-        </ul>
-        {next && (
-          <Link
-            href={next.unlocked ? `/area/lezioni/${next.lesson.id}` : "/area/lezioni"}
-            className={`mt-4 w-full ${next.unlocked ? "btn-primary" : "btn-secondary"}`}
-          >
-            {next.unlocked ? "Lezione successiva" : "Lezione successiva bloccata"}
-          </Link>
-        )}
-      </div>
     </>
   ) : null;
 
   return (
     <>
+      {stripEl}
       <PageHeader
         back={{ href: "/area/lezioni", label: live ? "Lezioni" : "Percorso" }}
         title={lesson.title}
