@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/app/AppShell";
 import { Avatar } from "@/components/app/Avatar";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EnrollmentAdd, EnrollmentStatus } from "./EnrollmentAdmin";
+import { ChangeEmailForm, DeleteUserButton } from "@/app/docente/utenti/AccountAdmin";
 import { requireStaff } from "@/lib/auth";
 import { loadPath } from "@/lib/progress";
 import { dateLong, dateShort, euro, KIND_LABEL } from "@/lib/format";
@@ -138,6 +139,15 @@ export default async function DiscentePage({ params }: Props) {
             )}
           </section>
           {me.role === "admin" && <EnrollmentAdd userId={s.id} packages={packages ?? []} />}
+          {me.role === "admin" && (
+            <section className="panel space-y-5 p-5">
+              <h2 className="font-semibold">Account</h2>
+              <ChangeEmailForm userId={s.id} email={s.email} />
+              <div className="border-t border-line-soft pt-4">
+                <DeleteUserButton userId={s.id} name={s.full_name || s.email} isStaff={false} redirectTo="/docente/discenti" />
+              </div>
+            </section>
+          )}
         </aside>
       </div>
     </>

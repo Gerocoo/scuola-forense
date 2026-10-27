@@ -1,7 +1,7 @@
 -- =====================================================================
 --  INSTALLAZIONE COMPLETA: copia TUTTO questo file nell'SQL Editor di
 --  Supabase e premi Run. Si può rieseguire senza danni.
---  (contiene 0001_schema.sql + 0002_video_calendario.sql + 0003_appunti.sql + 0004_integrazioni.sql + 0005_percorso.sql + 0006_inviti_docenti.sql + seed.sql)
+--  (contiene 0001_schema.sql + 0002_video_calendario.sql + 0003_appunti.sql + 0004_integrazioni.sql + 0005_percorso.sql + 0006_inviti_docenti.sql + 0007_gestione_account.sql + seed.sql)
 -- =====================================================================
 
 -- =====================================================================
@@ -711,6 +711,28 @@ begin
   end if;
   return new;
 end $$;
+
+
+-- =====================================================================
+--  0007: gestione account
+-- =====================================================================
+-- Prima di eliminare un docente: le sue esercitazioni, i file di correzione e le conversazioni
+-- passano a un altro membro dello staff, così i discenti non perdono nulla.
+create or replace function public.reassign_staff(old_id uuid, new_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() and auth.uid() is not null then
+    raise exception 'Solo un amministratore può farlo';
+  end if;
+  update public.assignments set teacher_id = new_id where teacher_id = old_id;
+  update public.assignment_files set uploaded_by = new_id where uploaded_by = old_id;
+  update public.messages
+     set teacher_id = new_id,
+         sender_id = case when sender_id = old_id then new_id else sender_id end
+   where teacher_id = old_id;
+end $$;
+
+revoke all on function public.reassign_staff(uuid, uuid) from public, anon;
 
 
 -- Pacchetti di esempio: modificare testi e prezzi dal pannello "Pacchetti" o qui.

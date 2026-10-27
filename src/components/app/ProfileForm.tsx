@@ -16,7 +16,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       <div>
         <label htmlFor="email" className="label">Email</label>
         <input id="email" value={profile.email} readOnly disabled className="field bg-paper text-slate" />
-        <p className="hint">È l&apos;email di accesso. Per cambiarla scrivi alla segreteria.</p>
+        <p className="hint">È l&apos;email con cui accedi. Per cambiarla o per cancellare l&apos;account scrivi alla segreteria.</p>
       </div>
       <div>
         <label htmlFor="phone" className="label">Telefono (facoltativo)</label>

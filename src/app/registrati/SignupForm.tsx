@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Divider, GoogleButton } from "@/components/auth/GoogleButton";
+import { AuthNotice, PasswordField } from "@/components/auth/PasswordField";
 
 export function SignupForm({ next }: { next: string }) {
   const router = useRouter();
@@ -15,6 +16,15 @@ export function SignupForm({ next }: { next: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [resent, setResent] = useState<string | null>(null);
+
+  const callback = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+
+  async function resend() {
+    setResent(null);
+    const { error } = await createClient().auth.resend({ type: "signup", email: email.trim(), options: { emailRedirectTo: callback() } });
+    setResent(error ? "Non riusciamo a reinviare adesso: riprova tra qualche minuto." : "Email inviata di nuovo.");
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,15 +39,20 @@ export function SignupForm({ next }: { next: string }) {
       password,
       options: {
         data: { full_name: name.trim() },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        emailRedirectTo: callback(),
       },
     });
     setLoading(false);
     if (error) {
+      const m = error.message.toLowerCase();
       setError(
-        error.message.toLowerCase().includes("already")
+        m.includes("already")
           ? "Esiste già un account con questa email. Accedi o reimposta la password."
-          : "Registrazione non riuscita. Controlla i dati e riprova.",
+          : error.status === 429 || m.includes("rate limit")
+            ? "Troppe registrazioni in poco tempo. Riprova tra qualche minuto."
+            : m.includes("password")
+              ? "Password troppo debole: usa almeno 8 caratteri, con lettere e numeri."
+              : "Registrazione non riuscita. Controlla i dati e riprova.",
       );
       return;
     }
@@ -58,6 +73,8 @@ export function SignupForm({ next }: { next: string }) {
           Abbiamo inviato un link di conferma a <strong className="text-ink">{email}</strong>. Aprilo per attivare l&apos;account.
           Se non lo trovi, guarda nella cartella spam.
         </p>
+        <button type="button" onClick={resend} className="btn-secondary btn-sm mt-4">Non è arrivata? Invia di nuovo</button>
+        {resent && <p className="mt-3 text-[14px] text-slate">{resent}</p>}
       </div>
     );
   }
@@ -77,7 +94,7 @@ export function SignupForm({ next }: { next: string }) {
         </div>
         <div>
           <label htmlFor="password" className="label">Password</label>
-          <input id="password" type="password" autoComplete="new-password" minLength={8} required className="field" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <PasswordField id="password" autoComplete="new-password" minLength={8} value={password} onChange={setPassword} />
           <p className="hint">Almeno 8 caratteri.</p>
         </div>
         <label className="flex items-start gap-3 text-sm text-slate">
@@ -87,7 +104,7 @@ export function SignupForm({ next }: { next: string }) {
             <Link href="/termini" className="link" target="_blank">termini di vendita</Link>.
           </span>
         </label>
-        {error && <p role="alert" className="text-sm text-ceralacca">{error}</p>}
+        {error && <AuthNotice tone="error">{error}</AuthNotice>}
         <button type="submit" className="btn-primary w-full" disabled={loading || !accepted || !name || !email || !password}>
           {loading ? "Creazione account…" : "Crea account"}
         </button>

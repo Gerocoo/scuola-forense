@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/app/AppShell";
 import { Avatar } from "@/components/app/Avatar";
 import { RoleSelect } from "./RoleSelect";
 import { InviteTeacher, RevokeInvite } from "./InviteTeacher";
+import { DeleteUserButton } from "./AccountAdmin";
 import { requireAdmin } from "@/lib/auth";
 import { dateShort } from "@/lib/format";
 import type { Profile } from "@/lib/types";
@@ -68,6 +69,7 @@ export default async function UtentiPage({ searchParams }: Props) {
               <th className="px-5 py-3 font-medium">Utente</th>
               <th className="px-5 py-3 font-medium">Registrato</th>
               <th className="px-5 py-3 font-medium">Ruolo</th>
+              <th className="px-5 py-3 font-medium"><span className="sr-only">Azioni</span></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line-soft">
@@ -85,6 +87,9 @@ export default async function UtentiPage({ searchParams }: Props) {
                 <td className="px-5 py-3 text-slate">{dateShort(p.created_at)}</td>
                 <td className="px-5 py-3">
                   {p.id === user.id ? <span className="text-slate">Amministratore (tu)</span> : <RoleSelect userId={p.id} role={p.role} />}
+                </td>
+                <td className="px-5 py-3 text-right">
+                  {p.id !== user.id && <DeleteUserButton userId={p.id} name={p.full_name || p.email} isStaff={p.role !== "student"} />}
                 </td>
               </tr>
             ))}

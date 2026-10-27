@@ -598,3 +598,62 @@ export async function revokeInvite(email: string): Promise<ActionResult> {
   revalidatePath("/docente/utenti");
   return { ok: true };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Gestione account (solo amministratori)                             */
+/* ------------------------------------------------------------------ */
+
+/** Cambia l'email di accesso di un utente (vale anche per l'accesso con password). */
+export async function changeUserEmail(userId: string, formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "Scrivi un indirizzo email valido." };
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.updateUserById(userId, { email, email_confirm: true });
+  if (error) {
+    return {
+      ok: false,
+      error: error.message.toLowerCase().includes("already") ? "Questa email è già usata da un altro account." : "Modifica non riuscita.",
+    };
+  }
+  await admin.from("profiles").update({ email }).eq("id", userId);
+  revalidatePath("/docente/utenti");
+  revalidatePath(`/docente/discenti/${userId}`);
+  return { ok: true, message: "Email aggiornata. Da ora accede con il nuovo indirizzo." };
+}
+
+/**
+ * Elimina definitivamente un account. Per un discente spariscono iscrizioni, elaborati, correzioni,
+ * messaggi e file. Per un docente, esercitazioni e conversazioni passano a chi lo elimina.
+ */
+export async function deleteUserAccount(userId: string): Promise<ActionResult> {
+  const { user } = await requireAdmin();
+  if (userId === user.id) return { ok: false, error: "Non puoi eliminare il tuo account da qui." };
+  const admin = createAdminClient();
+
+  const { data: target } = await admin.from("profiles").select("id, role").eq("id", userId).maybeSingle();
+  if (!target) return { ok: false, error: "Utente non trovato." };
+
+  if (target.role !== "student") {
+    const { error } = await admin.rpc("reassign_staff", { old_id: userId, new_id: user.id });
+    if (error) return { ok: false, error: "Non è stato possibile trasferire le esercitazioni del docente." };
+  }
+
+  // file degli elaborati del discente (verranno eliminati insieme alle esercitazioni)
+  const { data: files } = await admin
+    .from("assignment_files")
+    .select("storage_path, assignments!inner(student_id)")
+    .eq("assignments.student_id", userId);
+  const paths = (files ?? []).map((f: { storage_path: string }) => f.storage_path);
+
+  const { error } = await admin.auth.admin.deleteUser(userId);
+  if (error) return { ok: false, error: "Eliminazione non riuscita. Riprova." };
+
+  for (let i = 0; i < paths.length; i += 100) {
+    await admin.storage.from("materiali").remove(paths.slice(i, i + 100));
+  }
+
+  revalidatePath("/docente/utenti");
+  revalidatePath("/docente/discenti");
+  return { ok: true, message: "Account eliminato." };
+}
