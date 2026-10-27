@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { getSession, isStaff } from "@/lib/auth";
+import { AuthButtons } from "./AuthButtons";
 
 const NAV = [
   { href: "/#metodo", label: "Il metodo" },
@@ -11,7 +12,6 @@ const NAV = [
 
 export async function SiteHeader() {
   const { user, profile } = await getSession();
-  const areaHref = isStaff(profile) ? "/docente" : "/area";
 
   return (
     <header className="sticky top-0 z-30 border-b border-line/70 bg-paper/90 backdrop-blur">
@@ -25,20 +25,7 @@ export async function SiteHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          {user ? (
-            <Link href={areaHref} className="btn-primary btn-sm">
-              {isStaff(profile) ? "Area docenti" : "La tua area"}
-            </Link>
-          ) : (
-            <>
-              <Link href="/accedi" className="btn-ghost btn-sm">
-                Accedi
-              </Link>
-              <Link href="/#corsi" className="btn-primary btn-sm hidden sm:inline-flex">
-                Scegli il corso
-              </Link>
-            </>
-          )}
+          <AuthButtons initialLoggedIn={!!user} initialStaff={isStaff(profile)} />
         </div>
       </div>
     </header>

@@ -1,6 +1,9 @@
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 
+// La vetrina dipende da chi è collegato: niente pagine in cache condivise tra utenti.
+export const dynamic = "force-dynamic";
+
 export default function SitoLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
