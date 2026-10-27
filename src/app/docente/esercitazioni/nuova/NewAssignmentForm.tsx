@@ -23,11 +23,14 @@ export function NewAssignmentForm({
   preselected,
   lessons,
   preselectedLesson,
+  course,
 }: {
   students: StudentOption[];
   preselected?: string;
   lessons: { id: string; title: string }[];
   preselectedLesson?: string;
+  /** Modalità corso: l'esercizio va a tutti gli iscritti, niente scelta dei discenti. */
+  course?: { id: string; title: string; enrolled: number };
 }) {
   const [lessonId, setLessonId] = useState(preselectedLesson ?? "");
   const router = useRouter();
@@ -62,7 +65,7 @@ export function NewAssignmentForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!selected.size) return setError("Scegli almeno un discente.");
+    if (!course && !selected.size) return setError("Scegli almeno un discente.");
     if (!title.trim()) return setError("Inserisci un titolo.");
 
     const batchId = crypto.randomUUID();
@@ -72,19 +75,22 @@ export function NewAssignmentForm({
         setBusy(`Caricamento di ${f.name}…`);
         metas.push(await uploadFile(f, `tracce/${batchId}`));
       }
-      setBusy("Invio ai discenti…");
+      setBusy(course ? "Invio agli iscritti…" : "Invio ai discenti…");
       const res = await createAssignments({
         batchId,
-        studentIds: [...selected],
+        studentIds: course ? [] : [...selected],
         kind,
         title,
         instructions,
         dueLocal: due,
         files: metas,
         lessonId: lessonId || null,
+        packageId: course?.id ?? null,
       });
       if (!res.ok) throw new Error(res.error);
-      router.push(res.firstId ? `/docente/esercitazioni/${res.firstId}` : "/docente/esercitazioni?stato=in-attesa");
+      router.push(
+        course ? `/docente/corsi/${course.id}` : res.firstId ? `/docente/esercitazioni/${res.firstId}` : "/docente/esercitazioni?stato=in-attesa",
+      );
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invio non riuscito.");
@@ -168,6 +174,15 @@ export function NewAssignmentForm({
       </div>
 
       <aside className="space-y-4 lg:sticky lg:top-8 lg:self-start">
+        {course ? (
+          <div className="panel p-5">
+            <h2 className="font-semibold">Destinatari</h2>
+            <p className="mt-2 text-[15px] leading-relaxed text-slate">
+              Tutti gli iscritti a <strong className="text-ink">{course.title}</strong>:{" "}
+              {course.enrolled === 1 ? "1 discente oggi" : `${course.enrolled} discenti oggi`}. Chi si iscrive in seguito lo riceve in automatico.
+            </p>
+          </div>
+        ) : (
         <div className="panel p-5">
           <div className="flex items-baseline justify-between">
             <h2 className="font-semibold">Discenti</h2>
@@ -207,10 +222,11 @@ export function NewAssignmentForm({
             {!visible.length && <li className="px-2 py-3 text-sm text-mute">Nessun discente trovato.</li>}
           </ul>
         </div>
+        )}
 
         {error && <p role="alert" className="text-sm text-ceralacca">{error}</p>}
         <button type="submit" className="btn-primary w-full" disabled={!!busy}>
-          {busy ?? (selected.size > 1 ? `Assegna a ${selected.size} discenti` : "Assegna la traccia")}
+          {busy ?? (course ? "Assegna al corso" : selected.size > 1 ? `Assegna a ${selected.size} discenti` : "Assegna la traccia")}
         </button>
         <p className="text-sm text-mute">I discenti ricevono un&apos;email con il link alla traccia.</p>
       </aside>

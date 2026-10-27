@@ -22,34 +22,60 @@ create policy "docenti corso: gestione admin" on public.package_teachers for all
 alter table public.assignments add column if not exists package_id uuid references public.packages(id) on delete set null;
 create index if not exists assignments_package_idx on public.assignments(package_id, batch_id);
 
--- Chi si iscrive dopo riceve gli esercizi già assegnati al corso (con i file della traccia).
+create or replace function public.teaches_package(pid uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.is_admin() or exists (select 1 from public.package_teachers where package_id = pid and teacher_id = auth.uid())
+$$;
+
+-- Modello dell'esercizio di corso (l'id coincide con assignments.batch_id)
+create table if not exists public.course_exercises (
+  id           uuid primary key default gen_random_uuid(),
+  package_id   uuid not null references public.packages(id) on delete cascade,
+  teacher_id   uuid references public.profiles(id) on delete set null,
+  kind         assignment_kind not null default 'parere',
+  title        text not null,
+  instructions text not null default '',
+  due_at       timestamptz,
+  lesson_id    uuid references public.lessons(id) on delete set null,
+  files        jsonb not null default '[]',
+  created_at   timestamptz not null default now()
+);
+create index if not exists course_exercises_package_idx on public.course_exercises(package_id, created_at desc);
+
+alter table public.course_exercises enable row level security;
+
+drop policy if exists "esercizi corso: lettura staff" on public.course_exercises;
+create policy "esercizi corso: lettura staff" on public.course_exercises for select to authenticated
+  using (public.is_staff());
+drop policy if exists "esercizi corso: gestione docenti del corso" on public.course_exercises;
+create policy "esercizi corso: gestione docenti del corso" on public.course_exercises for all to authenticated
+  using (public.teaches_package(package_id)) with check (public.teaches_package(package_id));
+
+-- Chi si iscrive (o viene riattivato) riceve gli esercizi del corso con i file della traccia.
 create or replace function public.copy_course_assignments()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare
-  b record;
+  ce record;
   new_id uuid;
 begin
   if new.status <> 'active' then
     return new;
   end if;
 
-  for b in
-    select distinct on (a.batch_id) a.*
-    from public.assignments a
-    where a.package_id = new.package_id
-      and not exists (
-        select 1 from public.assignments x where x.batch_id = a.batch_id and x.student_id = new.user_id
-      )
-    order by a.batch_id, a.created_at
+  for ce in
+    select c.* from public.course_exercises c
+    where c.package_id = new.package_id
+      and c.teacher_id is not null
+      and not exists (select 1 from public.assignments x where x.batch_id = c.id and x.student_id = new.user_id)
+    order by c.created_at
   loop
     insert into public.assignments (batch_id, teacher_id, student_id, kind, title, instructions, due_at, lesson_id, package_id)
-    values (b.batch_id, b.teacher_id, new.user_id, b.kind, b.title, b.instructions, b.due_at, b.lesson_id, b.package_id)
+    values (ce.id, ce.teacher_id, new.user_id, ce.kind, ce.title, ce.instructions, ce.due_at, ce.lesson_id, ce.package_id)
     returning id into new_id;
 
     insert into public.assignment_files (assignment_id, role, uploaded_by, storage_path, file_name, size_bytes, mime_type)
-    select new_id, f.role, f.uploaded_by, f.storage_path, f.file_name, f.size_bytes, f.mime_type
-    from public.assignment_files f
-    where f.assignment_id = b.id and f.role = 'traccia';
+    select new_id, 'traccia', ce.teacher_id, f->>'path', f->>'name', coalesce((f->>'size')::bigint, 0), nullif(f->>'type', '')
+    from jsonb_array_elements(ce.files) f;
   end loop;
 
   return new;

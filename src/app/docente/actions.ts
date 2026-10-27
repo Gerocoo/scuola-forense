@@ -26,18 +26,50 @@ export async function createAssignments(input: {
   dueLocal: string;
   files: UploadedMeta[];
   lessonId?: string | null;
-}): Promise<ActionResult & { firstId?: string }> {
+  /** Esercizio di corso: va a tutti gli iscritti attivi e, in automatico, a chi si iscrive dopo. */
+  packageId?: string | null;
+}): Promise<ActionResult & { firstId?: string; count?: number }> {
   const { supabase, user, profile } = await requireStaff();
 
   const title = input.title.trim().slice(0, 200);
   if (!title) return { ok: false, error: "Inserisci un titolo." };
-  if (!input.studentIds.length) return { ok: false, error: "Scegli almeno un discente." };
   if (!KINDS.includes(input.kind)) return { ok: false, error: "Tipo non valido." };
   if (input.files.some((f) => !f.path.startsWith(`tracce/${input.batchId}/`))) {
     return { ok: false, error: "Percorso dei file non valido." };
   }
 
   const due = fromLocalInput(input.dueLocal);
+
+  if (input.packageId) {
+    const { data: allowed } = await supabase.rpc("teaches_package", { pid: input.packageId });
+    if (!allowed) return { ok: false, error: "Non sei tra i docenti di questo corso." };
+    const { error: ceErr } = await supabase.from("course_exercises").insert({
+      id: input.batchId,
+      package_id: input.packageId,
+      teacher_id: user.id,
+      kind: input.kind,
+      title,
+      instructions: input.instructions.trim().slice(0, 20000),
+      due_at: due,
+      lesson_id: input.lessonId || null,
+      files: input.files,
+    });
+    if (ceErr) {
+      console.error("[createAssignments course]", ceErr);
+      return { ok: false, error: "Creazione non riuscita. Riprova." };
+    }
+    const nowIso = new Date().toISOString();
+    const { data: enr } = await supabase
+      .from("enrollments")
+      .select("user_id, ends_at")
+      .eq("package_id", input.packageId)
+      .eq("status", "active");
+    input.studentIds = [...new Set((enr ?? []).filter((e) => !e.ends_at || e.ends_at > nowIso).map((e) => e.user_id as string))];
+    revalidatePath(`/docente/corsi/${input.packageId}`);
+    if (!input.studentIds.length) return { ok: true, count: 0, message: "Esercizio salvato: lo riceveranno gli iscritti del corso." };
+  }
+
+  if (!input.studentIds.length) return { ok: false, error: "Scegli almeno un discente." };
   const rows = input.studentIds.map((sid) => ({
     batch_id: input.batchId,
     teacher_id: user.id,
@@ -47,6 +79,7 @@ export async function createAssignments(input: {
     instructions: input.instructions.trim().slice(0, 20000),
     due_at: due,
     lesson_id: input.lessonId || null,
+    package_id: input.packageId || null,
   }));
 
   const { data: created, error } = await supabase.from("assignments").insert(rows).select("id, student_id");
@@ -94,7 +127,7 @@ export async function createAssignments(input: {
 
   revalidatePath("/docente/esercitazioni");
   revalidatePath("/docente");
-  return { ok: true, firstId: created.length === 1 ? created[0].id : undefined };
+  return { ok: true, firstId: created.length === 1 && !input.packageId ? created[0].id : undefined, count: created.length };
 }
 
 export async function updateAssignment(id: string, formData: FormData): Promise<ActionResult> {
@@ -656,4 +689,41 @@ export async function deleteUserAccount(userId: string): Promise<ActionResult> {
   revalidatePath("/docente/utenti");
   revalidatePath("/docente/discenti");
   return { ok: true, message: "Account eliminato." };
+}
+
+
+/* ------------------------------------------------------------------ */
+/*  Corsi: docenti ed esercizi di corso                                */
+/* ------------------------------------------------------------------ */
+
+export async function addCourseTeacher(packageId: string, teacherId: string): Promise<ActionResult> {
+  const { supabase } = await requireAdmin();
+  if (!teacherId) return { ok: false, error: "Scegli un docente." };
+  const { error } = await supabase.from("package_teachers").upsert({ package_id: packageId, teacher_id: teacherId }, { onConflict: "package_id,teacher_id" });
+  if (error) return { ok: false, error: "Non riuscito." };
+  revalidatePath(`/docente/corsi/${packageId}`);
+  revalidatePath("/docente/corsi");
+  return { ok: true };
+}
+
+export async function removeCourseTeacher(packageId: string, teacherId: string): Promise<ActionResult> {
+  const { supabase } = await requireAdmin();
+  const { error } = await supabase.from("package_teachers").delete().eq("package_id", packageId).eq("teacher_id", teacherId);
+  if (error) return { ok: false, error: "Non riuscito." };
+  revalidatePath(`/docente/corsi/${packageId}`);
+  revalidatePath("/docente/corsi");
+  return { ok: true };
+}
+
+/** Ritira un esercizio di corso: non arriva più ai nuovi iscritti e sparisce a chi non l'ha ancora consegnato. */
+export async function deleteCourseExercise(exerciseId: string): Promise<ActionResult> {
+  const { supabase } = await requireStaff();
+  const { data: ce } = await supabase.from("course_exercises").select("package_id").eq("id", exerciseId).maybeSingle();
+  if (!ce) return { ok: false, error: "Esercizio non trovato." };
+  const { error } = await supabase.from("course_exercises").delete().eq("id", exerciseId);
+  if (error) return { ok: false, error: "Non hai i permessi per questo corso." };
+  await supabase.from("assignments").delete().eq("batch_id", exerciseId).eq("status", "assegnato");
+  revalidatePath(`/docente/corsi/${ce.package_id}`);
+  revalidatePath("/docente/esercitazioni");
+  return { ok: true, message: "Esercizio ritirato." };
 }

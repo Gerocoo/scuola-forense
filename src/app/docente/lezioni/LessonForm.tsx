@@ -11,11 +11,13 @@ export function LessonForm({
   packages,
   defaultKind = "registrata",
   scheduledLocal = "",
+  defaultPackage,
 }: {
   lesson?: Lesson;
   packages: Pick<Package, "id" | "title" | "period_label">[];
   defaultKind?: LessonKind;
   scheduledLocal?: string;
+  defaultPackage?: string;
 }) {
   const router = useRouter();
   const [kind, setKind] = useState<LessonKind>(lesson?.kind ?? defaultKind);
@@ -128,7 +130,7 @@ export function LessonForm({
                 type="checkbox"
                 name="package_ids"
                 value={p.id}
-                defaultChecked={lesson ? lesson.package_ids.includes(p.id) : packages.length === 1}
+                defaultChecked={lesson ? lesson.package_ids.includes(p.id) : defaultPackage ? p.id === defaultPackage : packages.length === 1}
                 className="size-4 accent-codice"
               />
               {p.title} <span className="text-mute">({p.period_label})</span>

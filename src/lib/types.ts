@@ -107,6 +107,20 @@ export interface Assignment {
   corrected_at: string | null;
   created_at: string;
   lesson_id: string | null;
+  package_id?: string | null;
+}
+
+export interface CourseExercise {
+  id: string;
+  package_id: string;
+  teacher_id: string | null;
+  kind: AssignmentKind;
+  title: string;
+  instructions: string;
+  due_at: string | null;
+  lesson_id: string | null;
+  files: UploadedMeta[];
+  created_at: string;
 }
 
 export interface AssignmentFile extends StoredFile {

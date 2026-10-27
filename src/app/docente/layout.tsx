@@ -19,6 +19,7 @@ export default async function DocenteLayout({ children }: { children: React.Reac
 
   const nav: NavItem[] = [
     { href: "/docente", label: "Panoramica", exact: true },
+    { href: "/docente/corsi", label: "Corsi" },
     { href: "/docente/esercitazioni", label: "Esercitazioni", badge: toCorrect ?? 0 },
     { href: "/docente/discenti", label: "Discenti" },
     { href: "/docente/lezioni", label: "Lezioni" },
