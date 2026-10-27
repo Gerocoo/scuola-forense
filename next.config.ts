@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Permette di aprire il sito tramite un tunnel Cloudflare (anteprime senza dominio).
+  allowedDevOrigins: ["*.trycloudflare.com"],
+  experimental: {
+    serverActions: { allowedOrigins: ["*.trycloudflare.com"] },
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },

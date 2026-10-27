@@ -15,8 +15,13 @@ export function getStripe() {
   return stripe;
 }
 
+/**
+ * Indirizzo pubblico del sito, usato nei link delle email e nei ritorni da Stripe.
+ * SITE_URL è letto all'avvio (basta riavviare `npm start` se cambia, es. con un tunnel);
+ * NEXT_PUBLIC_SITE_URL invece viene fissato al momento della build.
+ */
 export function siteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  return (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
 }
 
 /**

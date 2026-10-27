@@ -17,7 +17,7 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: { default: SITE.name, template: `%s | ${SITE.shortName}` },
   description: SITE.description,
   openGraph: { title: SITE.name, description: SITE.description, locale: "it_IT", type: "website" },
