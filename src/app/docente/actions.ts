@@ -767,3 +767,23 @@ export async function deleteCourseExercise(exerciseId: string): Promise<ActionRe
   revalidatePath("/docente/esercitazioni");
   return { ok: true, message: "Esercizio ritirato." };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Correzione sul documento                                           */
+/* ------------------------------------------------------------------ */
+
+export async function saveAnnotations(fileId: string, data: unknown): Promise<ActionResult> {
+  const { supabase, user } = await requireStaff();
+  const json = JSON.stringify(data ?? {});
+  if (json.length > 1_500_000) return { ok: false, error: "Troppe annotazioni su questo documento." };
+  const { data: file } = await supabase.from("assignment_files").select("assignment_id").eq("id", fileId).maybeSingle();
+  if (!file) return { ok: false, error: "File non trovato." };
+  const { error } = await supabase.from("assignment_annotations").upsert(
+    { file_id: fileId, assignment_id: file.assignment_id, data: JSON.parse(json), updated_by: user.id, updated_at: new Date().toISOString() },
+    { onConflict: "file_id" },
+  );
+  if (error) return { ok: false, error: "Salvataggio non riuscito." };
+  // aprire la correzione appena si inizia ad annotare
+  await supabase.from("assignments").update({ status: "in_correzione" }).eq("id", file.assignment_id).eq("status", "consegnato");
+  return { ok: true };
+}

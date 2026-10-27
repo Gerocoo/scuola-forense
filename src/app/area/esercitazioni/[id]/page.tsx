@@ -5,6 +5,7 @@ import { FileList } from "@/components/app/FileList";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { AssignmentTimeline } from "@/components/app/AssignmentTimeline";
 import { SubmissionPanel } from "./SubmissionPanel";
+import { AnnotateButton, type Annotations } from "@/components/app/PdfAnnotator";
 import { requireUser } from "@/lib/auth";
 import { dateTime, KIND_LABEL } from "@/lib/format";
 import type { Assignment, AssignmentFile, Profile, Review } from "@/lib/types";
@@ -18,11 +19,16 @@ export default async function EsercitazionePage({ params }: Props) {
   const { data: a } = await supabase.from("assignments").select("*").eq("id", id).eq("student_id", user.id).maybeSingle<Assignment>();
   if (!a) notFound();
 
-  const [{ data: files }, { data: review }, { data: teacher }] = await Promise.all([
+  const [{ data: files }, { data: review }, { data: teacher }, { data: annotations }] = await Promise.all([
     supabase.from("assignment_files").select("*").eq("assignment_id", id).order("created_at").returns<AssignmentFile[]>(),
     supabase.from("assignment_reviews").select("*").eq("assignment_id", id).maybeSingle<Review>(),
     supabase.from("profiles").select("id, full_name, email").eq("id", a.teacher_id).maybeSingle<Pick<Profile, "id" | "full_name" | "email">>(),
+    // visibili solo a correzione pubblicata (regola del database)
+    supabase.from("assignment_annotations").select("file_id, data").eq("assignment_id", id).returns<{ file_id: string; data: Annotations }[]>(),
   ]);
+  const annotated = (annotations ?? []).filter((x) =>
+    Object.values(x.data?.pages ?? {}).some((p) => (p.strokes?.length ?? 0) + (p.notes?.length ?? 0) > 0),
+  );
 
   const byRole = (r: AssignmentFile["role"]) => (files ?? []).filter((f) => f.role === r);
   const editable = a.status === "assegnato" || a.status === "consegnato";
@@ -65,9 +71,31 @@ export default async function EsercitazionePage({ params }: Props) {
               {review?.feedback && (
                 <div className="prose-legal mt-4 whitespace-pre-wrap border-l-2 border-ceralacca/40 pl-4">{review.feedback}</div>
               )}
-              <div className="mt-6">
-                <FileList files={byRole("correzione")} kind="esercitazione" empty="Il docente non ha allegato file annotati." />
-              </div>
+              {annotated.length > 0 && (
+                <ul className="mt-6 space-y-2">
+                  {annotated.map((x) => {
+                    const f = (files ?? []).find((ff) => ff.id === x.file_id);
+                    if (!f) return null;
+                    return (
+                      <li key={x.file_id} className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] bg-ceralacca-soft/60 px-4 py-3">
+                        <span className="min-w-0">
+                          <span className="block text-[15px] font-semibold">Il tuo elaborato corretto</span>
+                          <span className="block truncate text-[13px] text-slate">{f.file_name}, con segni e note del docente</span>
+                        </span>
+                        <AnnotateButton fileId={f.id} fileName={f.file_name} initial={x.data} readOnly label="Vedi la correzione" />
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {byRole("correzione").length > 0 && (
+                <div className="mt-6">
+                  <FileList files={byRole("correzione")} kind="esercitazione" />
+                </div>
+              )}
+              {!annotated.length && !byRole("correzione").length && !review?.feedback && (
+                <p className="mt-4 text-[15px] text-slate">Il docente non ha allegato annotazioni.</p>
+              )}
             </section>
           )}
 

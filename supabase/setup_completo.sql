@@ -1,7 +1,7 @@
 -- =====================================================================
 --  INSTALLAZIONE COMPLETA: copia TUTTO questo file nell'SQL Editor di
 --  Supabase e premi Run. Si può rieseguire senza danni.
---  (contiene 0001_schema.sql + 0002_video_calendario.sql + 0003_appunti.sql + 0004_integrazioni.sql + 0005_percorso.sql + 0006_inviti_docenti.sql + 0007_gestione_account.sql + 0008_corsi_docenti.sql + 0009_promemoria_correzioni.sql + 0010_superadmin_registro.sql + 0011_inviti_con_corsi.sql + seed.sql)
+--  (contiene 0001_schema.sql + 0002_video_calendario.sql + 0003_appunti.sql + 0004_integrazioni.sql + 0005_percorso.sql + 0006_inviti_docenti.sql + 0007_gestione_account.sql + 0008_corsi_docenti.sql + 0009_promemoria_correzioni.sql + 0010_superadmin_registro.sql + 0011_inviti_con_corsi.sql + 0012_annotazioni_pdf.sql + seed.sql)
 -- =====================================================================
 
 -- =====================================================================
@@ -983,6 +983,37 @@ begin
   end if;
   return new;
 end $$;
+
+
+-- =====================================================================
+--  0012: correzione sul documento
+-- =====================================================================
+-- Correzione sul documento: versione PDF dei file Word e annotazioni del docente.
+
+alter table public.assignment_files add column if not exists pdf_path text;
+
+create table if not exists public.assignment_annotations (
+  file_id       uuid primary key references public.assignment_files(id) on delete cascade,
+  assignment_id uuid not null references public.assignments(id) on delete cascade,
+  data          jsonb not null default '{"pages":{}}',
+  updated_by    uuid references public.profiles(id) on delete set null,
+  updated_at    timestamptz not null default now()
+);
+create index if not exists assignment_annotations_assignment_idx on public.assignment_annotations(assignment_id);
+
+alter table public.assignment_annotations enable row level security;
+
+drop policy if exists "annotazioni: staff" on public.assignment_annotations;
+create policy "annotazioni: staff" on public.assignment_annotations for all to authenticated
+  using (public.is_staff()) with check (public.is_staff());
+
+-- il discente vede le annotazioni solo a correzione pubblicata
+drop policy if exists "annotazioni: discente a correzione pubblicata" on public.assignment_annotations;
+create policy "annotazioni: discente a correzione pubblicata" on public.assignment_annotations for select to authenticated
+  using (exists (
+    select 1 from public.assignments a
+    where a.id = assignment_id and a.student_id = auth.uid() and a.status = 'corretto'
+  ));
 
 
 -- Pacchetti di esempio: modificare testi e prezzi dal pannello "Pacchetti" o qui.

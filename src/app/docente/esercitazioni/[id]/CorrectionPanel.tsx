@@ -78,7 +78,7 @@ export function CorrectionPanel({
           <p className="mt-1 text-[15px] text-slate">
             {published
               ? "Pubblicata: il discente la vede nella sua area."
-              : "Scarica l'elaborato, annotalo e ricaricalo qui. Il discente vede la correzione solo quando la pubblichi."}
+              : "Correggi sul documento qui sopra oppure carica un file corretto. Il discente vede la correzione solo quando la pubblichi."}
           </p>
         </div>
         {status === "consegnato" && (
@@ -89,7 +89,7 @@ export function CorrectionPanel({
       </div>
 
       <div className="mt-5 space-y-3">
-        <p className="text-sm font-medium">Elaborato annotato</p>
+        <p className="text-sm font-medium">File corretto (facoltativo)</p>
         <FileList
           files={files}
           kind="esercitazione"
