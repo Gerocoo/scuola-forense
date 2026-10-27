@@ -4,6 +4,16 @@ import { NextResponse, type NextRequest } from "next/server";
 const PROTECTED = ["/area", "/docente"];
 
 export async function updateSession(request: NextRequest) {
+  // Se Supabase rimanda alla Site URL (es. "/?code=...") invece che a /auth/callback,
+  // completiamo comunque l'accesso.
+  const code = request.nextUrl.searchParams.get("code");
+  if (code && !request.nextUrl.pathname.startsWith("/auth/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    url.search = `?code=${encodeURIComponent(code)}`;
+    return NextResponse.redirect(url);
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
