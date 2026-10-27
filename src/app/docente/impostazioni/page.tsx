@@ -65,12 +65,21 @@ export default async function ImpostazioniPage({ searchParams }: Props) {
               <DisconnectYoutube />
             </div>
           ) : (
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <p className="text-[15px] text-slate">Nessun canale collegato.</p>
-              <a href="/api/youtube/connect" className={`btn-primary ${configured ? "" : "pointer-events-none opacity-50"}`} aria-disabled={!configured}>
-                Collega il canale YouTube
-              </a>
-            </div>
+            configured ? (
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <p className="text-[15px] text-slate">Nessun canale collegato.</p>
+                <a href="/api/youtube/connect" className="btn-primary">Collega il canale YouTube</a>
+              </div>
+            ) : (
+              <div className="text-[15px] leading-relaxed">
+                <p className="font-medium text-ceralacca">Il collegamento non è ancora attivo sul sito.</p>
+                <p className="mt-1 text-slate">
+                  Mancano le variabili <code className="rounded bg-surface px-1">GOOGLE_CLIENT_ID</code> e{" "}
+                  <code className="rounded bg-surface px-1">GOOGLE_CLIENT_SECRET</code> su Vercel (Settings › Environment Variables).
+                  Dopo averle aggiunte serve un <strong>Redeploy</strong>: poi qui comparirà il pulsante per collegare il canale.
+                </p>
+              </div>
+            )
           )}
         </div>
 
