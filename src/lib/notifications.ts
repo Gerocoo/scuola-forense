@@ -85,7 +85,10 @@ export async function staffNotices(supabase: SupabaseClient, me: Pick<Profile, "
     out.push({
       id: `c-${s.id}`,
       kind: "consegna",
-      title: `${who.get(s.student_id) ?? "Un discente"} ha consegnato`,
+      title:
+        s.submitted_at && now - new Date(s.submitted_at).getTime() > 5 * DAY
+          ? `Da correggere entro ${new Date(new Date(s.submitted_at).getTime() + 7 * DAY).toLocaleDateString("it-IT", { day: "numeric", month: "long" })}`
+          : `${who.get(s.student_id) ?? "Un discente"} ha consegnato`,
       body: s.title,
       href: `/docente/esercitazioni/${s.id}`,
       at: s.submitted_at ?? new Date(now).toISOString(),

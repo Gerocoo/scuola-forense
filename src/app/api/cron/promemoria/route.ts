@@ -66,5 +66,46 @@ export async function GET(req: Request) {
     report.push({ lesson: l.title, sent: recipients.length });
   }
 
-  return NextResponse.json({ ok: true, report });
+  /* ---- correzioni in attesa da 5 giorni: promemoria al docente (impegno: entro 7 giorni) ---- */
+  const { data: late } = await admin
+    .from("assignments")
+    .select("id, title, teacher_id, student_id, submitted_at")
+    .eq("status", "consegnato")
+    .is("correction_reminder_at", null)
+    .lte("submitted_at", new Date(now - 5 * 86400000).toISOString())
+    .limit(500);
+
+  let teachersReminded = 0;
+  if (late?.length) {
+    const ids = [...new Set(late.flatMap((a) => [a.teacher_id, a.student_id]))];
+    const { data: people } = await admin.from("profiles").select("id, full_name, email").in("id", ids);
+    const person = new Map((people ?? []).map((p) => [p.id, p]));
+    const byTeacher = new Map<string, typeof late>();
+    for (const a of late) byTeacher.set(a.teacher_id, [...(byTeacher.get(a.teacher_id) ?? []), a]);
+
+    for (const [tid, items] of byTeacher) {
+      const t = person.get(tid);
+      if (!t?.email) continue;
+      const rows = items
+        .map((a) => {
+          const deadline = new Date(new Date(a.submitted_at!).getTime() + 7 * 86400000);
+          const s = person.get(a.student_id);
+          return `<li style="margin-bottom:6px"><a href="${siteUrl()}/docente/esercitazioni/${a.id}">${escapeHtml(a.title)}</a> · ${escapeHtml(s?.full_name || s?.email || "discente")} · entro il ${deadline.toLocaleDateString("it-IT", { day: "numeric", month: "long" })}</li>`;
+        })
+        .join("");
+      await notify({
+        to: t.email,
+        subject: items.length > 1 ? `${items.length} elaborati da correggere entro 7 giorni` : `Elaborato da correggere: ${items[0].title}`,
+        html: emailLayout(
+          "Correzioni in scadenza",
+          `<p>Questi elaborati sono stati consegnati da almeno 5 giorni. Ai discenti è garantita la correzione entro 7 giorni dalla consegna.</p><ul style="padding-left:18px">${rows}</ul>`,
+          { label: "Apri le esercitazioni", href: `${siteUrl()}/docente/esercitazioni?stato=da-correggere` },
+        ),
+      });
+      await admin.from("assignments").update({ correction_reminder_at: new Date().toISOString() }).in("id", items.map((a) => a.id));
+      teachersReminded++;
+    }
+  }
+
+  return NextResponse.json({ ok: true, report, teachersReminded });
 }

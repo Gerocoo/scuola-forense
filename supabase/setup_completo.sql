@@ -1,7 +1,7 @@
 -- =====================================================================
 --  INSTALLAZIONE COMPLETA: copia TUTTO questo file nell'SQL Editor di
 --  Supabase e premi Run. Si può rieseguire senza danni.
---  (contiene 0001_schema.sql + 0002_video_calendario.sql + 0003_appunti.sql + 0004_integrazioni.sql + 0005_percorso.sql + 0006_inviti_docenti.sql + 0007_gestione_account.sql + 0008_corsi_docenti.sql + seed.sql)
+--  (contiene 0001_schema.sql + 0002_video_calendario.sql + 0003_appunti.sql + 0004_integrazioni.sql + 0005_percorso.sql + 0006_inviti_docenti.sql + 0007_gestione_account.sql + 0008_corsi_docenti.sql + 0009_promemoria_correzioni.sql + seed.sql)
 -- =====================================================================
 
 -- =====================================================================
@@ -825,6 +825,13 @@ drop trigger if exists enrollments_copy_course_assignments on public.enrollments
 create trigger enrollments_copy_course_assignments
   after insert or update of status on public.enrollments
   for each row execute function public.copy_course_assignments();
+
+
+-- =====================================================================
+--  0009: promemoria correzioni
+-- =====================================================================
+-- Promemoria al docente quando una consegna aspetta la correzione da 5 giorni (impegno: entro 7).
+alter table public.assignments add column if not exists correction_reminder_at timestamptz;
 
 
 -- Pacchetti di esempio: modificare testi e prezzi dal pannello "Pacchetti" o qui.

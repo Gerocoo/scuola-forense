@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin, requireStaff } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { emailLayout, escapeHtml, notify } from "@/lib/notify";
+import { emailConfigured, emailLayout, escapeHtml, notify } from "@/lib/notify";
 import { siteUrl } from "@/lib/stripe";
 import { fromLocalInput, KIND_LABEL, dateTime } from "@/lib/format";
 import { bunnyConfigured, createUpload, deleteVideo, getVideo } from "@/lib/bunny";
@@ -626,7 +626,7 @@ export async function inviteTeacher(formData: FormData): Promise<ActionResult> {
     ok: true,
     message: existing
       ? `${existing.full_name || email} ora è ${label}.`
-      : `Invito registrato. Appena ${email} si registra diventa ${label}.${process.env.RESEND_API_KEY ? " Gli abbiamo inviato un'email." : " Mandagli tu il link: " + href}`,
+      : `Invito registrato. Appena ${email} si registra diventa ${label}.${emailConfigured() ? " Gli abbiamo inviato un'email." : " Mandagli tu il link: " + href}`,
   };
 }
 
