@@ -197,6 +197,7 @@
 }
 .is-visible .anim-progress { animation: progress 6s linear 0.4s infinite alternate; }
 .is-visible .anim-pulse { animation: pulse-ring 1.6s ease-out 0.8s infinite; }
+.anim-pulse-always { animation: pulse-ring 1.8s ease-out infinite; }
 .anim-bubble { opacity: 0; }
 .is-visible .anim-bubble { animation: bubble-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0.3s) forwards; }
 

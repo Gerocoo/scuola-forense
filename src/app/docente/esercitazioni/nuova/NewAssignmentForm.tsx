@@ -18,7 +18,18 @@ const KINDS: { value: AssignmentKind; label: string }[] = [
   { value: "documento", label: "Documento o materiale" },
 ];
 
-export function NewAssignmentForm({ students, preselected }: { students: StudentOption[]; preselected?: string }) {
+export function NewAssignmentForm({
+  students,
+  preselected,
+  lessons,
+  preselectedLesson,
+}: {
+  students: StudentOption[];
+  preselected?: string;
+  lessons: { id: string; title: string }[];
+  preselectedLesson?: string;
+}) {
+  const [lessonId, setLessonId] = useState(preselectedLesson ?? "");
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set(preselected ? [preselected] : []));
   const [filter, setFilter] = useState("");
@@ -70,6 +81,7 @@ export function NewAssignmentForm({ students, preselected }: { students: Student
         instructions,
         dueLocal: due,
         files: metas,
+        lessonId: lessonId || null,
       });
       if (!res.ok) throw new Error(res.error);
       router.push(res.firstId ? `/docente/esercitazioni/${res.firstId}` : "/docente/esercitazioni?stato=in-attesa");
@@ -115,9 +127,23 @@ export function NewAssignmentForm({ students, preselected }: { students: Student
               placeholder="Testo della traccia, tempo a disposizione, indicazioni sulla consegna."
             />
           </div>
-          <div className="max-w-xs">
-            <label htmlFor="due" className="label">Scadenza (facoltativa)</label>
-            <input id="due" type="datetime-local" className="field" value={due} onChange={(e) => setDue(e.target.value)} />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label htmlFor="due" className="label">Scadenza (facoltativa)</label>
+              <input id="due" type="datetime-local" className="field" value={due} onChange={(e) => setDue(e.target.value)} />
+            </div>
+            <div>
+              <label htmlFor="lesson" className="label">Collegata alla lezione</label>
+              <select id="lesson" className="field" value={lessonId} onChange={(e) => setLessonId(e.target.value)}>
+                <option value="">Nessuna lezione</option>
+                {lessons.map((l, i) => (
+                  <option key={l.id} value={l.id}>
+                    {i + 1}. {l.title}
+                  </option>
+                ))}
+              </select>
+              <p className="hint">Se la colleghi, il discente deve consegnarla per sbloccare la lezione successiva.</p>
+            </div>
           </div>
         </div>
 

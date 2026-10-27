@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { saveLessonNote } from "@/app/area/actions";
+import { useRouter } from "next/navigation";
+import { saveLessonNote, saveVideoProgress } from "@/app/area/actions";
+
+const N = 100; // tratti in cui è diviso il video
 
 type Provider = "youtube" | "vimeo" | "bunny" | "file";
 
@@ -33,14 +36,94 @@ export function LessonPlayer({
   src,
   initialNotes,
   savedAt,
+  progress,
 }: {
   lessonId: string;
   title: string;
   src: string;
   initialNotes: string;
   savedAt: string | null;
+  /** progresso salvato; se assente il player non traccia la visione (es. anteprima docente) */
+  progress?: { buckets: string; percent: number; position: number; completed: boolean };
 }) {
+  const router = useRouter();
   const provider = providerOf(src);
+
+  /* ---------- progresso di visione ---------- */
+  const track = !!progress;
+  const buckets = useRef<string[]>((progress?.buckets ?? "0".repeat(N)).split(""));
+  const [seen, setSeen] = useState<string>(progress?.buckets ?? "0".repeat(N));
+  const [percent, setPercent] = useState(progress?.percent ?? 0);
+  const [completed, setCompleted] = useState(!!progress?.completed);
+  const duration = useRef<number | null>(null);
+  const lastT = useRef<number | null>(null);
+  const dirty = useRef(false);
+  const saving = useRef(false);
+
+  const flushProgress = useCallback(async () => {
+    if (!track || !dirty.current || saving.current) return;
+    saving.current = true;
+    dirty.current = false;
+    const res = await saveVideoProgress(lessonId, buckets.current.join(""), time.current ?? 0, duration.current);
+    saving.current = false;
+    if (res.ok) {
+      setPercent(res.percent);
+      if (res.completed) setCompleted(true);
+      if (res.justCompleted) router.refresh();
+    } else dirty.current = true;
+  }, [lessonId, router, track]);
+
+  const onTime = useCallback(
+    (t: number, d?: number | null) => {
+      if (d && d > 0) duration.current = d;
+      const dur = duration.current;
+      if (!track || !dur) {
+        lastT.current = t;
+        return;
+      }
+      const idx = (x: number) => Math.min(N - 1, Math.max(0, Math.floor((x / dur) * N)));
+      const prev = lastT.current;
+      lastT.current = t;
+      // solo riproduzione continua: un salto in avanti non conta come visto
+      if (prev == null || t < prev || t - prev > 2.5) return;
+      let changed = false;
+      for (let i = idx(prev); i <= idx(t); i++) {
+        if (buckets.current[i] !== "1") {
+          buckets.current[i] = "1";
+          changed = true;
+        }
+      }
+      // ultimi istanti: il player si ferma prima della fine esatta
+      if (dur - t < 1 && buckets.current[N - 1] !== "1" && buckets.current[N - 2] === "1") {
+        buckets.current[N - 1] = "1";
+        changed = true;
+      }
+      if (changed) {
+        dirty.current = true;
+        const joined = buckets.current.join("");
+        setSeen(joined);
+        const n = buckets.current.filter((c) => c === "1").length;
+        setPercent(Math.round((n / N) * 100));
+        if (n === N) void flushProgress();
+      }
+    },
+    [flushProgress, track],
+  );
+
+  useEffect(() => {
+    if (!track) return;
+    const iv = setInterval(() => void flushProgress(), 15000);
+    const onHide = () => {
+      if (document.visibilityState === "hidden") void flushProgress();
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      clearInterval(iv);
+      document.removeEventListener("visibilitychange", onHide);
+      void flushProgress();
+    };
+  }, [flushProgress, track]);
+
   const frame = useRef<HTMLIFrameElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const area = useRef<HTMLTextAreaElement>(null);
@@ -76,16 +159,29 @@ export function LessonPlayer({
         }
       }
       let t: number | undefined;
-      if (provider === "youtube" && d?.event === "infoDelivery") t = d.info?.currentTime;
-      if (provider === "vimeo" && d?.event === "timeupdate") t = d.data?.seconds;
+      let dur: number | undefined;
+      if (provider === "youtube" && d?.event === "infoDelivery") {
+        t = d.info?.currentTime;
+        dur = d.info?.duration;
+        if (typeof dur === "number" && dur > 0) duration.current = dur;
+      }
+      if (provider === "youtube" && d?.event === "onReady") subscribe();
+      if (provider === "vimeo" && d?.event === "timeupdate") {
+        t = d.data?.seconds;
+        dur = d.data?.duration;
+      }
       if (provider === "vimeo" && d?.event === "ready") subscribe();
       if (provider === "bunny" && d?.context === "player.js") {
         if (d.event === "ready") subscribe();
-        if (d.event === "timeupdate") t = d.value?.seconds;
+        if (d.event === "timeupdate") {
+          t = d.value?.seconds;
+          dur = d.value?.duration;
+        }
       }
       if (typeof t === "number") {
         time.current = t;
         setHasTime(true);
+        onTime(t, dur);
       }
     };
     window.addEventListener("message", onMsg);
@@ -95,7 +191,7 @@ export function LessonPlayer({
       window.removeEventListener("message", onMsg);
       retries.forEach(clearTimeout);
     };
-  }, [provider, subscribe]);
+  }, [provider, subscribe, onTime]);
 
   const seek = (t: number) => {
     if (provider === "file" && video.current) {
@@ -183,7 +279,19 @@ export function LessonPlayer({
       <div className="min-w-0 xl:sticky xl:top-8 xl:self-start">
         <div className="overflow-hidden rounded-[var(--radius-panel)] bg-ink shadow-[var(--shadow-card)]">
           {provider === "file" ? (
-            <video ref={video} src={src} controls controlsList="nodownload" className="aspect-video w-full" preload="metadata" />
+            <video
+              ref={video}
+              src={src}
+              controls
+              controlsList="nodownload"
+              className="aspect-video w-full"
+              preload="metadata"
+              onTimeUpdate={(e) => {
+                time.current = e.currentTarget.currentTime;
+                onTime(e.currentTarget.currentTime, e.currentTarget.duration);
+              }}
+              onPause={() => void flushProgress()}
+            />
           ) : (
             <iframe
               ref={frame}
@@ -197,6 +305,29 @@ export function LessonPlayer({
             />
           )}
         </div>
+        {track && (
+          <div className="mt-4 rounded-[14px] bg-surface px-4 py-3 shadow-[var(--shadow-card)]">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[13px]">
+              <span className={`font-semibold ${completed ? "text-codice" : "text-ink"}`}>
+                {completed ? "Video completato" : `Visto al ${percent}%`}
+              </span>
+              <span className="flex items-center gap-3 text-mute">
+                {!completed && progress && progress.position > 15 && (
+                  <button type="button" onClick={() => seek(progress.position)} className="font-medium text-codice hover:underline">
+                    Riprendi da {fmt(progress.position)}
+                  </button>
+                )}
+                {!completed && <span>I tratti saltati vanno guardati per completare</span>}
+              </span>
+            </div>
+            {/* mappa della visione: ogni tacca è un centesimo del video */}
+            <div className="mt-2 flex h-2 gap-px overflow-hidden rounded-full bg-line-soft" role="img" aria-label={`Visto al ${percent}%`}>
+              {seen.split("").map((c, i) => (
+                <span key={i} className={`h-full flex-1 transition-colors duration-500 ${c === "1" ? "bg-codice" : "bg-transparent"}`} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Quaderno */}

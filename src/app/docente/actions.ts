@@ -25,6 +25,7 @@ export async function createAssignments(input: {
   instructions: string;
   dueLocal: string;
   files: UploadedMeta[];
+  lessonId?: string | null;
 }): Promise<ActionResult & { firstId?: string }> {
   const { supabase, user, profile } = await requireStaff();
 
@@ -45,6 +46,7 @@ export async function createAssignments(input: {
     title,
     instructions: input.instructions.trim().slice(0, 20000),
     due_at: due,
+    lesson_id: input.lessonId || null,
   }));
 
   const { data: created, error } = await supabase.from("assignments").insert(rows).select("id, student_id");
@@ -283,6 +285,7 @@ export async function saveLesson(id: string | null, formData: FormData): Promise
     meeting_url: String(formData.get("meeting_url") ?? "").trim() || null,
     duration_min: duration,
     booking_enabled: kind === "in_presenza" && formData.get("booking_enabled") === "on",
+    sequential: kind === "registrata" ? formData.get("sequential") === "on" : false,
     capacity: kind === "in_presenza" ? Number(formData.get("capacity")) || null : null,
     package_ids: packageIds,
     published: formData.get("published") === "on",

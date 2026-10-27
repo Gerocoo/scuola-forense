@@ -135,3 +135,45 @@ export async function saveLessonNote(lessonId: string, body: string): Promise<Ac
   if (error) return { ok: false, error: "Appunti non salvati. Controlla la connessione." };
   return { ok: true };
 }
+
+/** Salva il progresso di visione: i tratti visti si sommano, non si perdono mai. */
+export async function saveVideoProgress(
+  lessonId: string,
+  buckets: string,
+  position: number,
+  duration: number | null,
+): Promise<{ ok: boolean; percent: number; completed: boolean; justCompleted: boolean }> {
+  const { supabase, user } = await requireUser();
+  const { BUCKETS, EMPTY_BUCKETS, countBuckets, mergeBuckets } = await import("@/lib/progress");
+  if (!/^[01]+$/.test(buckets) || buckets.length !== BUCKETS) return { ok: false, percent: 0, completed: false, justCompleted: false };
+
+  const { data: prev } = await supabase
+    .from("lesson_progress")
+    .select("buckets, completed_at")
+    .eq("lesson_id", lessonId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const merged = mergeBuckets(prev?.buckets ?? EMPTY_BUCKETS, buckets);
+  const percent = Math.round((countBuckets(merged) / BUCKETS) * 100);
+  const completedAt = prev?.completed_at ?? (percent >= 100 ? new Date().toISOString() : null);
+
+  const { error } = await supabase.from("lesson_progress").upsert({
+    lesson_id: lessonId,
+    user_id: user.id,
+    buckets: merged,
+    percent,
+    position_seconds: Math.max(0, Math.floor(position)),
+    duration_seconds: duration ? Math.floor(duration) : null,
+    completed_at: completedAt,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) return { ok: false, percent, completed: !!completedAt, justCompleted: false };
+
+  const justCompleted = !prev?.completed_at && !!completedAt;
+  if (justCompleted) {
+    revalidatePath("/area/lezioni");
+    revalidatePath("/area");
+  }
+  return { ok: true, percent, completed: !!completedAt, justCompleted };
+}

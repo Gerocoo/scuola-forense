@@ -5,6 +5,7 @@ import { Avatar } from "@/components/app/Avatar";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EnrollmentAdd, EnrollmentStatus } from "./EnrollmentAdmin";
 import { requireStaff } from "@/lib/auth";
+import { loadPath } from "@/lib/progress";
 import { dateLong, dateShort, euro, KIND_LABEL } from "@/lib/format";
 import type { Assignment, Enrollment, Package, Profile } from "@/lib/types";
 
@@ -31,6 +32,7 @@ export default async function DiscentePage({ params }: Props) {
   ]);
 
   const now = new Date().toISOString();
+  const path = await loadPath(supabase, id);
 
   return (
     <>
@@ -53,6 +55,41 @@ export default async function DiscentePage({ params }: Props) {
       />
 
       <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+        <div className="space-y-10">
+        {path.length > 0 && (
+          <section>
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="text-lg font-semibold">Percorso</h2>
+              <span className="text-sm text-mute">{path.filter((p) => p.completed).length} di {path.length} lezioni completate</span>
+            </div>
+            <ul className="mt-3 divide-y divide-line-soft rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
+              {path.map((p) => (
+                <li key={p.lesson.id} className="flex flex-wrap items-center gap-x-5 gap-y-2 px-5 py-3.5">
+                  <span className="w-6 text-sm font-semibold text-mute tabular-nums">{p.index + 1}</span>
+                  <span className="min-w-0 flex-1 truncate font-medium">{p.lesson.title}</span>
+                  {p.hasVideo && (
+                    <span className="flex w-40 items-center gap-2">
+                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line-soft">
+                        <span className="block h-full rounded-full bg-codice" style={{ width: `${p.percent}%` }} />
+                      </span>
+                      <span className="w-9 text-right text-sm tabular-nums">{p.percent}%</span>
+                    </span>
+                  )}
+                  {p.exercises.length > 0 && (
+                    <span className="text-sm text-slate tabular-nums">Esercitazioni {p.exercisesDone}/{p.exercises.length}</span>
+                  )}
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-sm font-medium ${
+                      p.completed ? "bg-codice-soft text-codice" : p.unlocked ? "bg-ambra-soft text-ambra" : "bg-line-soft text-mute"
+                    }`}
+                  >
+                    {p.completed ? "Completata" : p.unlocked ? "In corso" : "Bloccata"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <section>
           <h2 className="text-lg font-semibold">Esercitazioni</h2>
           {assignments?.length ? (
@@ -75,6 +112,7 @@ export default async function DiscentePage({ params }: Props) {
             <p className="mt-3 text-[15px] text-slate">Nessuna esercitazione assegnata.</p>
           )}
         </section>
+        </div>
 
         <aside className="space-y-4">
           <section className="panel p-5">

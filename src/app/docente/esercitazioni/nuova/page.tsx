@@ -4,10 +4,10 @@ import { requireStaff } from "@/lib/auth";
 
 export const metadata = { title: "Assegna una traccia" };
 
-type Props = { searchParams: Promise<{ discente?: string }> };
+type Props = { searchParams: Promise<{ discente?: string; lezione?: string }> };
 
 export default async function NuovaEsercitazione({ searchParams }: Props) {
-  const { discente } = await searchParams;
+  const { discente, lezione } = await searchParams;
   const { supabase } = await requireStaff();
   const now = new Date().toISOString();
 
@@ -16,6 +16,14 @@ export default async function NuovaEsercitazione({ searchParams }: Props) {
     .select("id, full_name, email, enrollments(status, ends_at, package:packages(title))")
     .eq("role", "student")
     .order("full_name");
+
+  const { data: lessons } = await supabase
+    .from("lessons")
+    .select("id, title, sort, created_at")
+    .eq("kind", "registrata")
+    .order("sort")
+    .order("created_at")
+    .returns<{ id: string; title: string }[]>();
 
   const options: StudentOption[] = (students ?? []).map((s: any) => {
     const active = (s.enrollments ?? []).filter((e: any) => e.status === "active" && (!e.ends_at || e.ends_at > now));
@@ -34,7 +42,7 @@ export default async function NuovaEsercitazione({ searchParams }: Props) {
         title="Assegna una traccia"
         description="Scegli uno o più discenti: ognuno riceve la propria copia della traccia e consegna in modo indipendente."
       />
-      <NewAssignmentForm students={options} preselected={discente} />
+      <NewAssignmentForm students={options} preselected={discente} lessons={lessons ?? []} preselectedLesson={lezione} />
     </>
   );
 }

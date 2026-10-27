@@ -1,10 +1,13 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/app/AppShell";
 import { LessonView } from "@/components/app/LessonView";
+import { StatusBadge } from "@/components/app/StatusBadge";
 import { BookingBox } from "./BookingBox";
 import { requireUser } from "@/lib/auth";
 import { bunnyConfigured, embedUrl } from "@/lib/bunny";
 import { googleCalendarUrl } from "@/lib/calendar";
+import { loadPath, DONE_STATUSES } from "@/lib/progress";
 import { siteUrl } from "@/lib/stripe";
 import type { Lesson, StoredFile } from "@/lib/types";
 
@@ -18,6 +21,50 @@ export default async function LezionePage({ params }: Props) {
   if (!lesson) notFound();
 
   const live = lesson.kind === "in_presenza";
+  const path = live ? [] : await loadPath(supabase, user.id);
+  const step = path.find((s) => s.lesson.id === lesson.id) ?? null;
+
+  /* ---------- lezione ancora bloccata ---------- */
+  if (step && !step.unlocked) {
+    const prev = step.blockedBy;
+    const pendingEx = prev ? prev.exercises.filter((e) => !DONE_STATUSES.includes(e.status)) : [];
+    return (
+      <>
+        <PageHeader back={{ href: "/area/lezioni", label: "Percorso" }} title={lesson.title} description={`Lezione ${step.index + 1}`} />
+        <section className="panel mx-auto max-w-xl p-8 text-center">
+          <span aria-hidden className="mx-auto grid size-16 place-items-center rounded-full bg-paper">
+            <svg viewBox="0 0 24 24" className="size-7 text-slate"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.8" /><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" strokeWidth="1.8" /></svg>
+          </span>
+          <h2 className="mt-5 text-[22px] font-semibold">Questa lezione si sblocca dopo la precedente</h2>
+          {prev && (
+            <div className="mt-4 text-left text-[15px] text-slate">
+              <p>
+                Completa prima <strong className="text-ink">{prev.lesson.title}</strong>:
+              </p>
+              <ul className="mt-3 space-y-2">
+                <li className="flex items-center justify-between gap-3 rounded-[12px] bg-paper px-4 py-2.5">
+                  <span>Guarda il video per intero</span>
+                  <span className={`font-semibold tabular-nums ${prev.videoDone ? "text-codice" : "text-ink"}`}>{prev.videoDone ? "Fatto" : `${prev.percent}%`}</span>
+                </li>
+                {prev.exercises.map((e) => (
+                  <li key={e.id} className="flex items-center justify-between gap-3 rounded-[12px] bg-paper px-4 py-2.5">
+                    <Link href={`/area/esercitazioni/${e.id}`} className="truncate hover:text-codice">Consegna: {e.title}</Link>
+                    <span className={`font-semibold ${DONE_STATUSES.includes(e.status) ? "text-codice" : "text-ink"}`}>
+                      {DONE_STATUSES.includes(e.status) ? "Fatto" : "Da fare"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <Link href={prev ? `/area/lezioni/${prev.lesson.id}` : "/area/lezioni"} className="btn-primary mt-7">
+            {prev && !prev.videoDone ? "Vai al video" : pendingEx.length ? "Vai all'esercitazione" : "Torna al percorso"}
+          </Link>
+        </section>
+      </>
+    );
+  }
+
   const [{ data: files }, { data: booking }, { data: taken }, { data: note }] = await Promise.all([
     supabase.from("lesson_files").select("*").eq("lesson_id", id).order("created_at").returns<StoredFile[]>(),
     live && lesson.booking_enabled
@@ -36,41 +83,78 @@ export default async function LezionePage({ params }: Props) {
   const past = !!(lesson.scheduled_at && new Date(lesson.scheduled_at) < new Date());
   const pageUrl = `${siteUrl()}/area/lezioni/${lesson.id}`;
   const gcal = live ? googleCalendarUrl(lesson, pageUrl) : null;
+  const next = step ? path[step.index + 1] : undefined;
 
-  const aside =
-    live ? (
-      <>
-        {lesson.booking_enabled && (
-          <BookingBox
-            lessonId={lesson.id}
-            booked={booking?.status === "confermato"}
-            capacity={lesson.capacity}
-            taken={Number(taken ?? 0)}
-            past={past}
-          />
-        )}
-        {!past && (
-          <div className="panel space-y-2 p-5">
-            <h2 className="font-semibold">Aggiungi al tuo calendario</h2>
-            <div className="flex flex-wrap gap-2">
-              {gcal && (
-                <a href={gcal} target="_blank" rel="noopener" className="btn-secondary btn-sm">Google Calendar</a>
-              )}
-              <a href={`/api/calendario/${lesson.id}`} className="btn-secondary btn-sm">Apple o Outlook (.ics)</a>
-            </div>
+  const aside = live ? (
+    <>
+      {lesson.booking_enabled && (
+        <BookingBox lessonId={lesson.id} booked={booking?.status === "confermato"} capacity={lesson.capacity} taken={Number(taken ?? 0)} past={past} />
+      )}
+      {!past && (
+        <div className="panel space-y-2 p-5">
+          <h2 className="font-semibold">Aggiungi al tuo calendario</h2>
+          <div className="flex flex-wrap gap-2">
+            {gcal && <a href={gcal} target="_blank" rel="noopener" className="btn-secondary btn-sm">Google Calendar</a>}
+            <a href={`/api/calendario/${lesson.id}`} className="btn-secondary btn-sm">Apple o Outlook (.ics)</a>
           </div>
+        </div>
+      )}
+    </>
+  ) : step ? (
+    <>
+      {step.exercises.length > 0 && (
+        <div className="panel p-5">
+          <h2 className="font-semibold">Esercitazioni della lezione</h2>
+          <p className="mt-1 text-[13px] text-mute">Vanno consegnate per sbloccare la lezione successiva.</p>
+          <ul className="mt-3 space-y-2">
+            {step.exercises.map((e) => (
+              <li key={e.id}>
+                <Link href={`/area/esercitazioni/${e.id}`} className="flex items-center justify-between gap-3 rounded-[12px] bg-paper px-3 py-2 hover:bg-codice-soft">
+                  <span className="truncate text-[14px] font-medium">{e.title}</span>
+                  <StatusBadge status={e.status} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div className={`panel p-5 ${step.completed ? "ring-2 ring-codice" : ""}`}>
+        <h2 className="font-semibold">{step.completed ? "Lezione completata" : "Per completare la lezione"}</h2>
+        <ul className="mt-2 space-y-1 text-[14px] text-slate">
+          <li>{step.videoDone ? "✓" : "○"} Video visto per intero</li>
+          {step.exercises.length > 0 && (
+            <li>
+              {step.exercisesDone === step.exercises.length ? "✓" : "○"} Esercitazioni consegnate ({step.exercisesDone}/{step.exercises.length})
+            </li>
+          )}
+        </ul>
+        {next && (
+          <Link
+            href={next.unlocked ? `/area/lezioni/${next.lesson.id}` : "/area/lezioni"}
+            className={`mt-4 w-full ${next.unlocked ? "btn-primary" : "btn-secondary"}`}
+          >
+            {next.unlocked ? "Lezione successiva" : "Lezione successiva bloccata"}
+          </Link>
         )}
-      </>
-    ) : null;
+      </div>
+    </>
+  ) : null;
 
   return (
     <>
       <PageHeader
-        back={{ href: "/area/lezioni", label: "Lezioni" }}
+        back={{ href: "/area/lezioni", label: live ? "Lezioni" : "Percorso" }}
         title={lesson.title}
-        description={live ? (past ? "Incontro in presenza, già svolto" : "Incontro in presenza") : "Lezione registrata"}
+        description={live ? (past ? "Incontro in presenza, già svolto" : "Incontro in presenza") : step ? `Lezione ${step.index + 1} di ${path.length}` : "Lezione registrata"}
       />
-      <LessonView lesson={lesson} files={files ?? []} bunnyEmbed={bunny} aside={aside} notes={note ?? undefined} />
+      <LessonView
+        lesson={lesson}
+        files={files ?? []}
+        bunnyEmbed={bunny}
+        aside={aside}
+        notes={note ?? undefined}
+        progress={step ? { buckets: step.buckets, percent: step.percent, position: step.position, completed: step.videoDone } : undefined}
+      />
     </>
   );
 }

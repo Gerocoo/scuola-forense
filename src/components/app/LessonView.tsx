@@ -15,12 +15,14 @@ export function LessonView({
   bunnyEmbed,
   aside,
   notes,
+  progress,
 }: {
   lesson: Lesson;
   files: StoredFile[];
   bunnyEmbed: string | null;
   aside?: React.ReactNode;
   notes?: { body: string; updated_at: string | null };
+  progress?: { buckets: string; percent: number; position: number; completed: boolean };
 }) {
   const external = externalEmbed(lesson.video_url);
   const hasVideo = !!bunnyEmbed || !!lesson.video_url;
@@ -33,7 +35,14 @@ export function LessonView({
       {hasVideo && src && (
         <section aria-label={live ? "Registrazione dell'incontro" : "Video"}>
           {live && <h2 className="mb-3 text-lg font-semibold">Registrazione dell&apos;incontro</h2>}
-          <LessonPlayer lessonId={lesson.id} title={lesson.title} src={src} initialNotes={notes?.body ?? ""} savedAt={notes?.updated_at ?? null} />
+          <LessonPlayer
+            lessonId={lesson.id}
+            title={lesson.title}
+            src={src}
+            initialNotes={notes?.body ?? ""}
+            savedAt={notes?.updated_at ?? null}
+            progress={progress}
+          />
         </section>
       )}
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">

@@ -67,6 +67,7 @@ export interface Lesson {
   capacity: number | null;
   booking_enabled: boolean;
   reminder_sent_at: string | null;
+  sequential: boolean;
 }
 
 export type VideoStatus = "none" | "uploading" | "processing" | "ready" | "error";
@@ -105,6 +106,7 @@ export interface Assignment {
   submitted_at: string | null;
   corrected_at: string | null;
   created_at: string;
+  lesson_id: string | null;
 }
 
 export interface AssignmentFile extends StoredFile {
@@ -139,3 +141,14 @@ export interface UploadedMeta {
 }
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };
+
+export interface LessonProgress {
+  lesson_id: string;
+  user_id: string;
+  buckets: string;
+  percent: number;
+  position_seconds: number;
+  duration_seconds: number | null;
+  completed_at: string | null;
+  updated_at: string;
+}

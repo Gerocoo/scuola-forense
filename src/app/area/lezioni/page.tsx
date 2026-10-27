@@ -2,13 +2,16 @@ import Link from "next/link";
 import { PageHeader } from "@/components/app/AppShell";
 import { EmptyState } from "@/components/app/EmptyState";
 import { requireUser } from "@/lib/auth";
+import { loadPath } from "@/lib/progress";
+import { PathTimeline } from "@/components/app/PathTimeline";
 import { dateLong, dateTime } from "@/lib/format";
 import type { Lesson } from "@/lib/types";
 
 export const metadata = { title: "Lezioni" };
 
 export default async function LezioniPage() {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  const path = await loadPath(supabase, user.id);
   const { data: lessons } = await supabase
     .from("lessons")
     .select("*")
@@ -17,7 +20,6 @@ export default async function LezioniPage() {
     .returns<Lesson[]>();
 
   const now = new Date().toISOString();
-  const recorded = (lessons ?? []).filter((l) => l.kind === "registrata");
   const live = (lessons ?? []).filter((l) => l.kind === "in_presenza").sort((a, b) => (a.scheduled_at ?? "").localeCompare(b.scheduled_at ?? ""));
   const upcoming = live.filter((l) => l.scheduled_at && l.scheduled_at >= now);
   const past = live.filter((l) => !l.scheduled_at || l.scheduled_at < now).reverse();
@@ -26,11 +28,31 @@ export default async function LezioniPage() {
     <>
       <PageHeader
         title="Lezioni"
-        description="Tre mini lezioni registrate al mese e un incontro in presenza."
+        description="Le mini lezioni si sbloccano una dopo l'altra: guarda il video per intero e consegna le esercitazioni per aprire la successiva."
         actions={<Link href="/area/calendario" className="btn-secondary">Calendario</Link>}
       />
 
-      <section aria-labelledby="presenza">
+      <section aria-labelledby="registrate">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 id="registrate" className="text-lg font-semibold">Il tuo percorso</h2>
+          {path.length > 0 && (
+            <p className="text-[14px] text-slate">
+              {path.filter((s) => s.completed).length} di {path.length} lezioni completate
+            </p>
+          )}
+        </div>
+        {path.length ? (
+          <div className="mt-5">
+            <PathTimeline steps={path} />
+          </div>
+        ) : (
+          <div className="mt-4">
+            <EmptyState title="Le lezioni del tuo corso non sono ancora pubblicate" body="Riceverai un'email quando saranno disponibili." />
+          </div>
+        )}
+      </section>
+
+      <section aria-labelledby="presenza" className="mt-14">
         <h2 id="presenza" className="text-lg font-semibold">In presenza</h2>
         {upcoming.length ? (
           <ul className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -46,31 +68,6 @@ export default async function LezioniPage() {
           </ul>
         ) : (
           <p className="mt-3 text-[15px] text-slate">Nessun incontro in calendario al momento.</p>
-        )}
-      </section>
-
-      <section aria-labelledby="registrate" className="mt-12">
-        <h2 id="registrate" className="text-lg font-semibold">Registrate</h2>
-        {recorded.length ? (
-          <ul className="mt-4 divide-y divide-line-soft rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
-            {recorded.map((l) => (
-              <li key={l.id}>
-                <Link href={`/area/lezioni/${l.id}`} className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-paper">
-                  <div className="min-w-0">
-                    <p className="font-medium">{l.title}</p>
-                    {l.summary && <p className="mt-0.5 line-clamp-1 text-[15px] text-slate">{l.summary}</p>}
-                  </div>
-                  <span className="shrink-0 text-sm text-mute tabular-nums">
-                    {l.duration_min ? `${l.duration_min} min` : dateLong(l.created_at)}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="mt-4">
-            <EmptyState title="Le lezioni del tuo corso non sono ancora pubblicate" body="Riceverai un'email quando saranno disponibili." />
-          </div>
         )}
       </section>
 
