@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { HeroFascicolo } from "@/components/site/HeroFascicolo";
 import { PackageCard } from "@/components/site/PackageCard";
-import { ABOUT, FAQ, HERO, METHOD, TEAM } from "@/content/site";
+import { PlatformBento } from "@/components/site/PlatformBento";
+import { Reveal } from "@/components/site/Reveal";
+import { LogoMark } from "@/components/Logo";
+import { ABOUT, FAQ, HERO, METHOD, SITE, TEAM } from "@/content/site";
 import { createClient } from "@/lib/supabase/server";
 import { initials } from "@/lib/format";
 import type { Package } from "@/lib/types";
@@ -17,100 +20,129 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Apertura */}
-      <section className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-20 pt-14 sm:px-6 md:pt-20 lg:grid-cols-[1fr_minmax(0,560px)]">
-        <div className="max-w-xl">
-          <p className="text-[15px] font-medium text-codice">Preparazione all&apos;esame di avvocato</p>
-          <h1 className="mt-4 text-[40px] font-semibold leading-[1.05] text-ink sm:text-[52px]">{HERO.title}</h1>
-          <p className="mt-6 text-lg leading-relaxed text-slate">{HERO.body}</p>
-          <div className="mt-9 flex flex-wrap gap-3">
-            <Link href="#corsi" className="btn-primary">Scegli il corso</Link>
-            <Link href="#metodo" className="btn-secondary">Come funziona</Link>
+      {/* Apertura: titolo grande al centro, poi il "prodotto" su un palco verde */}
+      <section className="overflow-hidden">
+        <div className="mx-auto max-w-[1080px] px-4 pt-16 text-center sm:px-6 sm:pt-24">
+          <p className="font-serif text-[19px] italic text-codice sm:text-[21px]">Preparazione all&apos;esame di avvocato</p>
+          <h1 className="mx-auto mt-4 max-w-4xl text-[44px] font-semibold leading-[1.04] tracking-[-0.035em] text-ink sm:text-[64px] lg:text-[76px]">
+            {HERO.title}
+          </h1>
+          <p className="mx-auto mt-6 max-w-2xl text-[19px] leading-relaxed text-slate sm:text-[21px]">{HERO.body}</p>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <Link href="#corsi" className="btn-primary btn-lg">Scegli il corso</Link>
+            <Link href="#metodo" className="btn-ghost btn-lg">Come funziona</Link>
           </div>
         </div>
-        <HeroFascicolo />
-      </section>
 
-      {/* Chi siamo */}
-      <section className="border-y border-line bg-surface">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 sm:px-6 md:grid-cols-[280px_1fr]">
-          <h2 className="text-3xl font-semibold text-ink">{ABOUT.title}</h2>
-          <div className="max-w-2xl space-y-5 font-serif text-[19px] leading-[1.7] text-ink">
-            {ABOUT.body.map((p) => (
-              <p key={p}>{p}</p>
-            ))}
+        <div className="mx-auto mt-16 max-w-[1180px] px-4 sm:mt-20 sm:px-6">
+          <div className="relative overflow-hidden rounded-[32px] bg-codice px-4 pb-0 pt-12 sm:rounded-[40px] sm:px-10 sm:pt-16">
+            {/* tempio in filigrana: richiama il marchio senza competere con il foglio */}
+            <svg aria-hidden viewBox="0 0 64 64" className="pointer-events-none absolute -right-16 -top-10 size-[420px] opacity-[0.07]">
+              <polygon points="12,22.6 32,11.2 52,22.6" fill="#f4eee2" />
+              <rect x="13" y="23.8" width="38" height="2.2" fill="#f4eee2" />
+              {[19, 27, 37, 45].map((c) => (
+                <rect key={c} x={c - 1.9} y="28.6" width="3.8" height="13.7" fill="#f4eee2" />
+              ))}
+              <rect x="13" y="42.9" width="38" height="2" fill="#f4eee2" />
+            </svg>
+            <div className="relative translate-y-6">
+              <HeroFascicolo />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Metodo: è davvero una sequenza, quindi è numerata */}
-      <section id="metodo" className="scroll-mt-20">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl font-semibold text-ink sm:text-4xl">{METHOD.title}</h2>
-            <p className="mt-4 text-lg leading-relaxed text-slate">{METHOD.intro}</p>
-          </div>
-          <ol className="mt-12 grid gap-px overflow-hidden rounded-[var(--radius-panel)] border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+      {/* Chi siamo: una dichiarazione, grande */}
+      <section className="mx-auto max-w-[1080px] px-4 py-28 sm:px-6 sm:py-36">
+        <Reveal>
+          <p className="text-[15px] font-medium text-codice">{ABOUT.title}</p>
+          <p className="mt-5 max-w-4xl text-[30px] font-semibold leading-[1.2] tracking-[-0.025em] text-ink sm:text-[44px]">
+            {ABOUT.body[0]}
+          </p>
+          <p className="mt-8 max-w-2xl text-[19px] leading-relaxed text-slate">{ABOUT.body[1]}</p>
+        </Reveal>
+      </section>
+
+      {/* Metodo: sequenza reale, quindi numerata */}
+      <section id="metodo" className="scroll-mt-16 bg-surface py-28 sm:py-32">
+        <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
+          <Reveal className="text-center">
+            <h2 className="text-[40px] font-semibold leading-tight sm:text-[56px]">{METHOD.title}.</h2>
+            <p className="mx-auto mt-4 max-w-xl text-[19px] leading-relaxed text-slate">{METHOD.intro}</p>
+          </Reveal>
+          <ol className="mt-16 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
             {METHOD.steps.map((s, i) => (
-              <li key={s.title} className="bg-surface p-6">
-                <span className="font-serif text-3xl text-codice tabular-nums">{i + 1}</span>
-                <h3 className="mt-4 text-lg font-semibold text-ink">{s.title}</h3>
-                <p className="mt-2 text-[15px] leading-relaxed text-slate">{s.body}</p>
-              </li>
+              <Reveal as="li" key={s.title} delay={i * 90}>
+                <span className="font-serif text-[56px] leading-none text-codice tabular-nums">{i + 1}</span>
+                <h3 className="mt-5 text-[21px] font-semibold">{s.title}</h3>
+                <p className="mt-2 text-[16px] leading-relaxed text-slate">{s.body}</p>
+              </Reveal>
             ))}
           </ol>
-          <p className="mt-6 text-[15px] text-slate">
-            Ogni mese: tre mini lezioni registrate e una lezione in presenza.
-          </p>
         </div>
       </section>
 
-      {/* Docenti */}
-      <section id="docenti" className="scroll-mt-20 border-y border-line bg-surface">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <h2 className="text-3xl font-semibold text-ink sm:text-4xl">I docenti</h2>
-          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate">
-            Avvocati e magistrati che correggono personalmente gli elaborati e rispondono ai tuoi messaggi.
-          </p>
-          <div className="mt-12 grid gap-10 md:grid-cols-3">
-            {TEAM.map((t) => (
-              <article key={t.name + t.role}>
-                <div className="flex items-center gap-4">
-                  <span aria-hidden className="grid size-14 place-items-center rounded-full bg-codice-soft text-lg font-semibold text-codice">
-                    {initials(t.name.replace(/^(Avv\.|Dott\.|Prof\.)\s*/, ""))}
-                  </span>
-                  <div>
-                    <h3 className="text-lg font-semibold text-ink">{t.name}</h3>
-                    <p className="text-[15px] text-slate">{t.role}</p>
-                  </div>
-                </div>
-                <p className="mt-4 text-[15px] leading-relaxed text-ink">{t.bio}</p>
-                <ul className="mt-4 flex flex-wrap gap-2">
+      {/* Piattaforma */}
+      <section id="piattaforma" className="scroll-mt-16 py-28 sm:py-32">
+        <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
+          <Reveal className="mb-14 max-w-3xl">
+            <h2 className="text-[40px] font-semibold leading-tight sm:text-[56px]">La scuola, sempre con te.</h2>
+            <p className="mt-4 text-[19px] leading-relaxed text-slate">
+              Lezioni, tracce, correzioni e messaggi in un&apos;unica area riservata, dal computer o dal telefono.
+            </p>
+          </Reveal>
+          <PlatformBento />
+        </div>
+      </section>
+
+      {/* Docenti: su fondo verde, l'unica sezione scura della pagina */}
+      <section id="docenti" className="scroll-mt-16 bg-codice py-28 text-white sm:py-32">
+        <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
+          <Reveal className="max-w-3xl">
+            <h2 className="text-[40px] font-semibold leading-tight sm:text-[56px]">I docenti.</h2>
+            <p className="mt-4 text-[19px] leading-relaxed text-white/75">
+              Avvocati e magistrati che correggono personalmente ogni elaborato e rispondono ai tuoi messaggi.
+            </p>
+          </Reveal>
+          <div className="mt-14 grid gap-4 md:grid-cols-3">
+            {TEAM.map((t, i) => (
+              <Reveal as="article" key={t.name + t.role} delay={i * 90} className="rounded-[28px] bg-white/[0.07] p-8 ring-1 ring-white/10">
+                <span aria-hidden className="grid size-20 place-items-center rounded-full bg-ivory font-serif text-[28px] text-codice">
+                  {initials(t.name.replace(/^(Avv\.|Dott\.|Prof\.)\s*/, ""))}
+                </span>
+                <h3 className="mt-6 text-[21px] font-semibold">{t.name}</h3>
+                <p className="text-[15px] text-ivory/80">{t.role}</p>
+                <p className="mt-4 text-[15px] leading-relaxed text-white/80">{t.bio}</p>
+                <ul className="mt-5 flex flex-wrap gap-2">
                   {t.subjects.map((s) => (
-                    <li key={s} className="rounded-full border border-line px-3 py-1 text-sm text-slate">{s}</li>
+                    <li key={s} className="rounded-full bg-white/10 px-3 py-1 text-[13px] text-white/90">{s}</li>
                   ))}
                 </ul>
-              </article>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* Corsi */}
-      <section id="corsi" className="scroll-mt-20">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <h2 className="text-3xl font-semibold text-ink sm:text-4xl">Corsi e prezzi</h2>
-          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate">
-            Scegli il percorso in base a quanto manca alla prova. Dopo il pagamento l&apos;area riservata è attiva subito.
-          </p>
+      <section id="corsi" className="scroll-mt-16 py-28 sm:py-32">
+        <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
+          <Reveal className="text-center">
+            <h2 className="text-[40px] font-semibold leading-tight sm:text-[56px]">Scegli il tuo percorso.</h2>
+            <p className="mx-auto mt-4 max-w-xl text-[19px] leading-relaxed text-slate">
+              In base a quanto manca alla prova. Dopo il pagamento l&apos;area riservata è attiva subito.
+            </p>
+          </Reveal>
           {packages && packages.length > 0 ? (
-            <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {packages.map((p) => (
-                <PackageCard key={p.id} pkg={p} />
+            <div className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {packages.map((p, i) => (
+                <Reveal key={p.id} delay={i * 90}>
+                  <PackageCard pkg={p} />
+                </Reveal>
               ))}
             </div>
           ) : (
-            <p className="mt-12 panel p-6 text-slate">
+            <p className="panel mx-auto mt-14 max-w-lg p-8 text-center text-slate">
               Le iscrizioni ai nuovi corsi apriranno a breve. Scrivi alla segreteria per essere avvisato.
             </p>
           )}
@@ -118,21 +150,33 @@ export default async function HomePage() {
       </section>
 
       {/* Domande */}
-      <section id="domande" className="scroll-mt-20 border-t border-line bg-surface">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 sm:px-6 md:grid-cols-[280px_1fr]">
-          <h2 className="text-3xl font-semibold text-ink">Domande frequenti</h2>
-          <div className="divide-y divide-line-soft border-y border-line-soft">
+      <section id="domande" className="scroll-mt-16 bg-surface py-28 sm:py-32">
+        <div className="mx-auto max-w-[760px] px-4 sm:px-6">
+          <h2 className="text-center text-[40px] font-semibold leading-tight sm:text-[48px]">Domande frequenti.</h2>
+          <div className="mt-12 divide-y divide-line-soft border-y border-line-soft">
             {FAQ.map((f) => (
-              <details key={f.q} className="group py-5">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-lg font-medium text-ink">
+              <details key={f.q} className="group py-6">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-[19px] font-medium text-ink">
                   {f.q}
-                  <span aria-hidden className="text-2xl leading-none text-mute transition-transform group-open:rotate-45">+</span>
+                  <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full bg-paper text-[18px] leading-none text-slate transition-transform duration-300 group-open:rotate-45">
+                    +
+                  </span>
                 </summary>
-                <p className="mt-3 max-w-2xl text-[16px] leading-relaxed text-slate">{f.a}</p>
+                <p className="mt-3 pr-12 text-[17px] leading-relaxed text-slate">{f.a}</p>
               </details>
             ))}
           </div>
         </div>
+      </section>
+
+      {/* Chiusura */}
+      <section className="py-28 sm:py-32">
+        <Reveal className="mx-auto flex max-w-[760px] flex-col items-center px-4 text-center sm:px-6">
+          <LogoMark className="size-20" />
+          <h2 className="mt-8 text-[36px] font-semibold leading-tight sm:text-[48px]">La prova si prepara scrivendo.</h2>
+          <p className="mt-4 text-[19px] leading-relaxed text-slate">Inizia dal corso più adatto a te. {SITE.brand} ti accompagna fino all&apos;esame.</p>
+          <Link href="#corsi" className="btn-primary btn-lg mt-10">Scegli il corso</Link>
+        </Reveal>
       </section>
     </>
   );

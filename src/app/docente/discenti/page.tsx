@@ -69,7 +69,7 @@ export default async function DiscentiPage({ searchParams }: Props) {
       {!list.length ? (
         <EmptyState title="Nessun discente" body="I discenti compaiono qui dopo la registrazione e l'acquisto di un corso." />
       ) : (
-        <div className="overflow-x-auto rounded-[var(--radius-panel)] border border-line bg-surface">
+        <div className="overflow-x-auto rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
           <table className="w-full min-w-[680px] text-left text-[15px]">
             <thead className="border-b border-line text-sm text-mute">
               <tr>

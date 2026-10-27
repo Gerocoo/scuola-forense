@@ -25,7 +25,7 @@ export default async function PacchettiPage() {
         description="Prezzi, promozioni e testi delle schede corso mostrate in vetrina."
         actions={<Link href="/docente/pacchetti/nuovo" className="btn-primary">Nuovo corso</Link>}
       />
-      <div className="overflow-x-auto rounded-[var(--radius-panel)] border border-line bg-surface">
+      <div className="overflow-x-auto rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
         <table className="w-full min-w-[720px] text-left text-[15px]">
           <thead className="border-b border-line text-sm text-mute">
             <tr>

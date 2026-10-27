@@ -36,7 +36,7 @@ export default async function LezioniPage() {
           <ul className="mt-4 grid gap-4 sm:grid-cols-2">
             {upcoming.map((l) => (
               <li key={l.id}>
-                <Link href={`/area/lezioni/${l.id}`} className="panel block p-5 hover:border-codice">
+                <Link href={`/area/lezioni/${l.id}`} className="panel block p-5 transition-shadow hover:shadow-[0_0_0_2px_var(--color-codice)]">
                   <p className="font-semibold text-codice">{dateTime(l.scheduled_at)}</p>
                   <p className="mt-1 text-[17px] font-medium">{l.title}</p>
                   {l.location && <p className="mt-1 text-[15px] text-slate">{l.location}</p>}
@@ -52,7 +52,7 @@ export default async function LezioniPage() {
       <section aria-labelledby="registrate" className="mt-12">
         <h2 id="registrate" className="text-lg font-semibold">Registrate</h2>
         {recorded.length ? (
-          <ul className="mt-4 divide-y divide-line-soft rounded-[var(--radius-panel)] border border-line bg-surface">
+          <ul className="mt-4 divide-y divide-line-soft rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
             {recorded.map((l) => (
               <li key={l.id}>
                 <Link href={`/area/lezioni/${l.id}`} className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-paper">

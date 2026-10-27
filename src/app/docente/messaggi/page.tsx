@@ -43,7 +43,7 @@ export default async function MessaggiDocente() {
       {!list.length ? (
         <EmptyState title="Nessuna conversazione" body="Quando un discente ti scrive, la conversazione compare qui e ricevi un'email." />
       ) : (
-        <ul className="divide-y divide-line-soft rounded-[var(--radius-panel)] border border-line bg-surface">
+        <ul className="divide-y divide-line-soft rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
           {list.map(({ last, unread, person }) => (
             <li key={last.student_id}>
               <Link href={`/docente/messaggi/${last.student_id}`} className="flex items-center gap-4 px-5 py-4 hover:bg-paper">

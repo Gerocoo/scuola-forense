@@ -110,7 +110,7 @@ export function MonthCalendar({ y, m, events, basePath }: { y: number; m: number
       {/* elenco: telefono */}
       <div className="md:hidden">
         {monthEvents.length ? (
-          <ul className="divide-y divide-line-soft rounded-[var(--radius-panel)] border border-line bg-surface">
+          <ul className="divide-y divide-line-soft rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
             {monthEvents.map((e) => {
               const d = new Date(e.date);
               return (

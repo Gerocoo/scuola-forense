@@ -38,7 +38,7 @@ export default async function MessaggiPage() {
       {!list.length ? (
         <EmptyState title="Nessun docente disponibile" body="I docenti compariranno qui appena attivati dalla segreteria." />
       ) : (
-        <ul className="divide-y divide-line-soft rounded-[var(--radius-panel)] border border-line bg-surface">
+        <ul className="divide-y divide-line-soft rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
           {list.map((t) => {
             const m = last.get(t.id);
             const n = unread.get(t.id) ?? 0;

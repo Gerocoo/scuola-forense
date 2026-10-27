@@ -83,7 +83,7 @@ export default async function EsercitazioniDocente({ searchParams }: Props) {
           body="Assegna una traccia a uno o più discenti: riceveranno un'email e la troveranno nella loro area."
         />
       ) : (
-        <div className="overflow-x-auto rounded-[var(--radius-panel)] border border-line bg-surface">
+        <div className="overflow-x-auto rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
           <table className="w-full min-w-[640px] text-left text-[15px]">
             <thead className="border-b border-line text-sm text-mute">
               <tr>

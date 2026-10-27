@@ -56,7 +56,7 @@ export default async function DiscentePage({ params }: Props) {
         <section>
           <h2 className="text-lg font-semibold">Esercitazioni</h2>
           {assignments?.length ? (
-            <ul className="mt-3 divide-y divide-line-soft rounded-[var(--radius-panel)] border border-line bg-surface">
+            <ul className="mt-3 divide-y divide-line-soft rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
               {assignments.map((a) => (
                 <li key={a.id}>
                   <Link href={`/docente/esercitazioni/${a.id}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 hover:bg-paper">

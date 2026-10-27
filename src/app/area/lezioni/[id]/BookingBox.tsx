@@ -31,7 +31,7 @@ export function BookingBox({
     });
 
   return (
-    <div className={`panel p-5 ${booked ? "border-codice" : ""}`}>
+    <div className={`panel p-5 ${booked ? "ring-2 ring-codice" : ""}`}>
       <h2 className="font-semibold">{booked ? "Hai prenotato il tuo posto" : "Prenotazione"}</h2>
       <p className="mt-1 text-[15px] text-slate">
         {past

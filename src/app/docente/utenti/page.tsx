@@ -31,7 +31,7 @@ export default async function UtentiPage({ searchParams }: Props) {
         <input id="q" name="q" defaultValue={q} placeholder="Cerca per nome o email" className="field w-72 py-2" />
         <button className="btn-secondary btn-sm">Cerca</button>
       </form>
-      <div className="overflow-x-auto rounded-[var(--radius-panel)] border border-line bg-surface">
+      <div className="overflow-x-auto rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
         <table className="w-full min-w-[640px] text-left text-[15px]">
           <thead className="border-b border-line text-sm text-mute">
             <tr>

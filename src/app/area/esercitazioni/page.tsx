@@ -44,7 +44,7 @@ export default async function EsercitazioniPage() {
                   {g.title} <span className="font-normal text-mute tabular-nums">{items.length}</span>
                 </h2>
                 {items.length ? (
-                  <ul className="mt-3 divide-y divide-line-soft rounded-[var(--radius-panel)] border border-line bg-surface">
+                  <ul className="mt-3 divide-y divide-line-soft rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
                     {items.map((a) => {
                       const late = a.status === "assegnato" && a.due_at && a.due_at < now;
                       return (

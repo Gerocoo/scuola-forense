@@ -54,7 +54,7 @@ export default async function LezioniDocente() {
           <section>
             <h2 className="text-lg font-semibold">In presenza</h2>
             {live.length ? (
-              <ul className="mt-3 divide-y divide-line-soft rounded-[var(--radius-panel)] border border-line bg-surface">
+              <ul className="mt-3 divide-y divide-line-soft rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
                 {live.map((l) => <Row key={l.id} l={l} />)}
               </ul>
             ) : (
@@ -64,7 +64,7 @@ export default async function LezioniDocente() {
           <section>
             <h2 className="text-lg font-semibold">Registrate</h2>
             {recorded.length ? (
-              <ul className="mt-3 divide-y divide-line-soft rounded-[var(--radius-panel)] border border-line bg-surface">
+              <ul className="mt-3 divide-y divide-line-soft rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
                 {recorded.map((l) => <Row key={l.id} l={l} />)}
               </ul>
             ) : (

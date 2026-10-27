@@ -1,47 +1,53 @@
 @import "tailwindcss";
 
 /*
-  Palette
-  carta     #F3F5F7  fondo applicazione, freddo e neutro
-  inchiostro#17212F  testo e titoli
-  ardesia   #4A5566  testo secondario
-  linea     #D7DDE4  bordi
-  codice    #1D5747  verde dei codici: azioni principali
-  ceralacca #A3301D  rosso della penna del correttore: correzioni, scadenze, promo
+  Palette (verde e avorio, impaginazione in stile Apple)
+  carta      #F5F3EE  fondo, avorio freddo e quasi neutro
+  avorio     #F4EEE2  il colore del tempio: superfici in evidenza
+  inchiostro #1D1D1F  testo
+  ardesia    #48484D  testo secondario
+  codice     #1D5747  verde: azioni principali, sezioni scure
+  ceralacca  #A3301D  rosso del correttore: correzioni, scadenze, promo
 */
 @theme {
-  --color-paper: #f3f5f7;
+  --color-paper: #f5f3ee;
   --color-surface: #ffffff;
-  --color-ink: #17212f;
-  --color-slate: #4a5566;
-  --color-mute: #6b7585;
-  --color-line: #d7dde4;
-  --color-line-soft: #e7ebef;
+  --color-ivory: #f4eee2;
+  --color-ink: #1d1d1f;
+  --color-slate: #48484d;
+  --color-mute: #6e6e73;
+  --color-line: #d9d6cf;
+  --color-line-soft: #ebe8e1;
   --color-codice: #1d5747;
-  --color-codice-dark: #15433a;
-  --color-codice-soft: #e2eeea;
+  --color-codice-dark: #153f34;
+  --color-codice-deep: #0f2f27;
+  --color-codice-soft: #e4eee9;
   --color-ceralacca: #a3301d;
   --color-ceralacca-soft: #f7e6e2;
   --color-ambra: #8a5a00;
   --color-ambra-soft: #f6ecd6;
 
-  --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
 
-  --radius-panel: 12px;
-  --radius-control: 8px;
+  --radius-panel: 18px;
+  --radius-control: 12px;
+
+  --shadow-card: 0 0 0 1px rgb(29 29 31 / 0.04), 0 1px 2px rgb(29 29 31 / 0.04), 0 8px 24px -12px rgb(29 29 31 / 0.10);
 }
 
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
   body {
     background: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    font-feature-settings: "ss01", "tnum" 0;
+    font-feature-settings: "cv11", "ss01";
+    letter-spacing: -0.011em;
   }
   ::selection {
     background: var(--color-codice-soft);
@@ -49,10 +55,10 @@
   :focus-visible {
     outline: 2px solid var(--color-codice);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
   h1, h2, h3 {
-    letter-spacing: -0.02em;
+    letter-spacing: -0.028em;
     text-wrap: balance;
   }
   p {
@@ -61,40 +67,45 @@
 }
 
 @layer components {
+  /* Pulsanti a pillola */
   .btn-primary,
   .btn-secondary,
   .btn-ghost,
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-[var(--radius-control)] px-4 py-2.5 text-[15px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[15px] font-medium transition-[background-color,color,box-shadow,transform] duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
   }
   .btn-primary {
     @apply bg-codice text-white hover:bg-codice-dark;
   }
   .btn-secondary {
-    @apply border border-line bg-surface text-ink hover:border-slate;
+    @apply bg-surface text-ink shadow-[0_0_0_1px_rgb(29_29_31/0.12)] hover:shadow-[0_0_0_1px_rgb(29_29_31/0.28)];
   }
   .btn-ghost {
-    @apply px-3 text-slate hover:bg-line-soft hover:text-ink;
+    @apply px-3 text-codice hover:bg-codice-soft;
   }
   .btn-danger {
-    @apply border border-ceralacca/30 bg-surface text-ceralacca hover:bg-ceralacca-soft;
+    @apply bg-surface text-ceralacca shadow-[0_0_0_1px_rgb(163_48_29/0.25)] hover:bg-ceralacca-soft;
   }
   .btn-sm {
-    @apply px-3 py-1.5 text-sm;
+    @apply px-3.5 py-1.5 text-sm;
+  }
+  .btn-lg {
+    @apply px-7 py-3.5 text-[17px];
   }
 
   .field {
-    @apply block w-full rounded-[var(--radius-control)] border border-line bg-surface px-3 py-2.5 text-[15px] text-ink placeholder:text-mute focus:border-codice focus:outline-none focus:ring-2 focus:ring-codice/15;
+    @apply block w-full rounded-[var(--radius-control)] border border-line bg-surface px-3.5 py-2.5 text-[16px] text-ink transition-shadow placeholder:text-mute focus:border-codice focus:outline-none focus:ring-4 focus:ring-codice/12;
   }
   .label {
-    @apply mb-1.5 block text-sm font-medium text-ink;
+    @apply mb-1.5 block text-[13px] font-medium text-slate;
   }
   .hint {
-    @apply mt-1 text-sm text-mute;
+    @apply mt-1.5 text-[13px] leading-snug text-mute;
   }
 
+  /* Superficie bianca su fondo avorio, senza bordo visibile */
   .panel {
-    @apply rounded-[var(--radius-panel)] border border-line bg-surface;
+    @apply rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)];
   }
 
   .link {
@@ -103,10 +114,21 @@
 
   /* Testo lungo (istruzioni, giudizi, messaggi) */
   .prose-legal {
-    @apply font-serif text-[17px] leading-[1.65] text-ink;
+    @apply font-serif text-[18px] leading-[1.7] text-ink;
   }
   .prose-legal p + p {
     @apply mt-4;
+  }
+
+  /* Comparsa allo scorrimento (vedi components/site/Reveal.tsx) */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1), transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -117,5 +139,9 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
   }
 }

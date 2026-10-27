@@ -4,22 +4,24 @@ import { getSession, isStaff } from "@/lib/auth";
 import { AuthButtons } from "./AuthButtons";
 
 const NAV = [
-  { href: "/#metodo", label: "Il metodo" },
+  { href: "/#metodo", label: "Metodo" },
+  { href: "/#piattaforma", label: "Piattaforma" },
   { href: "/#docenti", label: "Docenti" },
-  { href: "/#corsi", label: "Corsi e prezzi" },
+  { href: "/#corsi", label: "Corsi" },
   { href: "/#domande", label: "Domande" },
 ];
 
+/** Barra in vetro sfocato, sottile come quella di apple.com */
 export async function SiteHeader() {
   const { user, profile } = await getSession();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line/70 bg-paper/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-[rgb(245_243_238/0.72)] backdrop-blur-xl backdrop-saturate-150">
+      <div className="mx-auto flex h-14 max-w-[1080px] items-center justify-between gap-6 px-4 sm:px-6">
         <Logo />
-        <nav aria-label="Sezioni" className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Sezioni" className="hidden items-center gap-7 md:flex">
           {NAV.map((n) => (
-            <Link key={n.href} href={n.href} className="rounded-md px-3 py-2 text-[15px] text-slate hover:text-ink">
+            <Link key={n.href} href={n.href} className="text-[13px] text-ink/80 transition-colors hover:text-ink">
               {n.label}
             </Link>
           ))}

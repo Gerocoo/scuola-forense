@@ -29,7 +29,7 @@ export function FileList({
 }) {
   if (!files.length) return empty ? <p className="text-[15px] text-mute">{empty}</p> : null;
   return (
-    <ul className="divide-y divide-line-soft rounded-[10px] border border-line bg-surface">
+    <ul className="divide-y divide-line-soft rounded-[14px] bg-surface shadow-[var(--shadow-card)]">
       {files.map((f) => (
         <li key={f.id} className="flex items-center gap-3 px-4 py-3">
           <FileIcon name={f.file_name} />

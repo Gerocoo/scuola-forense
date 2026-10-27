@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Schibsted_Grotesk, Newsreader } from "next/font/google";
+import { Inter, Newsreader } from "next/font/google";
 import { SITE } from "@/content/site";
 import "./globals.css";
 
-const grotesk = Schibsted_Grotesk({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-grotesk",
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -24,12 +24,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f3f5f7",
+  themeColor: "#f5f3ee",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="it" className={`${grotesk.variable} ${newsreader.variable}`}>
+    <html lang="it" className={`${inter.variable} ${newsreader.variable}`}>
       <body className="min-h-dvh antialiased">{children}</body>
     </html>
   );
