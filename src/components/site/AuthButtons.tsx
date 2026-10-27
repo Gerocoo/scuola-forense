@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -25,8 +26,10 @@ export function AuthButtons({ initialLoggedIn, initialStaff }: { initialLoggedIn
       if (active) setStaff(data?.role === "teacher" || data?.role === "admin");
     }
 
-    supabase.auth.getSession().then(({ data }) => sync(data.session?.user.id ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => sync(session?.user.id ?? null));
+    supabase.auth.getSession().then((res: { data: { session: Session | null } }) => sync(res.data.session?.user.id ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e: AuthChangeEvent, session: Session | null) => {
+      void sync(session?.user.id ?? null);
+    });
     return () => {
       active = false;
       sub.subscription.unsubscribe();
