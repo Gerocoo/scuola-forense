@@ -1,5 +1,4 @@
 import { Logo } from "@/components/Logo";
-import { Avatar } from "./Avatar";
 import { NavLinks, type NavItem } from "./NavLinks";
 import { UserMenu } from "@/components/UserMenu";
 import type { Profile } from "@/lib/types";
@@ -31,23 +30,11 @@ export function AppShell({
     <div className="min-h-dvh lg:grid lg:grid-cols-[248px_1fr]">
       <aside className="sticky top-0 z-30 border-b border-black/[0.06] bg-[rgb(255_255_255/0.72)] backdrop-blur-xl backdrop-saturate-150 lg:flex lg:h-dvh lg:flex-col lg:border-b-0 lg:border-r">
         <div className="flex h-16 items-center justify-between px-4 lg:h-auto lg:flex-col lg:items-start lg:gap-1 lg:px-5 lg:py-6">
-          <Logo href={home} />
+          <Logo href="/" />
           <p className="mt-2 hidden rounded-full bg-paper px-3 py-1 text-[12px] font-medium text-slate lg:block">{areaLabel}</p>
           <div className="lg:hidden">{menu}</div>
         </div>
         <NavLinks items={nav} />
-        <div className="mt-auto hidden border-t border-black/[0.06] p-4 lg:block">
-          <div className="flex items-center gap-3">
-            <Avatar name={profile.full_name} email={profile.email} url={profile.avatar_url} />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-ink">{profile.full_name || profile.email}</p>
-              <p className="truncate text-xs text-mute">{profile.email}</p>
-            </div>
-          </div>
-          <form action="/auth/esci" method="post" className="mt-3">
-            <button className="btn-ghost btn-sm w-full justify-start px-2">Esci</button>
-          </form>
-        </div>
       </aside>
       <main id="contenuto" className="relative min-w-0 px-4 py-8 sm:px-8 lg:px-12 lg:pb-12 lg:pt-20">
         <div className="absolute right-8 top-6 z-20 hidden lg:block">{menu}</div>
