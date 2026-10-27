@@ -5,11 +5,11 @@
  */
 export const SITE = {
   /** Marchio: corto, è quello che compare nel logo */
-  brand: "Margine",
+  brand: "Pronao",
   /** Sottotitolo sotto il marchio */
   tagline: "Scuola di Alta Formazione Forense",
-  name: "Margine, Scuola di Alta Formazione Forense",
-  shortName: "Margine",
+  name: "Pronao, Scuola di Alta Formazione Forense",
+  shortName: "Pronao",
   description:
     "Preparazione all'esame di avvocato con lezioni brevi, tracce settimanali e correzione personalizzata di ogni elaborato.",
   email: "segreteria@esempio.it",
