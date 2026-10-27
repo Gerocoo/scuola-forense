@@ -7,6 +7,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { emailLayout, escapeHtml, notify } from "@/lib/notify";
 import { siteUrl } from "@/lib/stripe";
 import { fromLocalInput, KIND_LABEL, dateTime } from "@/lib/format";
+import { bunnyConfigured, createUpload, deleteVideo, getVideo } from "@/lib/bunny";
+import { enrolledStudents, inBatches } from "@/lib/recipients";
 import type { ActionResult, AssignmentKind, LessonKind, Role, UploadedMeta } from "@/lib/types";
 
 const KINDS: AssignmentKind[] = ["parere", "atto", "esercizio", "documento"];
@@ -280,15 +282,27 @@ export async function saveLesson(id: string | null, formData: FormData): Promise
     location: String(formData.get("location") ?? "").trim() || null,
     meeting_url: String(formData.get("meeting_url") ?? "").trim() || null,
     duration_min: duration,
+    booking_enabled: kind === "in_presenza" && formData.get("booking_enabled") === "on",
+    capacity: kind === "in_presenza" ? Number(formData.get("capacity")) || null : null,
     package_ids: packageIds,
     published: formData.get("published") === "on",
     sort: Number(formData.get("sort")) || 0,
   };
 
   if (kind === "in_presenza" && !row.scheduled_at) return { ok: false, error: "Indica data e ora dell'incontro." };
-  if (kind === "registrata" && row.published && !row.video_url) return { ok: false, error: "Inserisci il link del video prima di pubblicare." };
+  if (kind === "registrata" && row.published && !row.video_url) {
+    const { data: existing } = id
+      ? await supabase.from("lessons").select("bunny_video_id").eq("id", id).maybeSingle()
+      : { data: null };
+    if (!existing?.bunny_video_id) {
+      return { ok: false, error: "Carica il video o inserisci un link prima di pubblicare. Puoi salvare come bozza e caricarlo dopo." };
+    }
+  }
 
+  let wasPublished = false;
   if (id) {
+    const { data: before } = await supabase.from("lessons").select("published").eq("id", id).maybeSingle();
+    wasPublished = !!before?.published;
     const { error } = await supabase.from("lessons").update(row).eq("id", id);
     if (error) return { ok: false, error: "Salvataggio non riuscito." };
   } else {
@@ -296,14 +310,39 @@ export async function saveLesson(id: string | null, formData: FormData): Promise
     if (error || !data) return { ok: false, error: "Creazione non riuscita." };
     id = data.id;
   }
+
+  // Alla prima pubblicazione avvisa gli iscritti dei corsi scelti.
+  let message = "Lezione salvata.";
+  if (row.published && !wasPublished) {
+    const students = await enrolledStudents(packageIds);
+    const href = `${siteUrl()}/area/lezioni/${id}`;
+    await inBatches(students, 5, (st) =>
+      notify({
+        to: st.email,
+        subject: kind === "in_presenza" ? `Nuovo incontro in calendario: ${title}` : `Nuova lezione: ${title}`,
+        html: emailLayout(
+          kind === "in_presenza" ? "Nuovo incontro in presenza" : "Nuova lezione disponibile",
+          kind === "in_presenza"
+            ? `<p><strong>${escapeHtml(title)}</strong><br>${dateTime(row.scheduled_at)}${row.location ? `<br>${escapeHtml(row.location)}` : ""}</p>
+               ${row.booking_enabled ? "<p>Per partecipare prenota il tuo posto dalla pagina dell'incontro.</p>" : ""}`
+            : `<p>È online <strong>${escapeHtml(title)}</strong>${duration ? ` (${duration} minuti)` : ""}. Guardala quando vuoi dalla tua area.</p>`,
+          { label: kind === "in_presenza" ? "Vedi l'incontro" : "Guarda la lezione", href },
+        ),
+      }),
+    );
+    message = students.length ? `Lezione pubblicata: ${students.length} discenti avvisati via email.` : "Lezione pubblicata.";
+  }
+
   revalidatePath("/docente/lezioni");
   revalidatePath("/area/lezioni");
-  return { ok: true, id: id!, message: "Lezione salvata." };
+  return { ok: true, id: id!, message };
 }
 
 export async function deleteLesson(id: string) {
   const { supabase } = await requireStaff();
   const { data: files } = await supabase.from("lesson_files").select("storage_path").eq("lesson_id", id);
+  const { data: l } = await supabase.from("lessons").select("bunny_video_id").eq("id", id).maybeSingle();
+  if (l?.bunny_video_id) await deleteVideo(l.bunny_video_id);
   await supabase.from("lessons").delete().eq("id", id);
   if (files?.length) await supabase.storage.from("materiali").remove(files.map((f) => f.storage_path));
   revalidatePath("/docente/lezioni");
@@ -332,6 +371,55 @@ export async function removeLessonFile(fileId: string): Promise<ActionResult> {
   await supabase.from("lesson_files").delete().eq("id", fileId);
   await supabase.storage.from("materiali").remove([f.storage_path]);
   revalidatePath(`/docente/lezioni/${f.lesson_id}`);
+  return { ok: true };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Video delle lezioni (Bunny Stream)                                 */
+/* ------------------------------------------------------------------ */
+
+export type VideoUpload = { endpoint: string; videoId: string; libraryId: string; expire: number; signature: string };
+
+/** Prepara il caricamento: il file va dal browser direttamente a Bunny, senza passare dal nostro server. */
+export async function startVideoUpload(lessonId: string): Promise<{ ok: true; upload: VideoUpload } | { ok: false; error: string }> {
+  const { supabase } = await requireStaff();
+  if (!bunnyConfigured()) return { ok: false, error: "Il caricamento video non è ancora configurato (Bunny Stream)." };
+
+  const { data: l } = await supabase.from("lessons").select("title, bunny_video_id").eq("id", lessonId).maybeSingle();
+  if (!l) return { ok: false, error: "Lezione non trovata." };
+
+  try {
+    const upload = await createUpload(l.title);
+    if (l.bunny_video_id) await deleteVideo(l.bunny_video_id); // sostituzione del video
+    await supabase.from("lessons").update({ bunny_video_id: upload.videoId, video_status: "uploading" }).eq("id", lessonId);
+    return { ok: true, upload };
+  } catch (e) {
+    console.error("[startVideoUpload]", e);
+    return { ok: false, error: "Impossibile avviare il caricamento. Riprova tra poco." };
+  }
+}
+
+export async function refreshVideoStatus(lessonId: string, justUploaded = false): Promise<ActionResult & { status?: string }> {
+  const { supabase } = await requireStaff();
+  const { data: l } = await supabase.from("lessons").select("bunny_video_id, duration_min").eq("id", lessonId).maybeSingle();
+  if (!l?.bunny_video_id) return { ok: false, error: "Nessun video caricato." };
+  const v = await getVideo(l.bunny_video_id).catch(() => null);
+  let status = v?.status ?? "error";
+  if (justUploaded && status === "uploading") status = "processing";
+  await supabase
+    .from("lessons")
+    .update({ video_status: status, duration_min: l.duration_min ?? v?.durationMin ?? null })
+    .eq("id", lessonId);
+  revalidatePath(`/docente/lezioni/${lessonId}`);
+  return { ok: true, status };
+}
+
+export async function removeVideo(lessonId: string): Promise<ActionResult> {
+  const { supabase } = await requireStaff();
+  const { data: l } = await supabase.from("lessons").select("bunny_video_id").eq("id", lessonId).maybeSingle();
+  if (l?.bunny_video_id) await deleteVideo(l.bunny_video_id);
+  await supabase.from("lessons").update({ bunny_video_id: null, video_status: "none" }).eq("id", lessonId);
+  revalidatePath(`/docente/lezioni/${lessonId}`);
   return { ok: true };
 }
 

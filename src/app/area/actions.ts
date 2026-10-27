@@ -105,3 +105,21 @@ export async function updateProfile(_prev: ActionResult | null, formData: FormDa
   revalidatePath("/docente", "layout");
   return { ok: true, message: "Profilo aggiornato." };
 }
+
+export async function bookLesson(lessonId: string): Promise<ActionResult> {
+  const { supabase } = await requireUser();
+  const { error } = await supabase.rpc("book_lesson", { lid: lessonId });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/area/lezioni/${lessonId}`);
+  revalidatePath("/area/calendario");
+  return { ok: true, message: "Posto prenotato. Ti mandiamo un promemoria il giorno prima." };
+}
+
+export async function cancelBooking(lessonId: string): Promise<ActionResult> {
+  const { supabase } = await requireUser();
+  const { error } = await supabase.rpc("cancel_booking", { lid: lessonId });
+  if (error) return { ok: false, error: "Annullamento non riuscito." };
+  revalidatePath(`/area/lezioni/${lessonId}`);
+  revalidatePath("/area/calendario");
+  return { ok: true, message: "Prenotazione annullata." };
+}

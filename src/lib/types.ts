@@ -62,6 +62,21 @@ export interface Lesson {
   teacher_id: string | null;
   sort: number;
   created_at: string;
+  bunny_video_id: string | null;
+  video_status: VideoStatus;
+  capacity: number | null;
+  booking_enabled: boolean;
+  reminder_sent_at: string | null;
+}
+
+export type VideoStatus = "none" | "uploading" | "processing" | "ready" | "error";
+
+export interface Booking {
+  id: string;
+  lesson_id: string;
+  user_id: string;
+  status: "confermato" | "annullato";
+  created_at: string;
 }
 
 export interface StoredFile {

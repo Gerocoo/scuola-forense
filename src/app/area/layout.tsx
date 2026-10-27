@@ -30,6 +30,7 @@ export default async function AreaLayout({ children }: { children: React.ReactNo
       nav={[
         { href: "/area", label: "Panoramica", exact: true },
         { href: "/area/lezioni", label: "Lezioni" },
+        { href: "/area/calendario", label: "Calendario" },
         { href: "/area/esercitazioni", label: "Esercitazioni", badge: todo ?? 0 },
         { href: "/area/messaggi", label: "Messaggi", badge: unread ?? 0 },
         { href: "/area/corsi", label: "I miei corsi" },

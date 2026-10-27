@@ -69,9 +69,13 @@ export function LessonForm({
       {kind === "registrata" ? (
         <div className="grid gap-5 sm:grid-cols-[1fr_160px]">
           <div>
-            <label htmlFor="video_url" className="label">Link al video</label>
+            <label htmlFor="video_url" className="label">Link a un video esterno (facoltativo)</label>
             <input id="video_url" name="video_url" type="url" defaultValue={lesson?.video_url ?? ""} className="field" placeholder="https://vimeo.com/…" />
-            <p className="hint">Vimeo (consigliato, con privacy &laquo;nascosto&raquo; e dominio limitato al sito), YouTube non in elenco, oppure un link diretto a un file video.</p>
+            <p className="hint">
+              {lesson
+                ? "Di norma carica il video con il riquadro qui sopra. Usa questo campo solo per un video già su Vimeo o YouTube."
+                : "Salva la lezione: nella pagina successiva potrai caricare il file video. In alternativa incolla qui un link Vimeo o YouTube."}
+            </p>
           </div>
           <div>
             <label htmlFor="duration_min" className="label">Durata (min)</label>
@@ -95,6 +99,17 @@ export function LessonForm({
           <div className="sm:col-span-2">
             <label htmlFor="meeting_url" className="label">Link alla diretta (facoltativo)</label>
             <input id="meeting_url" name="meeting_url" type="url" defaultValue={lesson?.meeting_url ?? ""} className="field" placeholder="https://meet.google.com/…" />
+          </div>
+          <div className="rounded-[10px] border border-line-soft bg-paper p-4 sm:col-span-2">
+            <label className="flex items-center gap-3 text-[15px] font-medium">
+              <input type="checkbox" name="booking_enabled" defaultChecked={lesson?.booking_enabled ?? false} className="size-4 accent-codice" />
+              I discenti devono prenotare il posto
+            </label>
+            <div className="mt-3 flex items-center gap-3">
+              <label htmlFor="capacity" className="text-sm text-slate">Posti disponibili</label>
+              <input id="capacity" name="capacity" type="number" min={1} defaultValue={lesson?.capacity ?? ""} className="field w-28 py-1.5" placeholder="Illimitati" />
+            </div>
+            <p className="hint">Il giorno prima ricevono un promemoria via email: solo i prenotati se la prenotazione è attiva, altrimenti tutti gli iscritti dei corsi scelti.</p>
           </div>
         </div>
       )}

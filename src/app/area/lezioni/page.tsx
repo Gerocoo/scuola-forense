@@ -24,7 +24,11 @@ export default async function LezioniPage() {
 
   return (
     <>
-      <PageHeader title="Lezioni" description="Tre mini lezioni registrate al mese e un incontro in presenza." />
+      <PageHeader
+        title="Lezioni"
+        description="Tre mini lezioni registrate al mese e un incontro in presenza."
+        actions={<Link href="/area/calendario" className="btn-secondary">Calendario</Link>}
+      />
 
       <section aria-labelledby="presenza">
         <h2 id="presenza" className="text-lg font-semibold">In presenza</h2>
@@ -79,6 +83,9 @@ export default async function LezioniPage() {
                 <Link href={`/area/lezioni/${l.id}`} className="text-[15px] hover:text-codice">
                   {dateLong(l.scheduled_at)}: {l.title}
                 </Link>
+                {(l.video_status === "ready" || l.video_url) && (
+                  <span className="ml-2 rounded-full bg-codice-soft px-2 py-0.5 text-xs font-medium text-codice">Registrazione disponibile</span>
+                )}
               </li>
             ))}
           </ul>

@@ -4,11 +4,12 @@ Piattaforma per corsi a pagamento di preparazione all'esame di avvocato, con:
 
 - **vetrina pubblica**: chi siamo, metodo, docenti, corsi con prezzi e promozioni, domande frequenti;
 - **acquisto online** con Stripe (carta, Apple Pay, Google Pay, codici sconto, fattura con codice fiscale);
-- **area discente** protetta da login (Google o email): lezioni registrate e in presenza, tracce da scaricare, consegna degli elaborati, correzioni annotate, messaggi con i docenti;
-- **area docenti**: assegnazione di tracce a uno o più discenti, coda degli elaborati da correggere, caricamento del file annotato con giudizio e commento, gestione delle lezioni, messaggi;
+- **area discente** protetta da login (Google o email): video lezioni, calendario degli incontri in presenza con prenotazione del posto e "aggiungi al calendario", registrazioni degli incontri, tracce da scaricare, consegna degli elaborati, correzioni annotate, messaggi con i docenti;
+- **area docenti**: caricamento dei video direttamente dal pannello (anche file di diversi GB, con ripresa automatica), calendario, elenco dei prenotati, assegnazione di tracce a uno o più discenti, coda degli elaborati da correggere, caricamento del file annotato con giudizio e commento, messaggi;
+- **email automatiche**: nuova lezione o incontro pubblicato, promemoria il giorno prima, nuova traccia, consegna, correzione pronta, nuovo messaggio;
 - **direzione** (ruolo amministratore): prezzi e promozioni dei corsi, ruoli degli utenti, iscrizioni manuali per bonifico.
 
-Tecnologie: Next.js 15 (App Router), Supabase (database Postgres, autenticazione, archivio file privato), Stripe Checkout, Tailwind CSS 4. Email facoltative con Resend.
+Tecnologie: Next.js 15 (App Router), Supabase (database Postgres, autenticazione, archivio file privato), Stripe Checkout, Bunny Stream (video), Tailwind CSS 4. Email con Resend.
 
 ---
 
@@ -45,6 +46,7 @@ npm run dev                  # http://localhost:3000
 1. Crea un progetto su [supabase.com](https://supabase.com) (regione EU, es. Francoforte).
 2. In **SQL Editor** esegui, in ordine:
    - `supabase/migrations/0001_schema.sql` (tabelle, permessi, archivio file)
+   - `supabase/migrations/0002_video_calendario.sql` (video, prenotazioni, promemoria)
    - `supabase/seed.sql` (tre corsi di esempio, modificabili)
 3. In **Project Settings › API** copia URL, chiave `anon` e chiave `service_role` in `.env.local`.
 4. In **Authentication › URL Configuration**:
@@ -87,9 +89,22 @@ update public.profiles set role = 'admin' where email = 'tua@email.it';
 ```
 Da quel momento gestisci gli altri ruoli da **Area docenti › Utenti e ruoli**: chi deve diventare docente si registra e tu gli assegni il ruolo *Docente*.
 
-### 6. Video delle lezioni
+### 6. Video delle lezioni (Bunny Stream)
 
-Consigliato **Vimeo** (piano Starter o superiore): carica il video con privacy *Nascosto* e, in *Incorpora*, limita la riproduzione al dominio del sito. Incolla il link nella lezione. Funzionano anche YouTube *non in elenco* e Bunny Stream.
+I docenti caricano i video dalla pagina della lezione: il file va direttamente dal loro browser a Bunny, che lo prepara per lo streaming in tutte le risoluzioni. Vale sia per le lezioni registrate sia per la registrazione di un incontro in presenza, caricabile dopo l'incontro.
+
+1. Crea un account su [bunny.net](https://bunny.net) › **Stream** › *Add Video Library* (regione Europa).
+2. Nella libreria, sezione **API**: copia *Library ID* e *API Key* in `BUNNY_STREAM_LIBRARY_ID` e `BUNNY_STREAM_API_KEY`.
+3. Sezione **Security**: attiva *Embed view token authentication*, copia la chiave in `BUNNY_STREAM_TOKEN_KEY`, e in *Allowed domains* inserisci il dominio del sito. Così i link del player scadono dopo 4 ore e non funzionano fuori dal sito.
+4. Sezione **Webhook**: URL `https://www.tuodominio.it/api/bunny/webhook?secret=<BUNNY_WEBHOOK_SECRET>`. Serve ad aggiornare lo stato "pronto" anche se il docente chiude la pagina.
+
+Senza chiavi Bunny resta disponibile il link esterno: Vimeo con privacy *Nascosto* o YouTube *non in elenco*.
+
+### 7. Calendario e promemoria
+
+- Ogni incontro in presenza ha data, luogo, eventuale link alla diretta e, se serve, **prenotazione del posto** con numero massimo di partecipanti.
+- I discenti vedono il **calendario mensile** con incontri e scadenze delle tracce, e aggiungono gli incontri a Google Calendar, Apple o Outlook.
+- Il **promemoria** parte ogni mattina alle 9 (ora legale) o alle 10 per gli incontri del giorno dopo: ai prenotati, oppure a tutti gli iscritti se la prenotazione non è attiva. Su Vercel funziona da solo grazie a `vercel.json`: basta impostare `CRON_SECRET`.
 
 ---
 
@@ -133,5 +148,7 @@ supabase/              schema database e dati iniziali
 - [ ] Registrazione con email e conferma, accesso con Google
 - [ ] Acquisto con carta di prova: l'iscrizione compare in *I miei corsi*
 - [ ] Il docente assegna una traccia, il discente consegna, il docente pubblica la correzione: arrivano le tre email
+- [ ] Il docente carica un video: dopo qualche minuto risulta "pronto" e il discente lo vede
+- [ ] Incontro con prenotazione: il discente prenota, il docente lo vede nell'elenco, il file .ics si apre nel calendario
 - [ ] Un discente senza corso non vede le lezioni; un discente non apre i file di un altro (prova a incollare un link di download)
 - [ ] Testi di privacy e termini definitivi, chiavi Stripe in modalità *live*
