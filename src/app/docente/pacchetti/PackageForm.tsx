@@ -8,7 +8,16 @@ import type { Package } from "@/lib/types";
 
 const money = (c: number | null | undefined) => (c == null ? "" : (c / 100).toFixed(2).replace(".", ",").replace(",00", ""));
 
-export function PackageForm({ pkg }: { pkg?: Package }) {
+export function PackageForm({
+  pkg,
+  teachers,
+  selectedTeachers = [],
+}: {
+  pkg?: Package;
+  /** Docenti tra cui scegliere quelli del corso (staff della scuola). */
+  teachers?: { id: string; name: string }[];
+  selectedTeachers?: string[];
+}) {
   const router = useRouter();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
@@ -21,7 +30,7 @@ export function PackageForm({ pkg }: { pkg?: Package }) {
           const res = await savePackage(pkg?.id ?? null, fd);
           if (!res.ok) return setMsg({ ok: false, text: res.error });
           setMsg({ ok: true, text: res.message ?? "Salvato." });
-          if (!pkg && res.id) router.replace(`/docente/pacchetti/${res.id}`);
+          if (!pkg && res.id) router.replace(`/docente/corsi/${res.id}`);
           router.refresh();
         })
       }
@@ -37,7 +46,7 @@ export function PackageForm({ pkg }: { pkg?: Package }) {
         </div>
         <div>
           <label className="label" htmlFor="slug">Indirizzo della pagina</label>
-          <input id="slug" name="slug" defaultValue={pkg?.slug} required className="field" placeholder="intensivo-marzo-maggio-2027" />
+          <input id="slug" name="slug" defaultValue={pkg?.slug} className="field" placeholder="si crea da solo dal nome" />
           <p className="hint">Diventa /corsi/indirizzo. Evita di cambiarlo dopo la pubblicazione.</p>
         </div>
         <div className="sm:col-span-2">
@@ -110,6 +119,27 @@ export function PackageForm({ pkg }: { pkg?: Package }) {
           <input type="number" name="sort" defaultValue={pkg?.sort ?? 0} className="field w-20 py-1.5" />
         </label>
       </div>
+
+      {teachers && (
+        <div className="panel p-6">
+          <input type="hidden" name="teachers_present" value="1" />
+          <h2 className="font-semibold">Docenti del corso</h2>
+          <p className="mt-1 text-[14px] text-slate">Vedono il corso nella loro sezione Corsi e possono assegnare esercizi agli iscritti.</p>
+          {teachers.length ? (
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {teachers.map((t) => (
+                <label key={t.id} className="flex cursor-pointer items-center gap-3 rounded-[12px] border border-line px-3 py-2.5 text-[15px] has-[:checked]:border-codice has-[:checked]:bg-codice-soft">
+                  <input type="checkbox" name="teacher_ids" value={t.id} defaultChecked={selectedTeachers.includes(t.id)} className="size-4 accent-codice" />
+                  {t.name}
+                </label>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-[14px] text-slate">Non ci sono ancora docenti registrati.</p>
+          )}
+          <a href="/docente/utenti" className="mt-4 inline-block text-[14px] font-medium text-codice hover:underline">Invita un nuovo docente</a>
+        </div>
+      )}
 
       <div className="flex items-center gap-3">
         <button className="btn-primary" disabled={pending}>{pending ? "Salvataggio…" : pkg ? "Salva modifiche" : "Crea corso"}</button>

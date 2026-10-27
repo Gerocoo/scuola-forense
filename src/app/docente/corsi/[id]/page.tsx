@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Avatar } from "@/components/app/Avatar";
 import { StatusBadge } from "@/components/app/StatusBadge";
-import { AddTeacher, RemoveTeacher, RetireExercise } from "./CourseControls";
+import { AddTeacher, InviteToCourse, RemoveTeacher, RetireExercise } from "./CourseControls";
 import { requireStaff } from "@/lib/auth";
 import { activeByPackage, canTeach, type CourseTeacher } from "@/lib/courses";
 import { dateLong, dateShort, dateTime, KIND_LABEL } from "@/lib/format";
@@ -13,7 +13,7 @@ type Props = { params: Promise<{ id: string }> };
 export default async function CorsoPage({ params }: Props) {
   const { id } = await params;
   const { supabase, profile: me } = await requireStaff();
-  const isAdmin = me.role === "admin";
+  const isAdmin = me.role === "admin" || !!me.is_super;
 
   const { data: course } = await supabase.from("packages").select("*").eq("id", id).maybeSingle<Package>();
   if (!course) notFound();
@@ -47,6 +47,11 @@ export default async function CorsoPage({ params }: Props) {
       ? supabase.from("profiles").select("id, full_name, email").in("role", ["teacher", "admin"]).order("full_name").returns<Pick<Profile, "id" | "full_name" | "email">[]>()
       : Promise.resolve({ data: [] as Pick<Profile, "id" | "full_name" | "email">[] }),
   ]);
+
+  const { data: invites } = isAdmin
+    ? await supabase.from("teacher_invites").select("email").contains("package_ids", [id])
+    : { data: [] as { email: string }[] };
+  const pendingInvites = (invites ?? []).map((i: { email: string }) => i.email);
 
   const activeIds = activeByPackage(enr ?? []).get(id) ?? new Set<string>();
   const students = (enr ?? [])
@@ -83,6 +88,7 @@ export default async function CorsoPage({ params }: Props) {
             )}
           </div>
           <div className="flex flex-wrap gap-2">
+            {isAdmin && <Link href={`/docente/pacchetti/${id}`} className="btn-ghost">Modifica corso</Link>}
             <Link href={`/docente/lezioni/nuova?corso=${id}`} className="btn-secondary">Nuova lezione</Link>
             <Link href={`/docente/corsi/${id}/esercizio`} className="btn-primary">Nuovo esercizio</Link>
           </div>
@@ -252,6 +258,17 @@ export default async function CorsoPage({ params }: Props) {
               <p className="mt-2 text-[14px] text-slate">Nessun docente assegnato.</p>
             )}
             {isAdmin && <AddTeacher packageId={id} options={addable} />}
+            {isAdmin && <InviteToCourse packageId={id} />}
+            {isAdmin && pendingInvites.length > 0 && (
+              <div className="mt-4 border-t border-line-soft pt-3">
+                <p className="text-[12px] font-medium text-mute">In attesa di registrazione</p>
+                <ul className="mt-1 space-y-1 text-[13px] text-slate">
+                  {pendingInvites.map((e) => (
+                    <li key={e} className="truncate">{e}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </section>
         </aside>
       </div>

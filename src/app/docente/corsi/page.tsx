@@ -10,15 +10,26 @@ export default async function CorsiDocente() {
   const { supabase, profile } = await requireStaff();
   const ids = await myCourseIds(supabase, profile);
 
+  const isAdmin = profile.role === "admin" || !!profile.is_super;
+  const adminActions = isAdmin ? (
+    <>
+      <Link href="/docente/utenti" className="btn-secondary">Aggiungi un docente</Link>
+      <Link href="/docente/pacchetti/nuovo" className="btn-primary">Nuovo corso</Link>
+    </>
+  ) : undefined;
+
   if (!ids.length) {
     return (
       <>
-        <PageHeader title="Corsi" description="I corsi in cui insegni, con iscritti, lezioni ed esercizi." />
+        <PageHeader title="Corsi" description="I corsi in cui insegni, con iscritti, lezioni ed esercizi." actions={adminActions} />
         <div className="panel mx-auto max-w-lg p-8 text-center">
-          <h2 className="text-[19px] font-semibold">Nessun corso assegnato</h2>
+          <h2 className="text-[19px] font-semibold">{isAdmin ? "Nessun corso ancora" : "Nessun corso assegnato"}</h2>
           <p className="mt-2 text-[15px] leading-relaxed text-slate">
-            L&apos;amministratore della scuola ti aggiungerà ai corsi in cui insegni. Da quel momento li troverai qui.
+            {isAdmin
+              ? "Crea il primo corso: scegli nome, periodo, prezzo e docenti."
+              : "L'amministratore della scuola ti aggiungerà ai corsi in cui insegni. Da quel momento li troverai qui."}
           </p>
+          {isAdmin && <Link href="/docente/pacchetti/nuovo" className="btn-primary mt-5">Nuovo corso</Link>}
         </div>
       </>
     );
@@ -47,7 +58,7 @@ export default async function CorsiDocente() {
 
   return (
     <>
-      <PageHeader title="Corsi" description="Apri un corso per vedere gli iscritti e assegnare un esercizio a tutta la classe." />
+      <PageHeader title="Corsi" description="Apri un corso per vedere gli iscritti e assegnare un esercizio a tutta la classe." actions={adminActions} />
       <div className="grid gap-4 md:grid-cols-2">
         {(courses ?? []).map((c) => {
           const pending = count(toCorrect, c.id);

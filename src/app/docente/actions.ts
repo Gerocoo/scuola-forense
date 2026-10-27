@@ -479,7 +479,7 @@ function cents(v: FormDataEntryValue | null) {
 export async function savePackage(id: string | null, formData: FormData): Promise<ActionResult & { id?: string }> {
   const { supabase } = await requireAdmin();
   const title = String(formData.get("title") ?? "").trim();
-  const slug = String(formData.get("slug") ?? "")
+  const slug = String(formData.get("slug") || `${title} ${String(formData.get("period_label") ?? "")}`)
     .trim()
     .toLowerCase()
     .normalize("NFD")
@@ -489,7 +489,7 @@ export async function savePackage(id: string | null, formData: FormData): Promis
   const price = cents(formData.get("price"));
   const promo = cents(formData.get("promo_price"));
 
-  if (!title || !slug) return { ok: false, error: "Titolo e indirizzo della pagina sono obbligatori." };
+  if (!title || !slug) return { ok: false, error: "Inserisci il nome del corso." };
   if (price == null || Number.isNaN(price)) return { ok: false, error: "Prezzo non valido." };
   if (Number.isNaN(promo)) return { ok: false, error: "Prezzo promozionale non valido." };
   if (promo != null && promo >= price) return { ok: false, error: "Il prezzo promozionale deve essere inferiore al prezzo pieno." };
@@ -525,8 +525,20 @@ export async function savePackage(id: string | null, formData: FormData): Promis
     if (error || !data) return { ok: false, error: error?.code === "23505" ? "Esiste già un corso con questo indirizzo." : "Creazione non riuscita." };
     id = data.id;
   }
+
+  // docenti del corso, se il modulo li contiene
+  if (formData.get("teachers_present")) {
+    const chosen = formData.getAll("teacher_ids").map(String).filter(Boolean);
+    await supabase.from("package_teachers").delete().eq("package_id", id!).not("teacher_id", "in", `(${chosen.length ? chosen.join(",") : "00000000-0000-0000-0000-000000000000"})`);
+    if (chosen.length) {
+      await supabase.from("package_teachers").upsert(chosen.map((t) => ({ package_id: id!, teacher_id: t })), { onConflict: "package_id,teacher_id" });
+    }
+  }
+
   revalidatePath("/");
   revalidatePath("/docente/pacchetti");
+  revalidatePath("/docente/corsi");
+  revalidatePath(`/docente/corsi/${id}`);
   return { ok: true, id: id!, message: "Corso salvato." };
 }
 
@@ -595,19 +607,34 @@ export async function inviteTeacher(formData: FormData): Promise<ActionResult> {
   const role: Role = formData.get("role") === "admin" ? "admin" : "teacher";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "Scrivi un indirizzo email valido." };
 
+  const packageId = String(formData.get("package_id") ?? "") || null;
   const label = role === "admin" ? "amministratore" : "docente";
   const { data: existing } = await supabase.from("profiles").select("id, role, full_name").ilike("email", email).maybeSingle();
 
   if (existing) {
-    if (existing.id === user.id) return { ok: false, error: "Questo è il tuo account." };
-    if (existing.role === role) return { ok: true, message: `${existing.full_name || email} è già ${label}.` };
-    const { error } = await supabase.from("profiles").update({ role }).eq("id", existing.id);
-    if (error) return { ok: false, error: "Modifica non riuscita." };
+    if (existing.id === user.id && !packageId) return { ok: false, error: "Questo è il tuo account." };
+    // chi è già docente o amministratore mantiene il suo ruolo; un discente diventa docente
+    if (existing.role === "student") {
+      const { error } = await supabase.from("profiles").update({ role }).eq("id", existing.id);
+      if (error) return { ok: false, error: "Modifica non riuscita." };
+    } else if (!packageId && existing.role === role) {
+      return { ok: true, message: `${existing.full_name || email} è già ${label}.` };
+    } else if (!packageId && existing.role !== role) {
+      const { error } = await supabase.from("profiles").update({ role }).eq("id", existing.id);
+      if (error) return { ok: false, error: "Modifica non riuscita." };
+    }
+    if (packageId) {
+      await supabase.from("package_teachers").upsert({ package_id: packageId, teacher_id: existing.id }, { onConflict: "package_id,teacher_id" });
+      revalidatePath(`/docente/corsi/${packageId}`);
+    }
   } else {
+    const { data: prev } = await supabase.from("teacher_invites").select("package_ids").eq("email", email).maybeSingle();
+    const pkgs = [...new Set([...((prev?.package_ids as string[] | undefined) ?? []), ...(packageId ? [packageId] : [])])];
     const { error } = await supabase
       .from("teacher_invites")
-      .upsert({ email, role, invited_by: user.id }, { onConflict: "email" });
+      .upsert({ email, role, invited_by: user.id, package_ids: pkgs }, { onConflict: "email" });
     if (error) return { ok: false, error: "Invito non salvato. Riprova." };
+    if (packageId) revalidatePath(`/docente/corsi/${packageId}`);
   }
 
   const site = siteUrl();
@@ -627,8 +654,10 @@ export async function inviteTeacher(formData: FormData): Promise<ActionResult> {
   return {
     ok: true,
     message: existing
-      ? `${existing.full_name || email} ora è ${label}.`
-      : `Invito registrato. Appena ${email} si registra diventa ${label}.${emailConfigured() ? " Gli abbiamo inviato un'email." : " Mandagli tu il link: " + href}`,
+      ? packageId
+        ? `${existing.full_name || email} è stato aggiunto ai docenti del corso.`
+        : `${existing.full_name || email} ora è ${label}.`
+      : `Invito registrato. Appena ${email} si registra diventa ${label}${packageId ? " di questo corso" : ""}.${emailConfigured() ? " Gli abbiamo inviato un'email." : " Mandagli tu il link: " + href}`,
   };
 }
 
