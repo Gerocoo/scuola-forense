@@ -1,4 +1,5 @@
 import { FileList } from "./FileList";
+import { LessonPlayer } from "./LessonPlayer";
 import { dateTime } from "@/lib/format";
 import { embedUrl as externalEmbed } from "@/lib/video";
 import type { Lesson, StoredFile } from "@/lib/types";
@@ -13,47 +14,30 @@ export function LessonView({
   files,
   bunnyEmbed,
   aside,
+  notes,
 }: {
   lesson: Lesson;
   files: StoredFile[];
   bunnyEmbed: string | null;
   aside?: React.ReactNode;
+  notes?: { body: string; updated_at: string | null };
 }) {
   const external = externalEmbed(lesson.video_url);
   const hasVideo = !!bunnyEmbed || !!lesson.video_url;
   const live = lesson.kind === "in_presenza";
 
-  const player = bunnyEmbed ? (
-    <iframe
-      src={bunnyEmbed}
-      title={lesson.title}
-      className="aspect-video w-full"
-      allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
-      allowFullScreen
-      loading="lazy"
-    />
-  ) : external ? (
-    <iframe
-      src={external}
-      title={lesson.title}
-      className="aspect-video w-full"
-      allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-      allowFullScreen
-      referrerPolicy="strict-origin-when-cross-origin"
-    />
-  ) : lesson.video_url ? (
-    <video src={lesson.video_url} controls controlsList="nodownload" className="aspect-video w-full" preload="metadata" />
-  ) : null;
+  const src = bunnyEmbed ?? external ?? lesson.video_url;
 
   return (
+    <div className="space-y-10">
+      {hasVideo && src && (
+        <section aria-label={live ? "Registrazione dell'incontro" : "Video"}>
+          {live && <h2 className="mb-3 text-lg font-semibold">Registrazione dell&apos;incontro</h2>}
+          <LessonPlayer lessonId={lesson.id} title={lesson.title} src={src} initialNotes={notes?.body ?? ""} savedAt={notes?.updated_at ?? null} />
+        </section>
+      )}
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
       <div className="min-w-0 space-y-8">
-        {hasVideo && (
-          <section aria-label={live ? "Registrazione dell'incontro" : "Video"}>
-            {live && <h2 className="mb-3 text-lg font-semibold">Registrazione dell&apos;incontro</h2>}
-            <div className="overflow-hidden rounded-[var(--radius-panel)] border border-line bg-ink">{player}</div>
-          </section>
-        )}
         {!hasVideo && !live && lesson.video_status === "processing" && (
           <p className="panel p-5 text-[15px] text-slate">Il video è in preparazione e sarà disponibile tra pochi minuti.</p>
         )}
@@ -104,6 +88,7 @@ export function LessonView({
           {aside}
         </aside>
       )}
+    </div>
     </div>
   );
 }

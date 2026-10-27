@@ -123,3 +123,15 @@ export async function cancelBooking(lessonId: string): Promise<ActionResult> {
   revalidatePath("/area/calendario");
   return { ok: true, message: "Prenotazione annullata." };
 }
+
+export async function saveLessonNote(lessonId: string, body: string): Promise<ActionResult> {
+  const { supabase, user } = await requireUser();
+  const { error } = await supabase.from("lesson_notes").upsert({
+    lesson_id: lessonId,
+    user_id: user.id,
+    body: body.slice(0, 50000),
+    updated_at: new Date().toISOString(),
+  });
+  if (error) return { ok: false, error: "Appunti non salvati. Controlla la connessione." };
+  return { ok: true };
+}

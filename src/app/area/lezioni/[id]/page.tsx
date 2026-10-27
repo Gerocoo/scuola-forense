@@ -18,12 +18,18 @@ export default async function LezionePage({ params }: Props) {
   if (!lesson) notFound();
 
   const live = lesson.kind === "in_presenza";
-  const [{ data: files }, { data: booking }, { data: taken }] = await Promise.all([
+  const [{ data: files }, { data: booking }, { data: taken }, { data: note }] = await Promise.all([
     supabase.from("lesson_files").select("*").eq("lesson_id", id).order("created_at").returns<StoredFile[]>(),
     live && lesson.booking_enabled
       ? supabase.from("lesson_bookings").select("status").eq("lesson_id", id).eq("user_id", user.id).maybeSingle<{ status: string }>()
       : Promise.resolve({ data: null }),
     live && lesson.booking_enabled ? supabase.rpc("lesson_seats_taken", { lid: id }) : Promise.resolve({ data: 0 }),
+    supabase
+      .from("lesson_notes")
+      .select("body, updated_at")
+      .eq("lesson_id", id)
+      .eq("user_id", user.id)
+      .maybeSingle<{ body: string; updated_at: string }>(),
   ]);
 
   const bunny = lesson.bunny_video_id && lesson.video_status === "ready" && bunnyConfigured() ? embedUrl(lesson.bunny_video_id) : null;
@@ -64,7 +70,7 @@ export default async function LezionePage({ params }: Props) {
         title={lesson.title}
         description={live ? (past ? "Incontro in presenza, già svolto" : "Incontro in presenza") : "Lezione registrata"}
       />
-      <LessonView lesson={lesson} files={files ?? []} bunnyEmbed={bunny} aside={aside} />
+      <LessonView lesson={lesson} files={files ?? []} bunnyEmbed={bunny} aside={aside} notes={note ?? undefined} />
     </>
   );
 }
