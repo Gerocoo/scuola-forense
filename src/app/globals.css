@@ -217,8 +217,131 @@
 .anim-bubble { opacity: 0; }
 .is-visible .anim-bubble { animation: bubble-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0.3s) forwards; }
 
+/* ---------- Animazioni aggiuntive della vetrina ---------- */
+@keyframes word-in {
+  from { opacity: 0; transform: translateY(0.45em) rotate(1.5deg); filter: blur(8px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes aurora {
+  0% { transform: translate3d(-6%, -4%, 0) rotate(0deg) scale(1); }
+  50% { transform: translate3d(5%, 3%, 0) rotate(8deg) scale(1.08); }
+  100% { transform: translate3d(-6%, -4%, 0) rotate(0deg) scale(1); }
+}
+@keyframes marquee {
+  to { transform: translateX(-100%); }
+}
+@keyframes shine {
+  from { transform: translateX(-120%) skewX(-20deg); }
+  to { transform: translateX(220%) skewX(-20deg); }
+}
+@keyframes draw-line {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.6); }
+  60% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes menu-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes glow {
+  0%, 100% { filter: drop-shadow(0 0 0 rgb(29 87 71 / 0)); }
+  50% { filter: drop-shadow(0 10px 28px rgb(29 87 71 / 0.35)); }
+}
+
+/* Titolo d'apertura parola per parola */
+.word-in { display: inline-block; animation: word-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Aloni di colore che si muovono lentamente dietro l'apertura */
+.aurora { position: absolute; inset: -20% -10% auto; height: 120%; pointer-events: none; z-index: -1; filter: blur(60px); opacity: 0.55; }
+.aurora::before, .aurora::after {
+  content: ""; position: absolute; border-radius: 9999px;
+  animation: aurora 18s ease-in-out infinite;
+}
+.aurora::before { left: 8%; top: 10%; width: 46%; height: 60%; background: radial-gradient(closest-side, rgb(29 87 71 / 0.22), transparent); }
+.aurora::after { right: 6%; top: 0; width: 40%; height: 55%; background: radial-gradient(closest-side, rgb(201 168 106 / 0.28), transparent); animation-duration: 23s; animation-direction: reverse; }
+
+/* Pulsante principale: riflesso che attraversa al passaggio del mouse */
+.btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+.btn-shine::after {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 40%; z-index: -1;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent);
+  transform: translateX(-120%) skewX(-20deg);
+}
+@media (hover: hover) {
+  .btn-shine:hover::after { animation: shine 0.9s ease-out; }
+}
+.btn-arrow svg { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+.btn-arrow:hover svg { transform: translateX(3px); }
+
+/* Nastro che scorre */
+.marquee { mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+.marquee-row { animation: marquee 38s linear infinite; }
+.marquee:hover .marquee-row { animation-play-state: paused; }
+
+/* Alone che segue il mouse + inclinazione 3D (components/site/Spotlight.tsx) */
+.spotlight {
+  position: relative; isolation: isolate;
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.spotlight::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 1; pointer-events: none;
+  opacity: 0; transition: opacity 0.4s;
+}
+.spotlight-light::before { background: radial-gradient(420px circle at var(--sx, 50%) var(--sy, 50%), rgb(29 87 71 / 0.10), transparent 60%); }
+.spotlight-dark::before { background: radial-gradient(420px circle at var(--sx, 50%) var(--sy, 50%), rgb(255 255 255 / 0.14), transparent 60%); }
+@media (hover: hover) {
+  .spotlight:hover::before { opacity: 1; }
+}
+
+/* Linea che unisce i passi del metodo, si disegna quando entra nello schermo */
+.step-line { transform: scaleX(0); transform-origin: left; }
+.is-visible .step-line { animation: draw-line 1.4s cubic-bezier(0.65, 0, 0.35, 1) 0.3s forwards; }
+.step-dot { opacity: 0; }
+.is-visible .step-dot { animation: pop-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0.3s) forwards; }
+
+/* Marchio finale che "respira" */
+.glow { animation: glow 4.5s ease-in-out infinite; }
+
+/* Menu dell'utente */
+.menu-in { animation: menu-in 0.18s cubic-bezier(0.22, 1, 0.36, 1); transform-origin: top right; }
+
+/* Domande frequenti: apertura morbida dove il browser lo consente */
+@supports (interpolate-size: allow-keywords) {
+  :root { interpolate-size: allow-keywords; }
+  .faq::details-content { height: 0; overflow: clip; transition: height 0.45s cubic-bezier(0.22, 1, 0.36, 1), content-visibility 0.45s allow-discrete; }
+  .faq[open]::details-content { height: auto; }
+}
+
+/* Effetti legati allo scorrimento (Chrome, Edge, Safari recenti); altrove tutto resta statico */
+@supports (animation-timeline: view()) {
+  @keyframes word-light { from { opacity: 0.18; } to { opacity: 1; } }
+  .scroll-word { animation: word-light linear both; animation-timeline: view(); animation-range: entry 60% cover 42%; }
+
+  @keyframes stage-grow { from { transform: scale(0.92); border-radius: 56px; } to { transform: scale(1); } }
+  .stage-scroll { animation: stage-grow linear both; animation-timeline: view(); animation-range: entry 0% cover 40%; }
+
+  @keyframes parallax-up { from { transform: translateY(60px); } to { transform: translateY(-60px); } }
+  .parallax { animation: parallax-up linear both; animation-timeline: view(); }
+
+  @keyframes read-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .scroll-progress { animation: read-progress linear both; animation-timeline: scroll(root); transform-origin: left; }
+
+  @keyframes header-solid { to { background-color: rgb(245 243 238 / 0.92); box-shadow: 0 1px 0 rgb(29 29 31 / 0.06), 0 8px 24px -16px rgb(29 29 31 / 0.25); } }
+  .header-scroll { animation: header-solid linear both; animation-timeline: scroll(root); animation-range: 0 160px; }
+}
+@supports not (animation-timeline: view()) {
+  .scroll-progress { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .hero-in, .stage-in, .temple-float { animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
+  .hero-in, .stage-in, .temple-float, .word-in, .glow, .marquee-row, .aurora::before, .aurora::after,
+  .scroll-word, .stage-scroll, .parallax, .step-line, .step-dot { animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
+  .spotlight { transform: none !important; }
   .ink-mark { background-size: 100% 100% !important; }
   .ink-strike::after { transform: scaleX(1) !important; }
   .ink-insert, .anim-bubble { opacity: 1 !important; clip-path: none !important; transform: none !important; }

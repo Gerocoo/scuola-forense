@@ -16,7 +16,9 @@ export async function SiteHeader() {
   const { user, profile } = await getSession();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-[rgb(245_243_238/0.72)] backdrop-blur-xl backdrop-saturate-150">
+    <header className="header-scroll sticky top-0 z-40 border-b border-black/[0.06] bg-[rgb(245_243_238/0.72)] backdrop-blur-xl backdrop-saturate-150">
+      {/* avanzamento della lettura della pagina */}
+      <span aria-hidden className="scroll-progress absolute inset-x-0 bottom-[-1px] h-[2px] bg-codice" />
       <div className="mx-auto flex h-14 max-w-[1080px] items-center justify-between gap-6 px-4 sm:px-6">
         <Logo />
         <nav aria-label="Sezioni" className="hidden items-center gap-7 md:flex">
@@ -27,7 +29,19 @@ export async function SiteHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <AuthButtons initialLoggedIn={!!user} initialStaff={isStaff(profile)} />
+          <AuthButtons
+            initialLoggedIn={!!user}
+            initialStaff={isStaff(profile)}
+            initialUser={
+              user
+                ? {
+                    name: profile?.full_name || (user.user_metadata?.full_name as string | undefined) || "",
+                    email: user.email ?? "",
+                    avatar: profile?.avatar_url || (user.user_metadata?.avatar_url as string | undefined) || (user.user_metadata?.picture as string | undefined) || null,
+                  }
+                : null
+            }
+          />
         </div>
       </div>
     </header>

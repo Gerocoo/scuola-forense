@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/app/AppShell";
 import { Avatar } from "@/components/app/Avatar";
 import { RoleSelect } from "./RoleSelect";
+import { InviteTeacher, RevokeInvite } from "./InviteTeacher";
 import { requireAdmin } from "@/lib/auth";
 import { dateShort } from "@/lib/format";
 import type { Profile } from "@/lib/types";
@@ -18,14 +19,43 @@ export default async function UtentiPage({ searchParams }: Props) {
     const s = q.replace(/[%_,()]/g, "");
     query = query.or(`full_name.ilike.%${s}%,email.ilike.%${s}%`);
   }
-  const { data } = await query.returns<Profile[]>();
+  const [{ data }, { data: invites }] = await Promise.all([
+    query.returns<Profile[]>(),
+    supabase.from("teacher_invites").select("email, role, created_at").order("created_at", { ascending: false }).returns<{ email: string; role: string; created_at: string }[]>(),
+  ]);
 
   return (
     <>
       <PageHeader
         title="Utenti e ruoli"
-        description="Per aggiungere un docente: chiedigli di registrarsi sul sito, poi cambia qui il suo ruolo in Docente."
+        description="Invita i docenti con la loro email: appena si registrano (anche con Google) hanno l'area docenti. Puoi anche cambiare il ruolo di chi è già iscritto."
       />
+
+      <section className="panel mb-10 p-6">
+        <h2 className="text-[19px] font-semibold">Aggiungi un docente</h2>
+        <p className="mt-1 mb-5 text-[15px] text-slate">
+          Usa l&apos;indirizzo con cui accederà, per esempio il suo account Google. Se è già registrato diventa docente subito.
+        </p>
+        <InviteTeacher />
+        {invites && invites.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-[14px] font-semibold text-slate">Inviti in attesa di registrazione</h3>
+            <ul className="mt-2 divide-y divide-line-soft">
+              {invites.map((i) => (
+                <li key={i.email} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{i.email}</p>
+                    <p className="text-[13px] text-mute">
+                      {i.role === "admin" ? "Amministratore" : "Docente"} · invitato il {dateShort(i.created_at)}
+                    </p>
+                  </div>
+                  <RevokeInvite email={i.email} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
       <form action="/docente/utenti" className="mb-6 flex gap-2">
         <label htmlFor="q" className="sr-only">Cerca</label>
         <input id="q" name="q" defaultValue={q} placeholder="Cerca per nome o email" className="field w-72 py-2" />

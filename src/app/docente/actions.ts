@@ -539,3 +539,62 @@ export async function disconnectYoutube(): Promise<ActionResult> {
   revalidatePath("/docente/impostazioni");
   return { ok: true, message: "Canale scollegato." };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Inviti docenti                                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Invita un docente per email. Se la persona è già registrata cambia subito il ruolo;
+ * altrimenti l'invito resta in attesa e diventa docente appena si registra (Google o email).
+ */
+export async function inviteTeacher(formData: FormData): Promise<ActionResult> {
+  const { supabase, user, profile } = await requireAdmin();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const role: Role = formData.get("role") === "admin" ? "admin" : "teacher";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "Scrivi un indirizzo email valido." };
+
+  const label = role === "admin" ? "amministratore" : "docente";
+  const { data: existing } = await supabase.from("profiles").select("id, role, full_name").ilike("email", email).maybeSingle();
+
+  if (existing) {
+    if (existing.id === user.id) return { ok: false, error: "Questo è il tuo account." };
+    if (existing.role === role) return { ok: true, message: `${existing.full_name || email} è già ${label}.` };
+    const { error } = await supabase.from("profiles").update({ role }).eq("id", existing.id);
+    if (error) return { ok: false, error: "Modifica non riuscita." };
+  } else {
+    const { error } = await supabase
+      .from("teacher_invites")
+      .upsert({ email, role, invited_by: user.id }, { onConflict: "email" });
+    if (error) return { ok: false, error: "Invito non salvato. Riprova." };
+  }
+
+  const site = siteUrl();
+  const href = existing ? `${site}/accedi` : `${site}/registrati`;
+  await notify({
+    to: email,
+    subject: `Sei stato invitato come ${label}`,
+    html: emailLayout(
+      `Benvenuto nella scuola`,
+      `<p>${escapeHtml(profile.full_name || "La direzione")} ti ha aggiunto come <strong>${label}</strong> sulla piattaforma.</p>
+       <p>${existing ? "Accedi con il tuo account: troverai l'area docenti." : `Registrati con <strong>questo indirizzo email</strong> (${escapeHtml(email)}), anche con il pulsante &laquo;Continua con Google&raquo;: l'area docenti si attiva da sola.`}</p>`,
+      { label: existing ? "Accedi" : "Registrati", href },
+    ),
+  });
+
+  revalidatePath("/docente/utenti");
+  return {
+    ok: true,
+    message: existing
+      ? `${existing.full_name || email} ora è ${label}.`
+      : `Invito registrato. Appena ${email} si registra diventa ${label}.${process.env.RESEND_API_KEY ? " Gli abbiamo inviato un'email." : " Mandagli tu il link: " + href}`,
+  };
+}
+
+export async function revokeInvite(email: string): Promise<ActionResult> {
+  const { supabase } = await requireAdmin();
+  const { error } = await supabase.from("teacher_invites").delete().eq("email", email.toLowerCase());
+  if (error) return { ok: false, error: "Non riuscito." };
+  revalidatePath("/docente/utenti");
+  return { ok: true };
+}
