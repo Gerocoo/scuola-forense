@@ -221,3 +221,57 @@ export async function removeAvatar(): Promise<ActionResult> {
   revalidatePath("/docente", "layout");
   return { ok: true, message: "Foto rimossa." };
 }
+
+/* ---------- orale ---------- */
+
+export async function saveQuizAttempt(topic: string | null, score: number, total: number): Promise<ActionResult> {
+  const { supabase, user } = await requireUser();
+  if (!(total > 0 && score >= 0 && score <= total && total <= 50)) return { ok: false, error: "Dati non validi." };
+  const { error } = await supabase.from("quiz_attempts").insert({ user_id: user.id, topic, score, total });
+  if (error) return { ok: false, error: "Risultato non salvato." };
+  revalidatePath("/area/orale");
+  return { ok: true };
+}
+
+export async function bookOralSlot(slotId: string): Promise<ActionResult> {
+  const { supabase, user, profile } = await requireUser();
+  const { error } = await supabase.rpc("book_oral_slot", { sid: slotId });
+  if (error) return { ok: false, error: error.message };
+  const admin = createAdminClient();
+  const { data: slot } = await admin.from("oral_slots").select("starts_at, meeting_url, teacher_id").eq("id", slotId).maybeSingle();
+  if (slot) {
+    const { data: t } = await admin.from("profiles").select("email, full_name").eq("id", slot.teacher_id).maybeSingle();
+    const when = new Date(slot.starts_at).toLocaleString("it-IT", { dateStyle: "full", timeStyle: "short", timeZone: "Europe/Rome" });
+    if (t?.email) {
+      await notify({
+        to: t.email,
+        subject: `Simulazione d'orale prenotata: ${when}`,
+        html: emailLayout("Nuova simulazione d'orale", `<p>${escapeHtml(profile.full_name || user.email || "Un discente")} ha prenotato la simulazione d'orale di <strong>${when}</strong>.</p>`, {
+          label: "Vedi le prenotazioni",
+          href: `${siteUrl()}/docente/orale`,
+        }),
+      });
+    }
+    if (user.email) {
+      await notify({
+        to: user.email,
+        subject: `Simulazione d'orale confermata: ${when}`,
+        html: emailLayout(
+          "Simulazione d'orale confermata",
+          `<p>Ti aspettiamo <strong>${when}</strong> con ${escapeHtml(t?.full_name || "il docente")}.</p>${slot.meeting_url ? `<p>Collegamento: <a href="${slot.meeting_url}">${escapeHtml(slot.meeting_url)}</a></p>` : ""}`,
+          { label: "Apri la sezione Orale", href: `${siteUrl()}/area/orale` },
+        ),
+      });
+    }
+  }
+  revalidatePath("/area/orale");
+  return { ok: true, message: "Prenotazione confermata. Ti abbiamo mandato un'email." };
+}
+
+export async function cancelOralSlot(slotId: string): Promise<ActionResult> {
+  const { supabase } = await requireUser();
+  const { error } = await supabase.rpc("cancel_oral_slot", { sid: slotId });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/area/orale");
+  return { ok: true, message: "Prenotazione annullata." };
+}

@@ -870,3 +870,84 @@ export async function saveCollectiveReview(
   revalidatePath(`/docente/corsi/${ce.package_id}`);
   return { ok: true, message: input.publish ? (visibleNow ? "Pubblicata: i discenti la vedono." : "Pubblicata: i discenti la vedranno dopo la scadenza.") : "Bozza salvata." };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Orale: domande del quiz e orari delle simulazioni                  */
+/* ------------------------------------------------------------------ */
+
+export async function saveQuizQuestion(formData: FormData): Promise<ActionResult> {
+  const { supabase, user } = await requireStaff();
+  const id = String(formData.get("id") ?? "") || null;
+  const topic = String(formData.get("topic") ?? "");
+  const question = String(formData.get("question") ?? "").trim().slice(0, 1000);
+  // le risposte vuote si scartano, mantenendo l'indicazione di quella corretta
+  const raw = formData.getAll("option").map((o) => String(o).trim().slice(0, 300));
+  const chosen = Number(formData.get("correct"));
+  const options = raw.filter(Boolean);
+  const correct = raw[chosen] ? raw.slice(0, chosen).filter(Boolean).length : -1;
+  const explanation = String(formData.get("explanation") ?? "").trim().slice(0, 2000);
+  if (!["deontologia", "ordinamento", "previdenza"].includes(topic)) return { ok: false, error: "Scegli l'argomento." };
+  if (!question) return { ok: false, error: "Scrivi la domanda." };
+  if (options.length < 2) return { ok: false, error: "Servono almeno due risposte." };
+  if (!(correct >= 0 && correct < options.length)) return { ok: false, error: "Indica la risposta corretta." };
+  const row = { topic, question, options, correct, explanation };
+  const { error } = id
+    ? await supabase.from("quiz_questions").update(row).eq("id", id)
+    : await supabase.from("quiz_questions").insert({ ...row, created_by: user.id });
+  if (error) return { ok: false, error: "Salvataggio non riuscito." };
+  revalidatePath("/docente/orale");
+  return { ok: true, message: id ? "Domanda aggiornata." : "Domanda aggiunta." };
+}
+
+export async function deleteQuizQuestion(id: string): Promise<ActionResult> {
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.from("quiz_questions").delete().eq("id", id);
+  if (error) return { ok: false, error: "Non riuscito." };
+  revalidatePath("/docente/orale");
+  return { ok: true };
+}
+
+export async function createOralSlots(formData: FormData): Promise<ActionResult> {
+  const { supabase, user } = await requireStaff();
+  const start = fromLocalInput(String(formData.get("starts_at") ?? ""));
+  const duration = Number(formData.get("duration_min")) || 30;
+  const count = Math.min(12, Math.max(1, Number(formData.get("count")) || 1));
+  const url = String(formData.get("meeting_url") ?? "").trim() || null;
+  if (!start) return { ok: false, error: "Indica data e ora." };
+  if (new Date(start).getTime() < Date.now()) return { ok: false, error: "L'orario è già passato." };
+  if (url && !/^https?:\/\//i.test(url)) return { ok: false, error: "Il link deve iniziare con https://" };
+  // più orari consecutivi della stessa durata
+  const rows = Array.from({ length: count }, (_, i) => ({
+    teacher_id: user.id,
+    starts_at: new Date(new Date(start).getTime() + i * duration * 60_000).toISOString(),
+    duration_min: duration,
+    meeting_url: url,
+  }));
+  const { error } = await supabase.from("oral_slots").insert(rows);
+  if (error) return { ok: false, error: "Creazione non riuscita." };
+  revalidatePath("/docente/orale");
+  return { ok: true, message: count > 1 ? `${count} orari aggiunti.` : "Orario aggiunto." };
+}
+
+export async function deleteOralSlot(id: string): Promise<ActionResult> {
+  const { supabase } = await requireStaff();
+  const { data: slot } = await supabase.from("oral_slots").select("booked_by, starts_at").eq("id", id).maybeSingle();
+  const { error } = await supabase.from("oral_slots").delete().eq("id", id);
+  if (error) return { ok: false, error: "Non riuscito." };
+  if (slot?.booked_by) {
+    const { data: s } = await createAdminClient().from("profiles").select("email").eq("id", slot.booked_by).maybeSingle();
+    const when = new Date(slot.starts_at).toLocaleString("it-IT", { dateStyle: "full", timeStyle: "short", timeZone: "Europe/Rome" });
+    if (s?.email) {
+      await notify({
+        to: s.email,
+        subject: `Simulazione d'orale annullata: ${when}`,
+        html: emailLayout("Simulazione d'orale annullata", `<p>Il docente ha annullato la simulazione di <strong>${when}</strong>. Puoi prenotare un altro orario.</p>`, {
+          label: "Scegli un altro orario",
+          href: `${siteUrl()}/area/orale`,
+        }),
+      });
+    }
+  }
+  revalidatePath("/docente/orale");
+  return { ok: true };
+}
