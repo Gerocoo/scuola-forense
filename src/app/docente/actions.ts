@@ -539,6 +539,7 @@ export async function savePackage(id: string | null, formData: FormData): Promis
       .filter(Boolean),
     highlight: formData.get("highlight") === "on",
     active: formData.get("active") === "on",
+    subject: ["civile", "penale", "amministrativo"].includes(String(formData.get("subject"))) ? String(formData.get("subject")) : null,
     sort: Number(formData.get("sort")) || 0,
   };
 

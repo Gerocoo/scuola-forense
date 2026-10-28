@@ -15,7 +15,7 @@ export default async function DiscentiPage({ searchParams }: Props) {
 
   let query = supabase
     .from("profiles")
-    .select("id, full_name, email, avatar_url, created_at, enrollments(status, ends_at, package:packages(title)), assignments!assignments_student_id_fkey(status)")
+    .select("id, full_name, email, avatar_url, created_at, exam_subject, enrollments(status, ends_at, package:packages(title)), assignments!assignments_student_id_fkey(status)")
     .eq("role", "student")
     .order("full_name");
   if (sp.q) {
@@ -30,6 +30,7 @@ export default async function DiscentiPage({ searchParams }: Props) {
     email: string;
     avatar_url: string | null;
     created_at: string;
+    exam_subject: string | null;
     enrollments: { status: string; ends_at: string | null; package: { title: string } | null }[];
     assignments: { status: string }[];
   };
@@ -103,6 +104,9 @@ export default async function DiscentiPage({ searchParams }: Props) {
                   <div className="min-w-0">
                     <p className="truncate text-[16px] font-semibold">{s.full_name || s.email}</p>
                     <div className="mt-1 flex flex-wrap gap-1.5">
+                      {s.exam_subject && (
+                        <span className="rounded-full bg-ink px-2 py-0.5 text-[12px] font-medium capitalize text-white">{s.exam_subject}</span>
+                      )}
                       {s.active.length ? (
                         s.active.map((c) => (
                           <span key={c} className="rounded-full bg-codice-soft px-2 py-0.5 text-[13px] font-medium text-codice">{c}</span>

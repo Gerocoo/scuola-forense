@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Package } from "@/lib/types";
-import { currentPrice, euro } from "@/lib/format";
+import { currentPrice, euro, subjectLabel } from "@/lib/format";
 
 export function PackageCard({ pkg }: { pkg: Package }) {
   const price = currentPrice(pkg);
@@ -12,7 +12,12 @@ export function PackageCard({ pkg }: { pkg: Package }) {
         dark ? "bg-codice text-white" : "bg-surface text-ink shadow-[var(--shadow-card)]"
       }`}
     >
-      <p className={`text-[14px] font-medium ${dark ? "text-ivory/80" : "text-codice"}`}>{pkg.period_label}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <p className={`text-[14px] font-medium ${dark ? "text-ivory/80" : "text-codice"}`}>{pkg.period_label}</p>
+        <span className={`rounded-full px-2 py-0.5 text-[12px] font-medium ${dark ? "bg-white/15 text-white" : "bg-paper text-slate"}`}>
+          {subjectLabel(pkg.subject) ?? "Civile, penale e amministrativo"}
+        </span>
+      </div>
       <h3 className="mt-1 text-[26px] font-semibold leading-tight">{pkg.title}</h3>
       <p className={`mt-2 text-[15px] leading-relaxed ${dark ? "text-white/75" : "text-slate"}`}>{pkg.tagline}</p>
 

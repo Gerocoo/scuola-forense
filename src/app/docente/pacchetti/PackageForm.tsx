@@ -41,6 +41,15 @@ export function PackageForm({
           <input id="title" name="title" defaultValue={pkg?.title} required className="field" placeholder="Intensivo primavera" />
         </div>
         <div>
+          <label className="label" htmlFor="subject">Materia</label>
+          <select id="subject" name="subject" defaultValue={pkg?.subject ?? ""} className="field">
+            <option value="">Tutte le materie</option>
+            <option value="civile">Diritto civile</option>
+            <option value="penale">Diritto penale</option>
+            <option value="amministrativo">Diritto amministrativo</option>
+          </select>
+        </div>
+        <div>
           <label className="label" htmlFor="period_label">Periodo mostrato</label>
           <input id="period_label" name="period_label" defaultValue={pkg?.period_label} className="field" placeholder="Marzo – maggio 2027" />
         </div>

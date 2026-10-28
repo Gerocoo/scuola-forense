@@ -99,7 +99,12 @@ export async function updateProfile(_prev: ActionResult | null, formData: FormDa
   const phone = String(formData.get("phone") ?? "").trim().slice(0, 40) || null;
   if (!full_name) return { ok: false, error: "Inserisci nome e cognome." };
 
-  const { error } = await supabase.from("profiles").update({ full_name, phone }).eq("id", user.id);
+  const subj = String(formData.get("exam_subject") ?? "");
+  const exam_subject = ["civile", "penale", "amministrativo"].includes(subj) ? subj : null;
+  const { error } = await supabase
+    .from("profiles")
+    .update(formData.has("exam_subject") ? { full_name, phone, exam_subject } : { full_name, phone })
+    .eq("id", user.id);
   if (error) return { ok: false, error: "Salvataggio non riuscito." };
   revalidatePath("/area", "layout");
   revalidatePath("/docente", "layout");

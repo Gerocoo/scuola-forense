@@ -11,6 +11,7 @@ export interface Profile {
   created_at: string;
   /** Gestore tecnico della piattaforma: non può essere modificato né eliminato dal sito. */
   is_super?: boolean;
+  exam_subject?: "civile" | "penale" | "amministrativo" | null;
 }
 
 export interface Package {
@@ -32,6 +33,7 @@ export interface Package {
   seats: number | null;
   active: boolean;
   sort: number;
+  subject?: "civile" | "penale" | "amministrativo" | null;
 }
 
 export interface Enrollment {

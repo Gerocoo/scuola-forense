@@ -115,3 +115,11 @@ export function initials(name: string, email?: string) {
   const parts = src.split(/\s+/).filter(Boolean);
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
 }
+
+export const SUBJECTS = [
+  { value: "civile", label: "Diritto civile" },
+  { value: "penale", label: "Diritto penale" },
+  { value: "amministrativo", label: "Diritto amministrativo" },
+] as const;
+export type Subject = (typeof SUBJECTS)[number]["value"];
+export const subjectLabel = (s: string | null | undefined) => SUBJECTS.find((x) => x.value === s)?.label ?? null;

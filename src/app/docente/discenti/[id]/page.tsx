@@ -8,7 +8,7 @@ import { requireStaff } from "@/lib/auth";
 import { loadPath } from "@/lib/progress";
 import { loadScorePoints } from "@/lib/grading";
 import { ProgressChart } from "@/components/app/ProgressChart";
-import { dateLong, dateShort, euro, KIND_LABEL } from "@/lib/format";
+import { dateLong, dateShort, euro, KIND_LABEL, subjectLabel } from "@/lib/format";
 import type { Assignment, Enrollment, Package, Profile } from "@/lib/types";
 
 type Props = { params: Promise<{ id: string }> };
@@ -89,6 +89,7 @@ export default async function DiscentePage({ params }: Props) {
                 <a href={`mailto:${s.email}`} className="break-all hover:text-ink">{s.email}</a>
                 {s.phone && <a href={`tel:${s.phone}`} className="hover:text-ink">{s.phone}</a>}
                 <span className="text-mute">Iscritto dal {dateLong(s.created_at)}</span>
+                {s.exam_subject && <span className="font-medium text-ink">Esame in {subjectLabel(s.exam_subject)?.replace("Diritto ", "")}</span>}
               </p>
             </div>
           </div>

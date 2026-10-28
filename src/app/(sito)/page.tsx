@@ -8,10 +8,13 @@ import { Spotlight } from "@/components/site/Spotlight";
 import { LogoMark } from "@/components/Logo";
 import { ABOUT, FAQ, HERO, METHOD, SITE, TEAM } from "@/content/site";
 import { createClient } from "@/lib/supabase/server";
-import { initials } from "@/lib/format";
+import { initials, SUBJECTS } from "@/lib/format";
 import type { Package } from "@/lib/types";
 
-export default async function HomePage() {
+type Props = { searchParams: Promise<{ materia?: string }> };
+
+export default async function HomePage({ searchParams }: Props) {
+  const { materia } = await searchParams;
   const supabase = await createClient();
   const { data: packages } = await supabase
     .from("packages")
@@ -170,9 +173,24 @@ export default async function HomePage() {
               In base a quanto manca alla prova. Dopo il pagamento l&apos;area riservata è attiva subito.
             </p>
           </Reveal>
+          {packages && packages.some((p) => p.subject) && (
+            <nav aria-label="Filtra per materia" className="mt-10 flex flex-wrap justify-center gap-2">
+              {[{ v: "", l: "Tutte" }, ...SUBJECTS.map((x) => ({ v: x.value, l: x.label.replace("Diritto ", "") }))].map((f) => (
+                <Link
+                  key={f.v}
+                  href={f.v ? `/?materia=${f.v}#corsi` : "/#corsi"}
+                  scroll={false}
+                  aria-current={(materia ?? "") === f.v ? "true" : undefined}
+                  className={`rounded-full px-4 py-1.5 text-[15px] capitalize ${(materia ?? "") === f.v ? "bg-ink text-white" : "border border-line bg-surface text-slate hover:text-ink"}`}
+                >
+                  {f.l}
+                </Link>
+              ))}
+            </nav>
+          )}
           {packages && packages.length > 0 ? (
-            <div className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {packages.map((p, i) => (
+            <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {packages.filter((p) => !materia || !p.subject || p.subject === materia).map((p, i) => (
                 <Reveal key={p.id} delay={i * 90} className="h-full">
                   <Spotlight tone={p.highlight ? "dark" : "light"} className="h-full rounded-[28px]">
                     <PackageCard pkg={p} />
