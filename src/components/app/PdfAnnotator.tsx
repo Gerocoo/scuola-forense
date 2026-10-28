@@ -11,7 +11,7 @@ import { saveAnnotations } from "@/app/docente/actions";
 type Pt = [number, number];
 type Stroke = { id: string; tool: "pen" | "highlight"; color: string; width: number; points: Pt[] };
 type Note = { id: string; x: number; y: number; text: string };
-type PageAnn = { strokes: Stroke[]; notes: Note[] };
+type PageAnn = { strokes: Stroke[]; notes: Note[]; margin?: string };
 export type Annotations = { pages: Record<string, PageAnn> };
 
 type Tool = "move" | "pen" | "highlight" | "note" | "eraser";
@@ -51,6 +51,89 @@ function loadScript(src: string) {
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+
+// colonna a margine a righe: si scrive liberamente, rigo dopo rigo
+const LH = 26; // altezza del rigo in px
+const PAD = 8; // spazio sopra il primo rigo
+const ruled = {
+  backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent ${LH - 1}px, rgb(163 48 29 / 0.16) ${LH - 1}px, rgb(163 48 29 / 0.16) ${LH}px)`,
+  backgroundPosition: `0 ${PAD}px`,
+  backgroundAttachment: "local" as const,
+  lineHeight: `${LH}px`,
+  paddingTop: PAD,
+};
+
+/** Area a righe del margine: un clic su un rigo vuoto porta lì il cursore. */
+function MarginWriter({
+  value,
+  onChange,
+  readOnly,
+  minHeight,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  readOnly: boolean;
+  minHeight: number;
+  placeholder?: string;
+}) {
+  const ta = useRef<HTMLTextAreaElement>(null);
+  const [h, setH] = useState(minHeight);
+
+  // altezza: almeno quanto la pagina, poi cresce con il testo
+  useEffect(() => {
+    const el = ta.current;
+    if (!el) return;
+    const prev = el.style.height;
+    el.style.height = "0px";
+    const need = el.scrollHeight + LH;
+    el.style.height = prev;
+    setH(Math.max(minHeight, need));
+  }, [value, minHeight]);
+
+  const cls = "block w-full resize-none bg-transparent px-1 font-serif text-[15px] italic text-ceralacca outline-none placeholder:text-ceralacca/35";
+
+  if (readOnly) {
+    return (
+      <div className={`${cls} whitespace-pre-wrap break-words`} style={{ ...ruled, minHeight }}>
+        {value}
+      </div>
+    );
+  }
+
+  return (
+    <textarea
+      ref={ta}
+      value={value}
+      spellCheck
+      placeholder={placeholder}
+      aria-label="Annotazioni a margine"
+      onChange={(e) => onChange(e.target.value)}
+      onMouseDown={(e) => {
+        const el = e.currentTarget;
+        const r = el.getBoundingClientRect();
+        const line = Math.floor((e.clientY - r.top + el.scrollTop - PAD) / LH);
+        if (line < 0) return;
+        // righe di testo già occupate (contando gli a capo automatici)
+        const prev = el.style.height;
+        el.style.height = "0px";
+        const used = value ? Math.round((el.scrollHeight - PAD) / LH) : 0;
+        el.style.height = prev;
+        if (line < used) return; // clic dentro il testo: comportamento normale
+        e.preventDefault();
+        const add = value ? line - used + 1 : line;
+        const next = value + "\n".repeat(Math.max(0, add));
+        onChange(next);
+        requestAnimationFrame(() => {
+          el.focus();
+          el.setSelectionRange(next.length, next.length);
+        });
+      }}
+      className={`${cls} cursor-text`}
+      style={{ ...ruled, height: h }}
+    />
+  );
+}
 const empty = (): PageAnn => ({ strokes: [], notes: [] });
 
 function pathOf(points: Pt[]) {
@@ -84,10 +167,12 @@ function PdfPage({
   color,
   readOnly,
   onChange,
+  onText,
   margin,
   total,
   fileName,
 }: {
+  onText: (next: PageAnn) => void;
   margin: number;
   total: number;
   fileName: string;
@@ -174,17 +259,10 @@ function PdfPage({
   const drawingTool = !readOnly && (tool === "pen" || tool === "highlight");
   const cursor = readOnly || tool === "move" ? "default" : tool === "eraser" ? "pointer" : tool === "note" ? "copy" : "crosshair";
 
-  // note ordinate dall'alto: in colonna a margine non si sovrappongono
+  // note numerate in ordine dall'alto
   const ordered = ann.notes.map((n, i) => ({ n, num: i + 1 })).sort((a, b) => a.n.y - b.n.y);
   const pageH = width * ratio;
-  let nextFree = 0;
-  const placed = ordered.map((o) => {
-    const est = 30 + Math.ceil(Math.max(o.n.text.length, 12) / 24) * 22;
-    const top = Math.max((o.n.y / H) * pageH, nextFree);
-    nextFree = top + est + 14;
-    return { ...o, top };
-  });
-  const marginH = Math.max(pageH, nextFree);
+  const setMargin = (v: string) => onText({ ...ann, margin: v });
 
   const noteBody = (n: Note, num: number) => (
     <div className="group/note">
@@ -276,18 +354,26 @@ function PdfPage({
           ))}
         </div>
         {margin > 0 && (
-          <div className="relative ml-5 mr-5 shrink-0 border-l border-dashed border-ceralacca/40 pl-4" style={{ width: margin, minHeight: marginH }}>
-            {placed.map((o) => (
-              <div key={o.n.id} className="absolute left-4 right-0" style={{ top: o.top }}>
-                {noteBody(o.n, o.num)}
-              </div>
-            ))}
+          <div className="relative ml-5 mr-5 shrink-0 border-l border-dashed border-ceralacca/40 pl-3" style={{ width: margin }}>
+            <MarginWriter
+              value={ann.margin ?? ""}
+              onChange={setMargin}
+              readOnly={readOnly}
+              minHeight={pageH}
+              placeholder={index === 0 ? "Scrivi qui a margine: clicca su un rigo e scrivi…" : undefined}
+            />
           </div>
         )}
       </div>
-      {/* su telefono le note vanno sotto la pagina */}
-      {margin === 0 && ordered.length > 0 && (
-        <div className="space-y-3 border-t border-dashed border-ceralacca/40 px-4 py-3">
+      {/* su telefono il margine va sotto la pagina */}
+      {margin === 0 && (!readOnly || ann.margin) && (
+        <div className="border-t border-dashed border-ceralacca/40 px-4 py-2">
+          <MarginWriter value={ann.margin ?? ""} onChange={setMargin} readOnly={readOnly} minHeight={LH * 3 + PAD} placeholder="Annotazioni su questa pagina…" />
+        </div>
+      )}
+      {/* note numerate, richiamate sul testo */}
+      {ordered.length > 0 && (
+        <div className="space-y-3 border-t border-dashed border-ceralacca/40 px-4 py-3 sm:px-5">
           {ordered.map((o) => (
             <div key={o.n.id}>{noteBody(o.n, o.num)}</div>
           ))}
@@ -409,10 +495,10 @@ export function PdfAnnotator({
     return () => clearTimeout(t);
   }, [ann, fileId, readOnly]);
 
-  const updatePage = useCallback((i: number, next: PageAnn) => {
+  const updatePage = useCallback((i: number, next: PageAnn, typing = false) => {
     dirty.current = true;
     const prev = annRef.current;
-    setHistory((h) => [...h.slice(-49), prev]);
+    if (!typing) setHistory((h) => [...h.slice(-49), prev]);
     setAnn({ pages: { ...prev.pages, [String(i)]: next } });
   }, []);
 
@@ -495,6 +581,43 @@ export function PdfAnnotator({
           page.drawText(`NOTA ${k + 1}`, { x: x + 6, y: top - 11, size: 7, font: bold, color: hex("#c0261b") });
           lines.forEach((l, j) => page.drawText(l, { x: x + 6, y: top - 22 - j * (size + 3), size, font, color: hex("#5a1a12") }));
         });
+
+        // annotazioni a margine: la pagina si allarga a destra e il testo segue i righi dello schermo
+        if (a.margin?.trim()) {
+          const k = pw / width; // unità PDF per pixel a schermo
+          const extra = Math.round(pw * 0.32);
+          page.setSize(pw + extra, ph);
+          try {
+            page.setCropBox(0, 0, pw + extra, ph);
+          } catch {}
+          page.drawRectangle({ x: pw, y: 0, width: extra, height: ph, color: rgb(1, 1, 1) });
+          page.drawLine({ start: { x: pw + 6, y: 0 }, end: { x: pw + 6, y: ph }, thickness: 0.6, color: hex("#c0261b"), opacity: 0.35, dashArray: [3, 3] });
+          const lh = LH * k;
+          const size = Math.min(10, lh * 0.55);
+          const maxW = extra - 20;
+          const rows: string[] = [];
+          for (const raw of safe(a.margin).split("\n")) {
+            if (!raw.trim()) {
+              rows.push("");
+              continue;
+            }
+            let line = "";
+            for (const w of raw.split(/\s+/)) {
+              const t = line ? `${line} ${w}` : w;
+              if (font.widthOfTextAtSize(t, size) > maxW && line) {
+                rows.push(line);
+                line = w;
+              } else line = t;
+            }
+            rows.push(line);
+          }
+          rows.forEach((r, j) => {
+            const base = ph - (PAD * k + (j + 1) * lh) + lh * 0.28;
+            if (base < 4) return;
+            page.drawLine({ start: { x: pw + 12, y: ph - (PAD * k + (j + 1) * lh) }, end: { x: pw + extra - 8, y: ph - (PAD * k + (j + 1) * lh) }, thickness: 0.4, color: hex("#c0261b"), opacity: 0.18 });
+            if (r) page.drawText(r, { x: pw + 14, y: base, size, font, color: hex("#a3301d") });
+          });
+        }
       });
 
       const out = await doc.save();
@@ -622,6 +745,7 @@ export function PdfAnnotator({
                 color={color}
                 readOnly={readOnly}
                 onChange={(next) => updatePage(i, next)}
+                onText={(next) => updatePage(i, next, true)}
                 margin={margin}
                 total={sizes.length}
                 fileName={fileName}
