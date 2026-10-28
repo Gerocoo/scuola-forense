@@ -55,7 +55,11 @@ export const METHOD = {
   ],
 };
 
-export const TEAM: { name: string; role: string; bio: string; subjects: string[] }[] = [
+/**
+ * Docenti. `credential` è facoltativa: una qualifica breve e verificabile
+ * (es. "Ex commissario d'esame", "Cassazionista"), mostrata come etichetta.
+ */
+export const TEAM: { name: string; role: string; bio: string; subjects: string[]; credential?: string }[] = [
   {
     name: "Avv. Luisa Di Fede",
     role: "Avvocato penalista",
@@ -91,4 +95,21 @@ export const FAQ = [
     q: "Ricevo la fattura?",
     a: "Sì. Durante il pagamento inserisci codice fiscale o partita IVA e la fattura arriva via email.",
   },
+];
+
+
+/**
+ * Testimonianze di ex allievi: inserire solo testi reali e autorizzati.
+ * Finché l'elenco è vuoto la sezione non compare sul sito.
+ */
+export const TESTIMONIALS: { quote: string; name: string; detail: string }[] = [
+  // { quote: "…", name: "Nome C.", detail: "Abilitata nella sessione 2026, diritto civile" },
+];
+
+/**
+ * Risultati della scuola: solo dati veri e verificabili.
+ * Finché l'elenco è vuoto la fascia dei numeri non compare.
+ */
+export const STATS: { value: string; label: string }[] = [
+  // { value: "87%", label: "degli allievi ha superato gli scritti nel 2026" },
 ];

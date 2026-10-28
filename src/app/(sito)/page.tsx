@@ -6,7 +6,7 @@ import { Reveal } from "@/components/site/Reveal";
 import { Marquee, ScrollWords, WordsIn } from "@/components/site/Motion";
 import { Spotlight } from "@/components/site/Spotlight";
 import { LogoMark } from "@/components/Logo";
-import { ABOUT, FAQ, HERO, METHOD, SITE, TEAM } from "@/content/site";
+import { ABOUT, FAQ, HERO, METHOD, SITE, STATS, TEAM, TESTIMONIALS } from "@/content/site";
 import { createClient } from "@/lib/supabase/server";
 import { initials, SUBJECTS } from "@/lib/format";
 import type { Package } from "@/lib/types";
@@ -84,6 +84,20 @@ export default async function HomePage({ searchParams }: Props) {
         </Reveal>
       </section>
 
+      {STATS.length > 0 && (
+        <section aria-label="Risultati" className="border-y border-black/[0.06] bg-surface">
+          <dl className="mx-auto grid max-w-[1080px] gap-8 px-4 py-14 text-center sm:grid-cols-3 sm:px-6">
+            {STATS.map((st) => (
+              <Reveal key={st.label}>
+                <dt className="sr-only">{st.label}</dt>
+                <dd className="text-[44px] font-semibold tracking-[-0.03em] text-codice tabular-nums">{st.value}</dd>
+                <dd className="mt-1 text-[16px] text-slate">{st.label}</dd>
+              </Reveal>
+            ))}
+          </dl>
+        </section>
+      )}
+
       {/* Metodo: sequenza reale, quindi numerata */}
       <section id="metodo" className="scroll-mt-16 bg-surface py-20 sm:py-32">
         <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
@@ -153,6 +167,9 @@ export default async function HomePage({ searchParams }: Props) {
                     {initials(t.name.replace(/^(Avv\.|Dott\.|Prof\.)\s*/, ""))}
                   </span>
                   <h3 className="mt-6 text-[21px] font-semibold">{t.name}</h3>
+                  {t.credential && (
+                    <p className="mt-1 inline-block rounded-full bg-ivory px-2.5 py-0.5 text-[13px] font-semibold text-codice">{t.credential}</p>
+                  )}
                   <p className="text-[15px] text-ivory/80">{t.role}</p>
                   <p className="mt-4 text-[15px] leading-relaxed text-white/80">{t.bio}</p>
                   <ul className="mt-5 flex flex-wrap gap-2">
@@ -166,6 +183,29 @@ export default async function HomePage({ searchParams }: Props) {
           </div>
         </div>
       </section>
+
+      {TESTIMONIALS.length > 0 && (
+        <section className="py-20 sm:py-28">
+          <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
+            <Reveal className="max-w-3xl">
+              <h2 className="text-[32px] font-semibold leading-tight sm:text-[48px]">Chi ha studiato con noi.</h2>
+            </Reveal>
+            <div className="mt-12 grid gap-4 md:grid-cols-3">
+              {TESTIMONIALS.map((t, i) => (
+                <Reveal key={t.name} delay={i * 90} className="h-full">
+                  <figure className="panel flex h-full flex-col p-6">
+                    <blockquote className="flex-1 font-serif text-[18px] italic leading-relaxed text-ink">&ldquo;{t.quote}&rdquo;</blockquote>
+                    <figcaption className="mt-5 text-[15px]">
+                      <span className="font-semibold">{t.name}</span>
+                      <span className="block text-mute">{t.detail}</span>
+                    </figcaption>
+                  </figure>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Corsi */}
       <section id="corsi" className="scroll-mt-16 py-20 sm:py-32">

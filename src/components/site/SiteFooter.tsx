@@ -22,6 +22,8 @@ export function SiteFooter() {
           </div>
           <div className="space-y-2">
             <p className="font-semibold text-ink">Piattaforma</p>
+            <p><Link className="text-mute hover:text-ink" href="/esame-avvocato-2026">Il nuovo esame 2026</Link></p>
+            <p><Link className="text-mute hover:text-ink" href="/prova-gratuita">Prova gratuita</Link></p>
             <p><Link className="text-mute hover:text-ink" href="/accedi">Accedi</Link></p>
             <p><Link className="text-mute hover:text-ink" href="/privacy">Privacy e cookie</Link></p>
             <p><Link className="text-mute hover:text-ink" href="/termini">Termini di vendita</Link></p>

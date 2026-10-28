@@ -4,11 +4,12 @@ import { getSession, isStaff } from "@/lib/auth";
 import { AuthButtons } from "./AuthButtons";
 
 const NAV = [
+  { href: "/esame-avvocato-2026", label: "Esame 2026" },
   { href: "/#metodo", label: "Metodo" },
   { href: "/#piattaforma", label: "Piattaforma" },
   { href: "/#docenti", label: "Docenti" },
   { href: "/#corsi", label: "Corsi" },
-  { href: "/#domande", label: "Domande" },
+  { href: "/prova-gratuita", label: "Prova gratis" },
 ];
 
 /** Barra in vetro sfocato, sottile come quella di apple.com */
