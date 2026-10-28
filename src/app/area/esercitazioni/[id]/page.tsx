@@ -110,15 +110,16 @@ export default async function EsercitazionePage({ params }: Props) {
           {a.status === "corretto" && (
             <section aria-labelledby="correzione" className="rounded-[var(--radius-panel)] border border-ceralacca/30 bg-surface p-4 sm:p-6">
               <h2 id="correzione" className="text-lg font-semibold text-ceralacca">Correzione del docente</h2>
-              {review?.grade && (
-                <p className="mt-3 text-[15px]">
-                  Giudizio: <strong className="text-[18px]">{review.grade}</strong>
-                </p>
+              {(review?.grade || review?.feedback) && (
+                <div className="mt-4 flex gap-3 rounded-[14px] bg-ceralacca-soft p-4">
+                  <span aria-hidden className="font-serif text-[26px] leading-none text-ceralacca">§</span>
+                  <p className="whitespace-pre-wrap break-words text-[16px] italic leading-relaxed text-ink">
+                    {review?.grade && <strong className="font-semibold">Giudizio: {review.grade.toLowerCase()}. </strong>}
+                    {review?.feedback}
+                  </p>
+                </div>
               )}
               <ScoreCard scores={review?.scores} total={review?.total} />
-              {review?.feedback && (
-                <div className="prose-legal mt-4 whitespace-pre-wrap break-words border-l-2 border-ceralacca/40 pl-4">{review.feedback}</div>
-              )}
               {annotated.length > 0 && (
                 <ul className="mt-6 space-y-2">
                   {annotated.map((x) => {
@@ -130,7 +131,15 @@ export default async function EsercitazionePage({ params }: Props) {
                           <span className="block text-[15px] font-semibold">Il tuo elaborato corretto</span>
                           <span className="block break-words text-[14px] text-slate">{f.file_name}, con segni e note del docente</span>
                         </span>
-                        <AnnotateButton fileId={f.id} fileName={f.file_name} initial={x.data} readOnly label="Vedi la correzione" className="btn-primary btn-sm w-full sm:w-auto" />
+                        <AnnotateButton
+                          fileId={f.id}
+                          fileName={f.file_name}
+                          initial={x.data}
+                          readOnly
+                          label="Vedi la correzione"
+                          className="btn-primary btn-sm w-full sm:w-auto"
+                          verdict={review ? { grade: review.grade, feedback: review.feedback, total: review.total ?? null } : null}
+                        />
                       </li>
                     );
                   })}

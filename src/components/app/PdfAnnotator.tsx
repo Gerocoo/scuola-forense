@@ -25,7 +25,8 @@ const PEN_COLORS = [
   { value: "#1f4fbf", label: "Blu" },
   { value: "#1d7a4c", label: "Verde" },
 ];
-const HIGHLIGHT = "#f6d32d";
+// evidenziatore rosso tenue, come la penna del correttore nella vetrina
+const HIGHLIGHT = "#d24a35";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const scripts = new Map<string, Promise<void>>();
@@ -83,7 +84,13 @@ function PdfPage({
   color,
   readOnly,
   onChange,
+  margin,
+  total,
+  fileName,
 }: {
+  margin: number;
+  total: number;
+  fileName: string;
   pdf: any;
   index: number;
   width: number;
@@ -140,7 +147,7 @@ function PdfPage({
       });
     } else if (tool === "note") {
       const [x, y] = toPoint(e);
-      const n: Note = { id: uid(), x: Math.min(x, 760), y, text: "" };
+      const n: Note = { id: uid(), x, y, text: "" };
       onChange({ ...ann, notes: [...ann.notes, n] });
       setEditing(n.id);
     }
@@ -167,73 +174,125 @@ function PdfPage({
   const drawingTool = !readOnly && (tool === "pen" || tool === "highlight");
   const cursor = readOnly || tool === "move" ? "default" : tool === "eraser" ? "pointer" : tool === "note" ? "copy" : "crosshair";
 
-  return (
-    <div className="relative mx-auto bg-white shadow-[0_1px_3px_rgb(0_0_0/0.12),0_12px_32px_-12px_rgb(0_0_0/0.25)]" style={{ width, height: width * ratio }}>
-      <canvas ref={canvas} className="absolute inset-0 size-full" />
-      <svg
-        ref={svg}
-        viewBox={`0 0 1000 ${H}`}
-        className="absolute inset-0 size-full"
-        style={{ cursor, touchAction: drawingTool ? "none" : "auto" }}
-        onPointerDown={down}
-        onPointerMove={move}
-        onPointerUp={up}
-        onPointerCancel={up}
-      >
-        {[...ann.strokes, ...(drawing ? [drawing] : [])].map((s) => (
-          <path
-            key={s.id}
-            d={pathOf(s.points)}
-            fill="none"
-            stroke={s.color}
-            strokeWidth={s.width}
-            strokeLinecap={s.tool === "highlight" ? "butt" : "round"}
-            strokeLinejoin="round"
-            opacity={s.tool === "highlight" ? 0.38 : 0.95}
-            style={{ mixBlendMode: s.tool === "highlight" ? "multiply" : "normal", pointerEvents: tool === "eraser" && !readOnly ? "stroke" : "none" }}
-            className={tool === "eraser" && !readOnly ? "hover:opacity-30" : ""}
-            onClick={() => tool === "eraser" && !readOnly && erase(s.id)}
-          />
-        ))}
-      </svg>
+  // note ordinate dall'alto: in colonna a margine non si sovrappongono
+  const ordered = ann.notes.map((n, i) => ({ n, num: i + 1 })).sort((a, b) => a.n.y - b.n.y);
+  const pageH = width * ratio;
+  let nextFree = 0;
+  const placed = ordered.map((o) => {
+    const est = 30 + Math.ceil(Math.max(o.n.text.length, 12) / 24) * 22;
+    const top = Math.max((o.n.y / H) * pageH, nextFree);
+    nextFree = top + est + 14;
+    return { ...o, top };
+  });
+  const marginH = Math.max(pageH, nextFree);
 
-      {/* note a margine */}
-      {ann.notes.map((n, i) => (
-        <div
-          key={n.id}
-          className="absolute z-10"
-          style={{ left: `${n.x / 10}%`, top: `${(n.y / H) * 100}%`, width: "min(240px, 26%)", minWidth: 150 }}
-        >
-          <div className="rounded-[10px] border border-[#c0261b]/40 bg-[#fff7e6] p-2 text-[14px] leading-snug text-[#5a1a12] shadow-[0_6px_16px_-8px_rgb(0_0_0/0.35)]">
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="text-[12px] font-semibold uppercase tracking-wide text-[#c0261b]">Nota {i + 1}</span>
-              {!readOnly && (
-                <button type="button" onClick={() => removeNote(n.id)} className="text-[13px] text-[#c0261b]/70 hover:text-[#c0261b]" aria-label="Elimina la nota">
-                  ✕
-                </button>
-              )}
-            </div>
-            {!readOnly && (editing === n.id || !n.text) ? (
-              <textarea
-                autoFocus
-                rows={3}
-                value={n.text}
-                onChange={(e) => setNote(n.id, e.target.value)}
-                onBlur={() => {
-                  setEditing(null);
-                  if (!n.text.trim()) removeNote(n.id);
-                }}
-                className="w-full resize-y rounded-[6px] border border-[#c0261b]/25 bg-white/80 p-1.5 font-serif text-[14px] outline-none focus:border-[#c0261b]/60"
-                placeholder="Scrivi la nota…"
-              />
-            ) : (
-              <p className={`whitespace-pre-wrap font-serif text-[14px] ${readOnly ? "" : "cursor-text"}`} onClick={() => !readOnly && setEditing(n.id)}>
-                {n.text}
-              </p>
-            )}
-          </div>
+  const noteBody = (n: Note, num: number) => (
+    <div className="group/note">
+      <div className="flex items-start gap-1.5">
+        <span className="mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-full bg-ceralacca text-[11px] font-semibold not-italic text-white">{num}</span>
+        <div className="min-w-0 flex-1">
+          {!readOnly && (editing === n.id || !n.text) ? (
+            <textarea
+              autoFocus
+              rows={3}
+              value={n.text}
+              onChange={(e) => setNote(n.id, e.target.value)}
+              onBlur={() => {
+                setEditing(null);
+                if (!n.text.trim()) removeNote(n.id);
+              }}
+              className="w-full resize-y rounded-[6px] border border-ceralacca/30 bg-white p-1.5 font-serif text-[15px] italic text-ceralacca outline-none focus:border-ceralacca/60"
+              placeholder="Scrivi la nota…"
+            />
+          ) : (
+            <p
+              className={`whitespace-pre-wrap break-words font-serif text-[15px] italic leading-snug text-ceralacca ${readOnly ? "" : "cursor-text"}`}
+              onClick={() => !readOnly && setEditing(n.id)}
+            >
+              {n.text}
+            </p>
+          )}
         </div>
-      ))}
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={() => removeNote(n.id)}
+            className="shrink-0 text-[13px] text-ceralacca/50 opacity-100 hover:text-ceralacca sm:opacity-0 sm:group-hover/note:opacity-100"
+            aria-label="Elimina la nota"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="mx-auto rounded-[8px] bg-white shadow-[0_1px_3px_rgb(0_0_0/0.12),0_12px_32px_-12px_rgb(0_0_0/0.25)]" style={{ width: width + margin + (margin ? 40 : 0) }}>
+      {/* intestazione come un fascicolo */}
+      <div className="flex items-baseline justify-between gap-3 border-b border-line-soft px-4 py-2.5 sm:px-5">
+        <p className="truncate font-serif text-[15px] italic text-slate">{fileName.replace(/\.[^.]+$/, "")}</p>
+        <p className="shrink-0 text-[13px] text-mute">pag. {index + 1} di {total}</p>
+      </div>
+      <div className="flex">
+        <div className="relative shrink-0" style={{ width, height: pageH }}>
+          <canvas ref={canvas} className="absolute inset-0 size-full" />
+          <svg
+            ref={svg}
+            viewBox={`0 0 1000 ${H}`}
+            className="absolute inset-0 size-full"
+            style={{ cursor, touchAction: drawingTool ? "none" : "auto" }}
+            onPointerDown={down}
+            onPointerMove={move}
+            onPointerUp={up}
+            onPointerCancel={up}
+          >
+            {[...ann.strokes, ...(drawing ? [drawing] : [])].map((s) => (
+              <path
+                key={s.id}
+                d={pathOf(s.points)}
+                fill="none"
+                stroke={s.color}
+                strokeWidth={s.width}
+                strokeLinecap={s.tool === "highlight" ? "butt" : "round"}
+                strokeLinejoin="round"
+                opacity={s.tool === "highlight" ? 0.22 : 0.95}
+                style={{ mixBlendMode: s.tool === "highlight" ? "multiply" : "normal", pointerEvents: tool === "eraser" && !readOnly ? "stroke" : "none" }}
+                className={tool === "eraser" && !readOnly ? "hover:opacity-30" : ""}
+                onClick={() => tool === "eraser" && !readOnly && erase(s.id)}
+              />
+            ))}
+          </svg>
+          {/* richiami numerati sul testo */}
+          {ann.notes.map((n, i) => (
+            <span
+              key={n.id}
+              aria-hidden
+              className="pointer-events-none absolute z-10 grid size-[18px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-ceralacca text-[11px] font-semibold text-white ring-2 ring-white"
+              style={{ left: `${n.x / 10}%`, top: `${(n.y / H) * 100}%` }}
+            >
+              {i + 1}
+            </span>
+          ))}
+        </div>
+        {margin > 0 && (
+          <div className="relative ml-5 mr-5 shrink-0 border-l border-dashed border-ceralacca/40 pl-4" style={{ width: margin, minHeight: marginH }}>
+            {placed.map((o) => (
+              <div key={o.n.id} className="absolute left-4 right-0" style={{ top: o.top }}>
+                {noteBody(o.n, o.num)}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {/* su telefono le note vanno sotto la pagina */}
+      {margin === 0 && ordered.length > 0 && (
+        <div className="space-y-3 border-t border-dashed border-ceralacca/40 px-4 py-3">
+          {ordered.map((o) => (
+            <div key={o.n.id}>{noteBody(o.n, o.num)}</div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -248,12 +307,15 @@ export function PdfAnnotator({
   initial,
   readOnly = false,
   onClose,
+  verdict,
 }: {
   fileId: string;
   fileName: string;
   initial: Annotations | null;
   readOnly?: boolean;
   onClose: () => void;
+  /** Giudizio del docente, mostrato in fondo al documento (vista del discente). */
+  verdict?: { grade: string | null; feedback: string; total: number | null } | null;
 }) {
   const [pdf, setPdf] = useState<any>(null);
   const [sizes, setSizes] = useState<number[]>([]); // rapporto altezza/larghezza per pagina
@@ -264,7 +326,10 @@ export function PdfAnnotator({
   const [tool, setTool] = useState<Tool>(readOnly ? "move" : "pen");
   const [color, setColor] = useState(PEN_COLORS[0].value);
   const [save, setSave] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [width, setWidth] = useState(820);
+  const [avail, setAvail] = useState(820);
+  // colonna delle note a margine quando c'è spazio, altrimenti le note vanno sotto la pagina
+  const margin = avail >= 760 ? 230 : 0;
+  const width = Math.max(300, Math.min(820, avail - (margin ? margin + 40 : 0)));
   const area = useRef<HTMLDivElement>(null);
   const bytes = useRef<ArrayBuffer | null>(null);
   const dirty = useRef(false);
@@ -312,11 +377,11 @@ export function PdfAnnotator({
   useEffect(() => {
     const el = area.current;
     if (!el) return;
-    const measure = () => setWidth(Math.max(320, Math.min(900, el.clientWidth - 32)));
+    const measure = () => setAvail(Math.max(300, el.clientWidth - 32));
     measure();
     const ro = new ResizeObserver(() => {
-      const next = Math.max(320, Math.min(900, el.clientWidth - 32));
-      setWidth((w) => (Math.abs(w - next) > 40 ? next : w));
+      const next = Math.max(300, el.clientWidth - 32);
+      setAvail((w) => (Math.abs(w - next) > 40 ? next : w));
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -405,7 +470,7 @@ export function PdfAnnotator({
             scale: s,
             borderColor: hex(st.color),
             borderWidth: st.width * s,
-            borderOpacity: st.tool === "highlight" ? 0.38 : 0.95,
+            borderOpacity: st.tool === "highlight" ? 0.22 : 0.95,
             borderLineCap: st.tool === "highlight" ? 0 : 1,
           });
         }
@@ -557,8 +622,23 @@ export function PdfAnnotator({
                 color={color}
                 readOnly={readOnly}
                 onChange={(next) => updatePage(i, next)}
+                margin={margin}
+                total={sizes.length}
+                fileName={fileName}
               />
             ))}
+            {verdict && (verdict.grade || verdict.feedback || verdict.total != null) && (
+              <div className="mx-auto flex gap-3 rounded-[14px] bg-ceralacca-soft p-4 sm:p-5" style={{ width: width + margin + (margin ? 40 : 0) }}>
+                <span aria-hidden className="font-serif text-[26px] leading-none text-ceralacca">§</span>
+                <p className="text-[16px] italic leading-relaxed text-ink">
+                  <strong className="font-semibold">
+                    Giudizio{verdict.grade ? `: ${verdict.grade.toLowerCase()}` : ""}
+                    {verdict.total != null ? ` (${verdict.total}/30)` : ""}.
+                  </strong>{" "}
+                  {verdict.feedback}
+                </p>
+              </div>
+            )}
             <p className="pb-8 text-center text-[13px] text-mute">
               {sizes.length} {sizes.length === 1 ? "pagina" : "pagine"}
             </p>
@@ -577,6 +657,7 @@ export function AnnotateButton({
   readOnly = false,
   label,
   className = "btn-primary btn-sm",
+  verdict,
 }: {
   fileId: string;
   fileName: string;
@@ -584,6 +665,7 @@ export function AnnotateButton({
   readOnly?: boolean;
   label: string;
   className?: string;
+  verdict?: { grade: string | null; feedback: string; total: number | null } | null;
 }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -598,6 +680,7 @@ export function AnnotateButton({
           fileName={fileName}
           initial={initial}
           readOnly={readOnly}
+          verdict={verdict}
           onClose={() => {
             setOpen(false);
             if (!readOnly) router.refresh();
