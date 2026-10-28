@@ -118,7 +118,7 @@ export default async function LezionePage({ params }: Props) {
       {(
         <div className="panel p-5">
           <h2 className="font-semibold">Esercitazioni della lezione</h2>
-          <p className="mt-1 text-[13px] text-mute">Vanno consegnate per sbloccare la lezione successiva.</p>
+          <p className="mt-1 text-[14px] text-mute">Vanno consegnate per sbloccare la lezione successiva.</p>
           <ul className="mt-3 space-y-2">
             {step.exercises.map((e) => (
               <li key={e.id}>

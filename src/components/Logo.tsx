@@ -41,7 +41,7 @@ export function Logo({
           <span className={`font-serif text-[20px] font-medium uppercase tracking-[0.16em] ${inverted ? "text-white" : "text-ink"}`}>
             {SITE.brand}
           </span>
-          <span className={`mt-1 hidden text-[11px] sm:block ${inverted ? "text-white/70" : "text-mute"}`}>
+          <span className={`mt-1 hidden text-[12px] sm:block ${inverted ? "text-white/70" : "text-mute"}`}>
             {SITE.tagline}
           </span>
         </span>

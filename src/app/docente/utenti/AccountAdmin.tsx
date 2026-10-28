@@ -40,7 +40,7 @@ export function DeleteUserButton({
           ? "L'account viene cancellato. Le sue esercitazioni, correzioni e conversazioni passano a te, così i discenti non perdono nulla."
           : "Vengono cancellati per sempre account, iscrizioni, elaborati, correzioni, messaggi e appunti. I pagamenti restano su Stripe. Non si può annullare."}
       </p>
-      <label className="mt-3 block text-[13px] text-slate" htmlFor={`del-${userId}`}>
+      <label className="mt-3 block text-[14px] text-slate" htmlFor={`del-${userId}`}>
         Scrivi <strong className="text-ink">ELIMINA</strong> per confermare
       </label>
       <input id={`del-${userId}`} className="field mt-1 py-1.5" value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" />

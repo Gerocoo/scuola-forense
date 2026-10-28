@@ -103,12 +103,12 @@ export function VideoUrlField({
           <div className="min-w-0 flex-1">
             <p className="truncate font-medium">{picked?.title ?? "Video YouTube"}</p>
             {picked && (
-              <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[12px] font-medium ${PRIVACY[picked.privacy].cls}`}>
+              <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[13px] font-medium ${PRIVACY[picked.privacy].cls}`}>
                 {PRIVACY[picked.privacy].label}
               </span>
             )}
             {picked?.privacy === "private" && (
-              <p className="mt-1 text-[13px] text-ceralacca">I video privati non si vedono sulla piattaforma: su YouTube impostalo come «Non in elenco».</p>
+              <p className="mt-1 text-[14px] text-ceralacca">I video privati non si vedono sulla piattaforma: su YouTube impostalo come «Non in elenco».</p>
             )}
           </div>
           <div className="flex shrink-0 flex-col gap-1">
@@ -123,18 +123,18 @@ export function VideoUrlField({
           </span>
           <span>
             <span className="block font-medium text-ink">Scegli dal canale YouTube</span>
-            <span className="block text-[13px] text-mute">Si apre l&apos;elenco dei video della scuola</span>
+            <span className="block text-[14px] text-mute">Si apre l&apos;elenco dei video della scuola</span>
           </span>
         </button>
       )}
 
       {showManual ? (
         <div className="mt-3">
-          <label htmlFor="video_url_manual" className="text-[13px] text-mute">Oppure incolla un link (YouTube, Vimeo o file video)</label>
+          <label htmlFor="video_url_manual" className="text-[14px] text-mute">Oppure incolla un link (YouTube, Vimeo o file video)</label>
           <input id="video_url_manual" type="url" value={url} onChange={(e) => setUrl(e.target.value)} className="field mt-1" placeholder="https://…" />
         </div>
       ) : (
-        <button type="button" onClick={() => setShowManual(true)} className="mt-2 text-[13px] text-mute underline underline-offset-4 hover:text-ink">
+        <button type="button" onClick={() => setShowManual(true)} className="mt-2 text-[14px] text-mute underline underline-offset-4 hover:text-ink">
           Preferisci incollare un link?
         </button>
       )}
@@ -187,13 +187,13 @@ export function VideoUrlField({
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           {v.thumb && <img src={v.thumb} alt="" className="aspect-video w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />}
                           {v.durationMin && (
-                            <span className="absolute bottom-1.5 right-1.5 rounded-[6px] bg-black/75 px-1.5 py-0.5 text-[11px] font-medium text-white tabular-nums">
+                            <span className="absolute bottom-1.5 right-1.5 rounded-[6px] bg-black/75 px-1.5 py-0.5 text-[12px] font-medium text-white tabular-nums">
                               {v.durationMin} min
                             </span>
                           )}
                         </span>
                         <span className="mt-2 line-clamp-2 block text-[14px] font-medium leading-snug">{v.title}</span>
-                        <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${PRIVACY[v.privacy].cls}`}>
+                        <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[12px] font-medium ${PRIVACY[v.privacy].cls}`}>
                           {PRIVACY[v.privacy].label}
                         </span>
                       </button>

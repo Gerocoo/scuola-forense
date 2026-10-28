@@ -20,14 +20,14 @@ export function PathTimeline({ steps }: { steps: PathStep[] }) {
             } ${state === "current" ? "ring-2 ring-codice" : ""}`}
           >
             <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-medium text-mute">
+              <p className="text-[13px] font-medium text-mute">
                 Lezione {i + 1}
                 {s.lesson.duration_min ? `, ${s.lesson.duration_min} min` : ""}
               </p>
               <p className={`mt-0.5 text-[17px] font-semibold leading-snug ${state === "locked" ? "text-mute" : "text-ink"}`}>{s.lesson.title}</p>
-              {state === "locked" && <p className="mt-1 text-[13px] text-mute">Si sblocca completando la lezione precedente</p>}
+              {state === "locked" && <p className="mt-1 text-[14px] text-mute">Si sblocca completando la lezione precedente</p>}
               {state !== "locked" && s.exercises.length > 0 && (
-                <p className="mt-1 text-[13px] text-slate">
+                <p className="mt-1 text-[14px] text-slate">
                   Esercitazioni consegnate: {s.exercisesDone} di {s.exercises.length}
                 </p>
               )}
@@ -35,7 +35,7 @@ export function PathTimeline({ steps }: { steps: PathStep[] }) {
 
             {state !== "locked" && s.hasVideo && (
               <div className="w-full sm:w-48">
-                <div className="flex justify-between text-[12px]">
+                <div className="flex justify-between text-[13px]">
                   <span className="text-mute">Video</span>
                   <span className={`font-semibold tabular-nums ${s.videoDone ? "text-codice" : "text-ink"}`}>{s.percent}%</span>
                 </div>
@@ -46,7 +46,7 @@ export function PathTimeline({ steps }: { steps: PathStep[] }) {
             )}
 
             <span
-              className={`shrink-0 rounded-full px-3 py-1 text-[13px] font-medium ${
+              className={`shrink-0 rounded-full px-3 py-1 text-[14px] font-medium ${
                 state === "done"
                   ? "bg-codice-soft text-codice"
                   : state === "current"

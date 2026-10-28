@@ -59,7 +59,7 @@ export default async function ImpostazioniPage({ searchParams }: Props) {
                 )}
                 <div>
                   <p className="font-semibold">{link.channelName}</p>
-                  <p className="text-[13px] text-codice">Collegato dal {dateLong(link.connectedAt)}</p>
+                  <p className="text-[14px] text-codice">Collegato dal {dateLong(link.connectedAt)}</p>
                 </div>
               </div>
               <DisconnectYoutube />

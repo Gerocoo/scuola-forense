@@ -77,7 +77,7 @@ export function UserMenu({
             <span className="size-10 shrink-0">{face}</span>
             <div className="min-w-0">
               <p className="truncate text-[14px] font-semibold text-ink">{user.name || "Il tuo account"}</p>
-              <p className="truncate text-[12px] text-mute">{user.email}</p>
+              <p className="truncate text-[13px] text-mute">{user.email}</p>
             </div>
           </div>
           <div className="my-1 h-px bg-line-soft" />

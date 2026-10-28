@@ -80,7 +80,7 @@ export default async function EsercitazionePage({ params }: Props) {
                       <li key={x.file_id} className="flex flex-col gap-3 rounded-[14px] bg-ceralacca-soft/60 p-4 sm:flex-row sm:items-center sm:justify-between">
                         <span className="min-w-0">
                           <span className="block text-[15px] font-semibold">Il tuo elaborato corretto</span>
-                          <span className="block break-words text-[13px] text-slate">{f.file_name}, con segni e note del docente</span>
+                          <span className="block break-words text-[14px] text-slate">{f.file_name}, con segni e note del docente</span>
                         </span>
                         <AnnotateButton fileId={f.id} fileName={f.file_name} initial={x.data} readOnly label="Vedi la correzione" className="btn-primary btn-sm w-full sm:w-auto" />
                       </li>

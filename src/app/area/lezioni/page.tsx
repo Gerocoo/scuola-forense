@@ -81,7 +81,7 @@ export default async function LezioniPage() {
                   {dateLong(l.scheduled_at)}: {l.title}
                 </Link>
                 {(l.video_status === "ready" || l.video_url) && (
-                  <span className="ml-2 rounded-full bg-codice-soft px-2 py-0.5 text-xs font-medium text-codice">Registrazione disponibile</span>
+                  <span className="ml-2 rounded-full bg-codice-soft px-2 py-0.5 text-[13px] font-medium text-codice">Registrazione disponibile</span>
                 )}
               </li>
             ))}

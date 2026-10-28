@@ -91,7 +91,7 @@ export default async function EsercitazioneDocente({ params }: Props) {
                         <li key={f.id} className="flex flex-col gap-2.5 rounded-[12px] bg-surface p-3.5 sm:flex-row sm:items-center sm:justify-between">
                           <span className="min-w-0">
                             <span className="block break-words text-[14px] font-medium sm:truncate">{f.file_name}</span>
-                            <span className="text-[12px] text-mute">{n ? `${n} annotazioni` : "Nessuna annotazione"}</span>
+                            <span className="text-[13px] text-mute">{n ? `${n} annotazioni` : "Nessuna annotazione"}</span>
                           </span>
                           <AnnotateButton fileId={f.id} fileName={f.file_name} initial={annOf(f.id)} label={n ? "Continua la correzione" : "Apri e correggi"} className="btn-primary btn-sm w-full sm:w-auto" />
                         </li>

@@ -94,7 +94,7 @@ export function MonthCalendar({ y, m, events, basePath }: { y: number; m: number
                 <ul className="space-y-1">
                   {list.map((e) => (
                     <li key={e.id}>
-                      <Link href={e.href} className={`block truncate rounded-[6px] px-1.5 py-1 text-xs font-medium ${TONE[e.tone]}`} title={e.title}>
+                      <Link href={e.href} className={`block truncate rounded-[6px] px-1.5 py-1 text-[13px] font-medium ${TONE[e.tone]}`} title={e.title}>
                         {e.tone !== "scadenza" && <span className="tabular-nums">{time(new Date(e.date))} </span>}
                         {e.title}
                       </Link>
@@ -118,10 +118,10 @@ export function MonthCalendar({ y, m, events, basePath }: { y: number; m: number
                   <Link href={e.href} className="flex items-center gap-4 px-4 py-3">
                     <span className="w-12 shrink-0 text-center">
                       <span className="block text-xl font-semibold tabular-nums">{new Intl.DateTimeFormat("it-IT", { day: "numeric", timeZone: TZ }).format(d)}</span>
-                      <span className="block text-xs text-mute">{new Intl.DateTimeFormat("it-IT", { weekday: "short", timeZone: TZ }).format(d)}</span>
+                      <span className="block text-[13px] text-mute">{new Intl.DateTimeFormat("it-IT", { weekday: "short", timeZone: TZ }).format(d)}</span>
                     </span>
                     <span className="min-w-0">
-                      <span className={`mb-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${TONE[e.tone]}`}>
+                      <span className={`mb-1 inline-block rounded-full px-2 py-0.5 text-[13px] font-medium ${TONE[e.tone]}`}>
                         {e.tone === "scadenza" ? "Scadenza" : time(d)}
                       </span>
                       <span className="block truncate font-medium">{e.title}</span>

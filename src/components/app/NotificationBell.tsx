@@ -199,7 +199,7 @@ export function NotificationBell({ items }: { items: Notice[] }) {
                   setTimeout(chime, 50);
                 }
               }}
-              className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium text-slate hover:bg-paper hover:text-ink"
+              className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-medium text-slate hover:bg-paper hover:text-ink"
               aria-pressed={sound}
             >
               <svg viewBox="0 0 24 24" className="size-3.5" aria-hidden>
@@ -229,9 +229,9 @@ export function NotificationBell({ items }: { items: Notice[] }) {
                       <span className="min-w-0 flex-1">
                         <span className="flex items-baseline justify-between gap-2">
                           <span className={`truncate text-[14px] ${fresh ? "font-semibold text-ink" : "font-medium text-slate"}`}>{n.title}</span>
-                          <span className="shrink-0 text-[12px] text-mute">{when(n.at)}</span>
+                          <span className="shrink-0 text-[13px] text-mute">{when(n.at)}</span>
                         </span>
-                        <span className="mt-0.5 block truncate text-[13px] text-slate">{n.body}</span>
+                        <span className="mt-0.5 block truncate text-[14px] text-slate">{n.body}</span>
                       </span>
                       {fresh && <span aria-hidden className="mt-2 size-2 shrink-0 rounded-full bg-codice" />}
                     </Link>

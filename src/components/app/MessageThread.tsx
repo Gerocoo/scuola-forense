@@ -51,7 +51,7 @@ export function MessageThread({
               )}
               <p className="whitespace-pre-wrap break-words text-[16px] leading-relaxed">{m.body}</p>
               {mine && (
-                <p className="mt-1 text-right text-xs text-white/60">{m.read_at ? "Letto" : "Non ancora letto"}</p>
+                <p className="mt-1 text-right text-[13px] text-white/60">{m.read_at ? "Letto" : "Non ancora letto"}</p>
               )}
             </article>
           </li>

@@ -46,7 +46,7 @@ export default async function UtentiPage({ searchParams }: Props) {
                 <li key={i.email} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
                   <div className="min-w-0">
                     <p className="truncate font-medium">{i.email}</p>
-                    <p className="text-[13px] text-mute">
+                    <p className="text-[14px] text-mute">
                       {i.role === "admin" ? "Amministratore" : "Docente"} · invitato il {dateShort(i.created_at)}
                     </p>
                   </div>
@@ -69,14 +69,14 @@ export default async function UtentiPage({ searchParams }: Props) {
               <Avatar name={p.full_name} email={p.email} url={p.avatar_url} size="sm" />
               <div className="min-w-0">
                 <p className="truncate font-medium">{p.full_name || "Senza nome"}</p>
-                <p className="truncate text-[13px] text-mute">
+                <p className="truncate text-[14px] text-mute">
                   {p.email} · dal {dateShort(p.created_at)}
                 </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2 pl-11 sm:justify-end sm:pl-0">
               {p.is_super ? (
-                <span className="rounded-full bg-ink px-2.5 py-1 text-[12px] font-medium text-white">Super amministratore{p.id === user.id ? " (tu)" : ""}</span>
+                <span className="rounded-full bg-ink px-2.5 py-1 text-[13px] font-medium text-white">Super amministratore{p.id === user.id ? " (tu)" : ""}</span>
               ) : p.id === user.id ? (
                 <span className="text-[14px] text-slate">Amministratore (tu)</span>
               ) : (

@@ -160,7 +160,7 @@ export function LessonForm({
           <input type="checkbox" name="sequential" defaultChecked={lesson?.sequential ?? true} className="mt-0.5 size-4 accent-codice" />
           <span>
             <span className="font-medium">Si sblocca dopo la lezione precedente</span>
-            <span className="block text-[13px] text-mute">
+            <span className="block text-[14px] text-mute">
               Il discente la vede solo dopo aver guardato per intero la lezione precedente e consegnato le sue esercitazioni.
               L&apos;ordine segue il campo &laquo;Ordine&raquo; qui sotto.
             </span>

@@ -5,7 +5,7 @@
   carta      #F5F3EE  fondo, avorio freddo e quasi neutro
   avorio     #F4EEE2  il colore del tempio: superfici in evidenza
   inchiostro #1D1D1F  testo
-  ardesia    #48484D  testo secondario
+  ardesia    #3D3D42  testo secondario
   codice     #1D5747  verde: azioni principali, sezioni scure
   ceralacca  #A3301D  rosso del correttore: correzioni, scadenze, promo
 */
@@ -14,8 +14,8 @@
   --color-surface: #ffffff;
   --color-ivory: #f4eee2;
   --color-ink: #1d1d1f;
-  --color-slate: #48484d;
-  --color-mute: #6e6e73;
+  --color-slate: #3d3d42;
+  --color-mute: #5e5e63;
   --color-line: #d9d6cf;
   --color-line-soft: #ebe8e1;
   --color-codice: #1d5747;
@@ -68,6 +68,7 @@
     min-width: 0;
   }
   body {
+    line-height: 1.55;
     background: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
@@ -122,10 +123,10 @@
     @apply block w-full rounded-[var(--radius-control)] border border-line bg-surface px-3.5 py-2.5 text-[16px] text-ink transition-shadow placeholder:text-mute focus:border-codice focus:outline-none focus:ring-4 focus:ring-codice/12;
   }
   .label {
-    @apply mb-1.5 block text-[13px] font-medium text-slate;
+    @apply mb-1.5 block text-[14px] font-medium text-slate;
   }
   .hint {
-    @apply mt-1.5 text-[13px] leading-snug text-mute;
+    @apply mt-1.5 text-[14px] leading-snug text-mute;
   }
 
   /* Superficie bianca su fondo avorio, senza bordo visibile */

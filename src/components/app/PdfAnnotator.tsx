@@ -204,11 +204,11 @@ function PdfPage({
           className="absolute z-10"
           style={{ left: `${n.x / 10}%`, top: `${(n.y / H) * 100}%`, width: "min(240px, 26%)", minWidth: 150 }}
         >
-          <div className="rounded-[10px] border border-[#c0261b]/40 bg-[#fff7e6] p-2 text-[13px] leading-snug text-[#5a1a12] shadow-[0_6px_16px_-8px_rgb(0_0_0/0.35)]">
+          <div className="rounded-[10px] border border-[#c0261b]/40 bg-[#fff7e6] p-2 text-[14px] leading-snug text-[#5a1a12] shadow-[0_6px_16px_-8px_rgb(0_0_0/0.35)]">
             <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#c0261b]">Nota {i + 1}</span>
+              <span className="text-[12px] font-semibold uppercase tracking-wide text-[#c0261b]">Nota {i + 1}</span>
               {!readOnly && (
-                <button type="button" onClick={() => removeNote(n.id)} className="text-[12px] text-[#c0261b]/70 hover:text-[#c0261b]" aria-label="Elimina la nota">
+                <button type="button" onClick={() => removeNote(n.id)} className="text-[13px] text-[#c0261b]/70 hover:text-[#c0261b]" aria-label="Elimina la nota">
                   ✕
                 </button>
               )}
@@ -450,7 +450,7 @@ export function PdfAnnotator({
       onClick={() => setTool(t)}
       aria-pressed={tool === t}
       title={label}
-      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors ${
+      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-medium transition-colors ${
         tool === t ? "bg-ink text-white" : "text-ink hover:bg-paper"
       }`}
     >
@@ -467,7 +467,7 @@ export function PdfAnnotator({
       <div className="flex flex-wrap items-center gap-2 border-b border-black/10 bg-surface/95 px-3 py-2 backdrop-blur sm:px-5">
         <div className="mr-2 min-w-0">
           <p className="truncate text-[14px] font-semibold">{fileName}</p>
-          <p className="text-[12px] text-mute">
+          <p className="text-[13px] text-mute">
             {readOnly
               ? `Correzione del docente${noteCount ? ` · ${noteCount} note` : ""}`
               : save === "saving"
@@ -513,7 +513,7 @@ export function PdfAnnotator({
             <ToolBtn t="eraser" label="Gomma">
               <svg viewBox="0 0 24 24" className="size-4" aria-hidden><path d="M8 20h12M5 15l8-8 6 6-5 5H8z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>
             </ToolBtn>
-            <button type="button" onClick={undo} disabled={!history.length} title="Annulla (Ctrl+Z)" className="rounded-full px-3 py-1.5 text-[13px] font-medium text-ink hover:bg-paper disabled:opacity-40">
+            <button type="button" onClick={undo} disabled={!history.length} title="Annulla (Ctrl+Z)" className="rounded-full px-3 py-1.5 text-[14px] font-medium text-ink hover:bg-paper disabled:opacity-40">
               Annulla
             </button>
           </div>
@@ -559,7 +559,7 @@ export function PdfAnnotator({
                 onChange={(next) => updatePage(i, next)}
               />
             ))}
-            <p className="pb-8 text-center text-[12px] text-mute">
+            <p className="pb-8 text-center text-[13px] text-mute">
               {sizes.length} {sizes.length === 1 ? "pagina" : "pagine"}
             </p>
           </div>

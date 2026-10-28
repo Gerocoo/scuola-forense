@@ -21,7 +21,7 @@ export function EnrollmentAdd({ userId, packages }: { userId: string; packages: 
         })
       }
     >
-      <p className="text-[13px] text-slate">Per pagamenti con bonifico, rate o borse di studio.</p>
+      <p className="text-[14px] text-slate">Per pagamenti con bonifico, rate o borse di studio.</p>
       <div>
         <label htmlFor="package_id" className="label">Corso</label>
         <select id="package_id" name="package_id" className="field" required defaultValue="">
@@ -45,7 +45,7 @@ export function EnrollmentStatus({ enrollmentId, status }: { enrollmentId: strin
   const router = useRouter();
   const [pending, start] = useTransition();
   return (
-    <label className="mt-2 flex items-center gap-2 text-[13px] text-slate">
+    <label className="mt-2 flex items-center gap-2 text-[14px] text-slate">
       Stato
       <select
         className="field w-auto py-1 text-sm"

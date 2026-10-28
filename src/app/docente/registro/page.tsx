@@ -158,17 +158,17 @@ export default async function RegistroPage({ searchParams }: Props) {
               const diff = changes(r);
               return (
                 <li key={r.id} className="grid gap-x-4 gap-y-1 px-5 py-3.5 sm:grid-cols-[150px_1fr]">
-                  <time className="text-[13px] text-mute tabular-nums" dateTime={r.at}>
+                  <time className="text-[14px] text-mute tabular-nums" dateTime={r.at}>
                     {new Date(r.at).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Rome" })}
                   </time>
                   <div className="min-w-0">
                     <p className="flex flex-wrap items-center gap-2 text-[14px]">
-                      <span className={`rounded-full px-2 py-0.5 text-[12px] font-medium ${TONE[r.action]}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-[13px] font-medium ${TONE[r.action]}`}>
                         {r.action === "login" ? "Accesso" : `${SUBJECT[r.table_name] ?? r.table_name} ${VERB[r.action]}`}
                       </span>
                       {what && <span className="truncate font-medium">{what}</span>}
                     </p>
-                    <p className="mt-0.5 text-[13px] text-slate">
+                    <p className="mt-0.5 text-[14px] text-slate">
                       {r.action === "login"
                         ? `${r.actor_email ?? "utente"}${r.new_data?.provider ? ` · con ${r.new_data.provider === "google" ? "Google" : "email"}` : ""}`
                         : r.actor_email
@@ -176,7 +176,7 @@ export default async function RegistroPage({ searchParams }: Props) {
                           : "dal sistema (pagamento, automatismo o pannello tecnico)"}
                     </p>
                     {diff.length > 0 && (
-                      <ul className="mt-1 space-y-0.5 text-[12px] text-mute">
+                      <ul className="mt-1 space-y-0.5 text-[13px] text-mute">
                         {diff.map((c) => (
                           <li key={c} className="truncate">{c}</li>
                         ))}

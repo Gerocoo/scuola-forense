@@ -75,7 +75,7 @@ export default async function ModificaLezione({ params }: Props) {
                       <Link href={`/docente/discenti/${b.user?.id}`} className="flex items-center gap-3 hover:text-codice">
                         <Avatar name={b.user?.full_name ?? ""} email={b.user?.email} url={b.user?.avatar_url} size="sm" />
                         <span className="min-w-0 flex-1 truncate text-[15px]">{b.user?.full_name || b.user?.email}</span>
-                        <span className="text-xs text-mute">{dateShort(b.created_at)}</span>
+                        <span className="text-[13px] text-mute">{dateShort(b.created_at)}</span>
                       </Link>
                     </li>
                   ))}

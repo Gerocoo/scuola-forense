@@ -307,7 +307,7 @@ export function LessonPlayer({
         </div>
         {track && (
           <div className="mt-4 rounded-[14px] bg-surface px-4 py-3 shadow-[var(--shadow-card)]">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-[13px]">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[14px]">
               <span className={`font-semibold ${completed ? "text-codice" : "text-ink"}`}>
                 {completed ? "Video completato" : `Visto al ${percent}%`}
               </span>
@@ -334,11 +334,11 @@ export function LessonPlayer({
       <section aria-labelledby="appunti" className="panel flex min-h-[280px] xl:min-h-[420px] flex-col p-5 xl:h-[calc(100dvh-7rem)] xl:max-h-[720px]">
         <div className="flex items-center justify-between gap-3">
           <h2 id="appunti" className="text-[17px] font-semibold">I miei appunti</h2>
-          <span role="status" aria-live="polite" className={`text-[12px] ${status === "error" ? "text-ceralacca" : "text-mute"}`}>
+          <span role="status" aria-live="polite" className={`text-[13px] ${status === "error" ? "text-ceralacca" : "text-mute"}`}>
             {status === "saving" ? "Salvataggio…" : status === "saved" ? "Salvati" : status === "error" ? "Non salvati" : ""}
           </span>
         </div>
-        <p className="mt-0.5 text-[13px] text-mute">Visibili solo a te. Si salvano da soli.</p>
+        <p className="mt-0.5 text-[14px] text-mute">Visibili solo a te. Si salvano da soli.</p>
 
         <div className="mt-4 flex flex-wrap gap-2">
           <button type="button" onClick={insertStamp} disabled={!hasTime} className="btn-secondary btn-sm" title={hasTime ? "" : "Avvia il video per segnare il minuto"}>
@@ -362,14 +362,14 @@ export function LessonPlayer({
 
         {bookmarks.length > 0 && (
           <div className="mt-4 border-t border-line-soft pt-3">
-            <p className="text-[12px] font-medium text-mute">Torna al punto</p>
+            <p className="text-[13px] font-medium text-mute">Torna al punto</p>
             <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto">
               {bookmarks.map((b, i) => (
                 <li key={`${b.stamp}-${i}`}>
                   <button
                     type="button"
                     onClick={() => seek(parseStamp(b.stamp))}
-                    className="flex w-full items-baseline gap-2 rounded-[8px] px-2 py-1 text-left text-[13px] hover:bg-codice-soft"
+                    className="flex w-full items-baseline gap-2 rounded-[8px] px-2 py-1 text-left text-[14px] hover:bg-codice-soft"
                   >
                     <span className="shrink-0 font-semibold text-codice tabular-nums">{b.stamp}</span>
                     <span className="truncate text-slate">{b.text || "senza testo"}</span>

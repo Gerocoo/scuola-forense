@@ -23,7 +23,7 @@ export async function SiteHeader() {
         <Logo />
         <nav aria-label="Sezioni" className="hidden items-center gap-7 md:flex">
           {NAV.map((n) => (
-            <Link key={n.href} href={n.href} className="text-[13px] text-ink/80 transition-colors hover:text-ink">
+            <Link key={n.href} href={n.href} className="text-[14px] text-ink/80 transition-colors hover:text-ink">
               {n.label}
             </Link>
           ))}

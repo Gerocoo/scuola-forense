@@ -102,7 +102,7 @@ export default async function CorsoPage({ params }: Props) {
           ].map(([label, n]) => (
             <div key={label} className="rounded-[16px] bg-paper px-4 py-3">
               <dd className={`text-[24px] font-semibold tabular-nums ${label === "Da correggere" && Number(n) > 0 ? "text-ambra" : ""}`}>{n}</dd>
-              <dt className="text-[13px] text-mute">{label}</dt>
+              <dt className="text-[14px] text-mute">{label}</dt>
             </div>
           ))}
         </dl>
@@ -113,7 +113,7 @@ export default async function CorsoPage({ params }: Props) {
         <section className="min-w-0">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="text-[19px] font-semibold">Esercizi del corso</h2>
-            <span className="text-[13px] text-mute">Arrivano a tutti gli iscritti, anche a chi si iscrive dopo</span>
+            <span className="text-[14px] text-mute">Arrivano a tutti gli iscritti, anche a chi si iscrive dopo</span>
           </div>
           {exercises?.length ? (
             <ul className="space-y-3">
@@ -129,7 +129,7 @@ export default async function CorsoPage({ params }: Props) {
                       <summary className="flex cursor-pointer list-none flex-wrap items-center gap-4 p-5">
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-semibold">{ex.title}</p>
-                          <p className="mt-0.5 text-[13px] text-mute">
+                          <p className="mt-0.5 text-[14px] text-mute">
                             {KIND_LABEL[ex.kind]} · assegnato il {dateShort(ex.created_at)}
                             {ex.due_at ? ` · scadenza ${dateTime(ex.due_at)}` : ""}
                           </p>
@@ -137,13 +137,13 @@ export default async function CorsoPage({ params }: Props) {
                             <span className="h-1.5 max-w-[240px] flex-1 overflow-hidden rounded-full bg-line-soft">
                               <span className="block h-full rounded-full bg-codice" style={{ width: `${pct}%` }} />
                             </span>
-                            <span className="text-[13px] text-slate tabular-nums">
+                            <span className="text-[14px] text-slate tabular-nums">
                               {delivered} di {copies.length} consegnati · {corrected} corretti
                             </span>
                           </div>
                         </div>
                         {toFix > 0 && (
-                          <span className="rounded-full bg-ambra-soft px-2.5 py-0.5 text-[13px] font-medium text-ambra">{toFix} da correggere</span>
+                          <span className="rounded-full bg-ambra-soft px-2.5 py-0.5 text-[14px] font-medium text-ambra">{toFix} da correggere</span>
                         )}
                         <svg aria-hidden viewBox="0 0 16 16" className="size-4 text-mute transition-transform group-open:rotate-180"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                       </summary>
@@ -184,7 +184,7 @@ export default async function CorsoPage({ params }: Props) {
           {/* lezioni */}
           <div className="mb-3 mt-10 flex items-baseline justify-between">
             <h2 className="text-[19px] font-semibold">Lezioni del corso</h2>
-            <Link href="/docente/lezioni" className="text-[13px] text-codice hover:underline">Tutte le lezioni</Link>
+            <Link href="/docente/lezioni" className="text-[14px] text-codice hover:underline">Tutte le lezioni</Link>
           </div>
           {lessons?.length ? (
             <ul className="panel divide-y divide-line-soft overflow-hidden">
@@ -196,11 +196,11 @@ export default async function CorsoPage({ params }: Props) {
                         {l.kind === "registrata" ? `${i + 1}. ` : ""}
                         {l.title}
                       </span>
-                      <span className="text-[13px] text-mute">
+                      <span className="text-[14px] text-mute">
                         {l.kind === "in_presenza" ? `In presenza · ${dateTime(l.scheduled_at)}` : "Video lezione"}
                       </span>
                     </span>
-                    <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[13px] font-medium ${l.published ? "bg-codice-soft text-codice" : "bg-line-soft text-slate"}`}>
+                    <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[14px] font-medium ${l.published ? "bg-codice-soft text-codice" : "bg-line-soft text-slate"}`}>
                       {l.published ? "Visibile" : "Bozza"}
                     </span>
                   </Link>
@@ -217,7 +217,7 @@ export default async function CorsoPage({ params }: Props) {
           <section className="panel p-5">
             <div className="flex items-baseline justify-between">
               <h2 className="font-semibold">Iscritti</h2>
-              <span className="text-[13px] text-mute tabular-nums">{students.length}</span>
+              <span className="text-[14px] text-mute tabular-nums">{students.length}</span>
             </div>
             {students.length ? (
               <ul className="mt-3 max-h-[420px] space-y-1 overflow-y-auto pr-1">
@@ -230,7 +230,7 @@ export default async function CorsoPage({ params }: Props) {
                         <Avatar name={s.full_name} email={s.email} url={s.avatar_url} size="sm" />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-[14px] font-medium">{s.full_name || s.email}</span>
-                          <span className="block text-[12px] text-mute tabular-nums">{mine.length ? `${done}/${mine.length} esercizi consegnati` : "Nessun esercizio"}</span>
+                          <span className="block text-[13px] text-mute tabular-nums">{mine.length ? `${done}/${mine.length} esercizi consegnati` : "Nessun esercizio"}</span>
                         </span>
                       </Link>
                     </li>
@@ -261,8 +261,8 @@ export default async function CorsoPage({ params }: Props) {
             {isAdmin && <InviteToCourse packageId={id} />}
             {isAdmin && pendingInvites.length > 0 && (
               <div className="mt-4 border-t border-line-soft pt-3">
-                <p className="text-[12px] font-medium text-mute">In attesa di registrazione</p>
-                <ul className="mt-1 space-y-1 text-[13px] text-slate">
+                <p className="text-[13px] font-medium text-mute">In attesa di registrazione</p>
+                <ul className="mt-1 space-y-1 text-[14px] text-slate">
                   {pendingInvites.map((e) => (
                     <li key={e} className="truncate">{e}</li>
                   ))}

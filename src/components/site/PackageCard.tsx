@@ -12,7 +12,7 @@ export function PackageCard({ pkg }: { pkg: Package }) {
         dark ? "bg-codice text-white" : "bg-surface text-ink shadow-[var(--shadow-card)]"
       }`}
     >
-      <p className={`text-[13px] font-medium ${dark ? "text-ivory/80" : "text-codice"}`}>{pkg.period_label}</p>
+      <p className={`text-[14px] font-medium ${dark ? "text-ivory/80" : "text-codice"}`}>{pkg.period_label}</p>
       <h3 className="mt-1 text-[26px] font-semibold leading-tight">{pkg.title}</h3>
       <p className={`mt-2 text-[15px] leading-relaxed ${dark ? "text-white/75" : "text-slate"}`}>{pkg.tagline}</p>
 
@@ -24,11 +24,11 @@ export function PackageCard({ pkg }: { pkg: Package }) {
           )}
         </div>
         {price.promoActive && pkg.promo_label ? (
-          <p className={`mt-3 inline-block rounded-full px-3 py-1 text-[13px] font-medium ${dark ? "bg-white/15 text-ivory" : "bg-ceralacca-soft text-ceralacca"}`}>
+          <p className={`mt-3 inline-block rounded-full px-3 py-1 text-[14px] font-medium ${dark ? "bg-white/15 text-ivory" : "bg-ceralacca-soft text-ceralacca"}`}>
             {pkg.promo_label}
           </p>
         ) : (
-          <p className={`mt-2 text-[13px] ${dark ? "text-white/60" : "text-mute"}`}>Pagamento unico</p>
+          <p className={`mt-2 text-[14px] ${dark ? "text-white/60" : "text-mute"}`}>Pagamento unico</p>
         )}
       </div>
 

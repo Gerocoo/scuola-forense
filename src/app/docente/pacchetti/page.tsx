@@ -34,25 +34,25 @@ export default async function PacchettiPage() {
               <Link href={`/docente/pacchetti/${p.id}`} className="panel lift flex h-full flex-col p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[13px] font-medium text-codice">{p.period_label || "Corso"}</p>
+                    <p className="text-[14px] font-medium text-codice">{p.period_label || "Corso"}</p>
                     <p className="text-[18px] font-semibold leading-snug">{p.title}</p>
                   </div>
-                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-medium ${p.active ? "bg-codice-soft text-codice" : "bg-line-soft text-slate"}`}>
+                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[13px] font-medium ${p.active ? "bg-codice-soft text-codice" : "bg-line-soft text-slate"}`}>
                     {p.active ? "In vendita" : "Nascosto"}
                   </span>
                 </div>
                 <dl className="mt-4 grid grid-cols-3 gap-2">
                   <div className="rounded-[12px] bg-paper px-3 py-2">
-                    <dt className="text-[11px] text-mute">Prezzo</dt>
+                    <dt className="text-[12px] text-mute">Prezzo</dt>
                     <dd className="text-[15px] font-semibold tabular-nums">{euro(price.amount)}</dd>
-                    {price.promoActive && <dd className="text-[11px] text-ceralacca">in promozione</dd>}
+                    {price.promoActive && <dd className="text-[12px] text-ceralacca">in promozione</dd>}
                   </div>
                   <div className="rounded-[12px] bg-paper px-3 py-2">
-                    <dt className="text-[11px] text-mute">Iscritti</dt>
+                    <dt className="text-[12px] text-mute">Iscritti</dt>
                     <dd className="text-[15px] font-semibold tabular-nums">{st.count}</dd>
                   </div>
                   <div className="rounded-[12px] bg-paper px-3 py-2">
-                    <dt className="text-[11px] text-mute">Incassato</dt>
+                    <dt className="text-[12px] text-mute">Incassato</dt>
                     <dd className="truncate text-[15px] font-semibold tabular-nums">{euro(st.total)}</dd>
                   </div>
                 </dl>

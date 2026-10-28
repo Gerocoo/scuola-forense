@@ -184,7 +184,7 @@ export function VideoUploader({
         </div>
       )}
       {error && <p role="alert" className="text-sm text-ceralacca">{error}</p>}
-      <p className="text-xs text-mute">MP4 consigliato, fino a 20 GB. Se la connessione cade, il caricamento riprende da dove si era fermato.</p>
+      <p className="text-[13px] text-mute">MP4 consigliato, fino a 20 GB. Se la connessione cade, il caricamento riprende da dove si era fermato.</p>
     </div>
   );
 }

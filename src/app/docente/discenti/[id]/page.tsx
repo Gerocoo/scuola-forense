@@ -104,24 +104,24 @@ export default async function DiscentePage({ params }: Props) {
               <span className="absolute text-[14px] font-semibold tabular-nums">{pathPct}%</span>
             </div>
             <div>
-              <dt className="text-[13px] text-mute">Percorso</dt>
+              <dt className="text-[14px] text-mute">Percorso</dt>
               <dd className="text-[17px] font-semibold">
                 {path.length ? `${done} di ${path.length} lezioni` : "Nessuna lezione"}
               </dd>
             </div>
           </div>
           <div className="rounded-[18px] bg-paper p-4">
-            <dt className="text-[13px] text-mute">Esercitazioni</dt>
+            <dt className="text-[14px] text-mute">Esercitazioni</dt>
             <dd className="mt-1 text-[17px] font-semibold">{list.length ? `${corrected} corrette su ${list.length}` : "Nessuna"}</dd>
-            <dd className="mt-2 flex flex-wrap gap-1.5 text-[12px] font-medium">
+            <dd className="mt-2 flex flex-wrap gap-1.5 text-[13px] font-medium">
               {toCorrect > 0 && <span className="rounded-full bg-ambra-soft px-2 py-0.5 text-ambra">{toCorrect} da correggere</span>}
               {toDeliver > 0 && <span className="rounded-full bg-line-soft px-2 py-0.5 text-slate">{toDeliver} da consegnare</span>}
             </dd>
           </div>
           <div className="rounded-[18px] bg-paper p-4">
-            <dt className="text-[13px] text-mute">Corso</dt>
+            <dt className="text-[14px] text-mute">Corso</dt>
             <dd className="mt-1 truncate text-[17px] font-semibold">{activeEnr[0]?.package?.title ?? "Nessun corso attivo"}</dd>
-            {activeEnr[0]?.ends_at && <dd className="mt-1 text-[13px] text-slate">Accesso fino al {dateLong(activeEnr[0].ends_at)}</dd>}
+            {activeEnr[0]?.ends_at && <dd className="mt-1 text-[14px] text-slate">Accesso fino al {dateLong(activeEnr[0].ends_at)}</dd>}
           </div>
         </dl>
       </section>
@@ -154,18 +154,18 @@ export default async function DiscentePage({ params }: Props) {
                             <span className="h-1.5 max-w-[220px] flex-1 overflow-hidden rounded-full bg-line-soft">
                               <span className="block h-full rounded-full bg-codice transition-[width]" style={{ width: `${p.percent}%` }} />
                             </span>
-                            <span className="text-[13px] text-slate tabular-nums">video {p.percent}%</span>
+                            <span className="text-[14px] text-slate tabular-nums">video {p.percent}%</span>
                           </>
                         ) : (
-                          <span className="text-[13px] text-mute">Senza video</span>
+                          <span className="text-[14px] text-mute">Senza video</span>
                         )}
                         {p.exercises.length > 0 && (
-                          <span className="text-[13px] text-slate tabular-nums">· esercitazioni {p.exercisesDone}/{p.exercises.length}</span>
+                          <span className="text-[14px] text-slate tabular-nums">· esercitazioni {p.exercisesDone}/{p.exercises.length}</span>
                         )}
                       </div>
                     </div>
                     <span
-                      className={`hidden shrink-0 rounded-full px-2.5 py-0.5 text-[13px] font-medium sm:inline ${
+                      className={`hidden shrink-0 rounded-full px-2.5 py-0.5 text-[14px] font-medium sm:inline ${
                         p.completed ? "bg-codice-soft text-codice" : p.unlocked ? "bg-ambra-soft text-ambra" : "bg-line-soft text-mute"
                       }`}
                     >
@@ -182,7 +182,7 @@ export default async function DiscentePage({ params }: Props) {
           <section>
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <h2 className="text-[19px] font-semibold">Esercitazioni</h2>
-              {list.length > 0 && <span className="text-[13px] text-mute">{list.length} in totale</span>}
+              {list.length > 0 && <span className="text-[14px] text-mute">{list.length} in totale</span>}
             </div>
             {list.length ? (
               <ul className="panel divide-y divide-line-soft overflow-hidden">
@@ -191,7 +191,7 @@ export default async function DiscentePage({ params }: Props) {
                     <Link href={`/docente/esercitazioni/${a.id}`} className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-paper">
                       <span className="min-w-0">
                         <span className="block truncate font-medium">{a.title}</span>
-                        <span className="text-[13px] text-mute">
+                        <span className="text-[14px] text-mute">
                           {KIND_LABEL[a.kind]} · assegnata il {dateShort(a.created_at)}
                           {a.due_at ? ` · scadenza ${dateShort(a.due_at)}` : ""}
                         </span>
@@ -226,14 +226,14 @@ export default async function DiscentePage({ params }: Props) {
                       <div className="flex items-start justify-between gap-2">
                         <p className="font-medium leading-snug">{e.package?.title}</p>
                         <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-[12px] font-medium ${
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[13px] font-medium ${
                             active ? "bg-codice-soft text-codice" : e.status === "refunded" ? "bg-ceralacca-soft text-ceralacca" : "bg-line-soft text-mute"
                           }`}
                         >
                           {active ? "Attivo" : e.status === "refunded" ? "Rimborsato" : "Scaduto"}
                         </span>
                       </div>
-                      <p className="mt-1 text-[13px] text-slate">
+                      <p className="mt-1 text-[14px] text-slate">
                         {euro(e.amount_cents)}
                         {e.ends_at ? ` · fino al ${dateLong(e.ends_at)}` : ""}
                       </p>

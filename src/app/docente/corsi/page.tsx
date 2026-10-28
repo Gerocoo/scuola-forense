@@ -68,11 +68,11 @@ export default async function CorsiDocente() {
             <Link key={c.id} href={`/docente/corsi/${c.id}`} className="panel lift group flex flex-col p-6">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[13px] font-medium text-codice">{c.period_label || "Corso"}</p>
+                  <p className="text-[14px] font-medium text-codice">{c.period_label || "Corso"}</p>
                   <h2 className="mt-0.5 text-[21px] font-semibold leading-snug">{c.title}</h2>
                 </div>
                 {pending > 0 && (
-                  <span className="shrink-0 rounded-full bg-ambra-soft px-2.5 py-0.5 text-[13px] font-medium text-ambra">
+                  <span className="shrink-0 rounded-full bg-ambra-soft px-2.5 py-0.5 text-[14px] font-medium text-ambra">
                     {pending} da correggere
                   </span>
                 )}
@@ -86,7 +86,7 @@ export default async function CorsiDocente() {
                 ].map(([label, n]) => (
                   <div key={label} className="rounded-[14px] bg-paper py-3">
                     <dd className="text-[22px] font-semibold tabular-nums">{n}</dd>
-                    <dt className="text-[12px] text-mute">{label}</dt>
+                    <dt className="text-[13px] text-mute">{label}</dt>
                   </div>
                 ))}
               </dl>
@@ -98,11 +98,11 @@ export default async function CorsiDocente() {
                       <Avatar name={t.full_name} email={t.email} url={t.avatar_url} size="sm" />
                     </span>
                   ))}
-                  {!team.length && <span className="text-[13px] text-mute">Nessun docente assegnato</span>}
+                  {!team.length && <span className="text-[14px] text-mute">Nessun docente assegnato</span>}
                 </div>
                 <span className="text-[14px] font-medium text-codice transition-transform group-hover:translate-x-0.5">Apri →</span>
               </div>
-              {!c.active && <p className="mt-3 text-[12px] text-mute">Non più in vendita</p>}
+              {!c.active && <p className="mt-3 text-[13px] text-mute">Non più in vendita</p>}
             </Link>
           );
         })}

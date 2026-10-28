@@ -73,7 +73,7 @@ export default async function DiscentiPage({ searchParams }: Props) {
       </div>
 
       {list.length > 0 && (
-        <div className="mb-5 flex flex-wrap gap-2 text-[13px]">
+        <div className="mb-5 flex flex-wrap gap-2 text-[14px]">
           <StatusPill kind="correct" n={totals.toCorrect} label="da correggere" />
           <StatusPill kind="todo" n={totals.todo} label="da svolgere" />
           <StatusPill kind="done" n={totals.done} label="corrette" />
@@ -105,10 +105,10 @@ export default async function DiscentiPage({ searchParams }: Props) {
                     <div className="mt-1 flex flex-wrap gap-1.5">
                       {s.active.length ? (
                         s.active.map((c) => (
-                          <span key={c} className="rounded-full bg-codice-soft px-2 py-0.5 text-[12px] font-medium text-codice">{c}</span>
+                          <span key={c} className="rounded-full bg-codice-soft px-2 py-0.5 text-[13px] font-medium text-codice">{c}</span>
                         ))
                       ) : (
-                        <span className="rounded-full bg-line-soft px-2 py-0.5 text-[12px] text-mute">Nessun corso attivo</span>
+                        <span className="rounded-full bg-line-soft px-2 py-0.5 text-[13px] text-mute">Nessun corso attivo</span>
                       )}
                     </div>
                   </div>
@@ -148,7 +148,7 @@ function StatusPill({ kind, n, label, compact = false }: { kind: keyof typeof PI
   return (
     <span
       title={`${n} ${label}`}
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium tabular-nums ${n ? p.on : "bg-paper text-mute/70"} ${compact ? "text-[13px]" : ""}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium tabular-nums ${n ? p.on : "bg-paper text-mute/70"} ${compact ? "text-[14px]" : ""}`}
     >
       <svg viewBox="0 0 24 24" className="size-[15px]" aria-hidden>
         <path d={p.icon} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

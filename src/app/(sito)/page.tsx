@@ -151,7 +151,7 @@ export default async function HomePage() {
                   <p className="mt-4 text-[15px] leading-relaxed text-white/80">{t.bio}</p>
                   <ul className="mt-5 flex flex-wrap gap-2">
                     {t.subjects.map((s) => (
-                      <li key={s} className="rounded-full bg-white/10 px-3 py-1 text-[13px] text-white/90">{s}</li>
+                      <li key={s} className="rounded-full bg-white/10 px-3 py-1 text-[14px] text-white/90">{s}</li>
                     ))}
                   </ul>
                 </Spotlight>

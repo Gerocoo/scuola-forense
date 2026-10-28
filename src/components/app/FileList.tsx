@@ -9,7 +9,7 @@ export function FileIcon({ name }: { name: string }) {
   const e = ext(name);
   const tone = e === "PDF" ? "text-ceralacca" : e.startsWith("DOC") || e === "ODT" ? "text-codice" : "text-slate";
   return (
-    <span aria-hidden className={`grid h-10 w-9 shrink-0 place-items-center rounded-[4px] border border-line bg-paper text-[10px] font-bold ${tone}`}>
+    <span aria-hidden className={`grid h-10 w-9 shrink-0 place-items-center rounded-[4px] border border-line bg-paper text-[12px] font-bold ${tone}`}>
       {e || "FILE"}
     </span>
   );

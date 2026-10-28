@@ -110,7 +110,7 @@ export default async function EsercitazioniDocente({ searchParams }: Props) {
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-[15px]">{a.title}</span>
-                      <span className="text-[13px] text-mute">
+                      <span className="text-[14px] text-mute">
                         {KIND_LABEL[a.kind]}
                         <span className={`md:hidden ${late ? "text-ceralacca" : ""}`}>{a.due_at ? ` · scadenza ${dateShort(a.due_at)}` : ""}</span>
                       </span>

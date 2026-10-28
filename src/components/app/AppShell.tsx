@@ -38,7 +38,7 @@ export function AppShell({
       <aside className="sticky top-0 z-30 border-b border-black/[0.06] bg-[rgb(255_255_255/0.72)] backdrop-blur-xl backdrop-saturate-150 lg:flex lg:h-dvh lg:flex-col lg:border-b-0 lg:border-r">
         <div className="flex h-16 items-center justify-between px-4 lg:h-auto lg:flex-col lg:items-start lg:gap-1 lg:px-5 lg:py-6">
           <Logo href="/" />
-          <p className="mt-2 hidden rounded-full bg-paper px-3 py-1 text-[12px] font-medium text-slate lg:block">{areaLabel}</p>
+          <p className="mt-2 hidden rounded-full bg-paper px-3 py-1 text-[13px] font-medium text-slate lg:block">{areaLabel}</p>
           <div className="lg:hidden">{menu}</div>
         </div>
         <NavLinks items={nav} />

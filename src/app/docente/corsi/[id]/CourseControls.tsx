@@ -43,7 +43,7 @@ export function RemoveTeacher({ packageId, teacherId }: { packageId: string; tea
       type="button"
       disabled={pending}
       onClick={() => start(async () => { await removeCourseTeacher(packageId, teacherId); router.refresh(); })}
-      className="text-[13px] text-mute hover:text-ceralacca"
+      className="text-[14px] text-mute hover:text-ceralacca"
     >
       Rimuovi
     </button>
@@ -61,7 +61,7 @@ export function RetireExercise({ id, title }: { id: string; title: string }) {
         if (!confirm(`Ritirare "${title}"? Non arriverà ai nuovi iscritti e sparirà a chi non l'ha ancora consegnato. Gli elaborati già consegnati restano.`)) return;
         start(async () => { await deleteCourseExercise(id); router.refresh(); });
       }}
-      className="text-[13px] text-mute hover:text-ceralacca"
+      className="text-[14px] text-mute hover:text-ceralacca"
     >
       {pending ? "Ritiro…" : "Ritira"}
     </button>
@@ -100,7 +100,7 @@ export function InviteToCourse({ packageId }: { packageId: string }) {
         <button className="btn-primary btn-sm shrink-0" disabled={pending}>{pending ? "…" : "Invita"}</button>
       </div>
       <p className="hint">Appena si registra con questa email entra come docente di questo corso.</p>
-      {msg && <p role="status" className={`text-[13px] ${msg.ok ? "text-codice" : "text-ceralacca"}`}>{msg.text}</p>}
+      {msg && <p role="status" className={`text-[14px] ${msg.ok ? "text-codice" : "text-ceralacca"}`}>{msg.text}</p>}
     </form>
   );
 }
