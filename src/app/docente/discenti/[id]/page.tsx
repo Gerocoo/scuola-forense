@@ -95,6 +95,7 @@ export default async function DiscentePage({ params }: Props) {
           </div>
           <div className="grid grid-cols-2 gap-2 md:flex md:shrink-0">
             <Link href={`/docente/messaggi/${s.id}`} className="btn-secondary">Scrivi</Link>
+            <Link href={`/docente/colloqui?discente=${s.id}`} className="btn-secondary">Fissa un colloquio</Link>
             <Link href={`/docente/esercitazioni/nuova?discente=${s.id}`} className="btn-primary">Assegna traccia</Link>
           </div>
         </div>

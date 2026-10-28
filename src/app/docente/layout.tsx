@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app/AppShell";
 import { requireStaff } from "@/lib/auth";
 import { staffNotices } from "@/lib/notifications";
+import { meetingsToHandle } from "@/lib/meetings";
 import type { NavItem } from "@/components/app/NavLinks";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +10,7 @@ export default async function DocenteLayout({ children }: { children: React.Reac
   const { supabase, user, profile } = await requireStaff();
 
   const isAdmin = profile.role === "admin" || !!profile.is_super;
-  const [{ count: unread }, { count: toCorrect }, notices, { count: toCollect }] = await Promise.all([
+  const [{ count: unread }, { count: toCorrect }, notices, { count: toCollect }, meetings] = await Promise.all([
     supabase
       .from("messages")
       .select("id", { count: "exact", head: true })
@@ -21,6 +22,7 @@ export default async function DocenteLayout({ children }: { children: React.Reac
     isAdmin
       ? supabase.from("enrollments").select("id", { count: "exact", head: true }).eq("status", "pending")
       : Promise.resolve({ count: 0 }),
+    meetingsToHandle(supabase, user.id, "teacher"),
   ]);
 
   const nav: NavItem[] = [
@@ -33,13 +35,13 @@ export default async function DocenteLayout({ children }: { children: React.Reac
     { href: "/docente/orale", label: "Orale" },
     { href: "/docente/archivio", label: "Archivio tracce" },
     { href: "/docente/messaggi", label: "Messaggi", badge: unread ?? 0 },
+    { href: "/docente/colloqui", label: "Colloqui", badge: meetings },
   ];
   if (isAdmin) {
     nav.push(
       { href: "/docente/pacchetti", label: "Corsi in vendita" },
       { href: "/docente/pagamenti", label: "Pagamenti", badge: toCollect ?? 0 },
       { href: "/docente/utenti", label: "Utenti e ruoli" },
-      { href: "/docente/statistiche", label: "Statistiche" },
       { href: "/docente/contatti", label: "Contatti" },
     );
   }

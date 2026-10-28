@@ -5,6 +5,8 @@ import { Avatar } from "@/components/app/Avatar";
 import { LessonForm } from "../LessonForm";
 import { LessonFiles } from "./LessonFiles";
 import { VideoUploader } from "./VideoUploader";
+import { LessonBroadcast } from "./LessonBroadcast";
+import { enrolledStudents } from "@/lib/recipients";
 import { requireStaff } from "@/lib/auth";
 import { bunnyConfigured, embedUrl } from "@/lib/bunny";
 import { dateShort, dateTime, toLocalInput } from "@/lib/format";
@@ -30,6 +32,7 @@ export default async function ModificaLezione({ params }: Props) {
       .returns<BookingRow[]>(),
   ]);
   if (!lesson) notFound();
+  const enrolledCount = lesson.kind === "in_presenza" && !lesson.booking_enabled ? (await enrolledStudents(lesson.package_ids ?? [])).length : 0;
 
   const live = lesson.kind === "in_presenza";
   const past = live && lesson.scheduled_at && lesson.scheduled_at < new Date().toISOString();
@@ -83,14 +86,14 @@ export default async function ModificaLezione({ params }: Props) {
               ) : (
                 <p className="mt-2 text-sm text-slate">Ancora nessuna prenotazione.</p>
               )}
-              {!!bookings?.length && (
-                <a
-                  className="btn-ghost btn-sm mt-3 px-0"
-                  href={`mailto:?bcc=${encodeURIComponent(bookings.map((b) => b.user?.email).filter(Boolean).join(","))}&subject=${encodeURIComponent(lesson.title)}`}
-                >
-                  Scrivi a tutti i prenotati
-                </a>
-              )}
+              {!!bookings?.length && <LessonBroadcast lessonId={lesson.id} count={bookings.length} label="Scrivi a tutti i prenotati" />}
+            </section>
+          )}
+          {live && !lesson.booking_enabled && enrolledCount > 0 && (
+            <section className="panel p-5">
+              <h2 className="font-semibold">Partecipanti</h2>
+              <p className="mt-1 text-sm text-slate">{enrolledCount} iscritti ai corsi di questo incontro.</p>
+              <LessonBroadcast lessonId={lesson.id} count={enrolledCount} label="Scrivi a tutti gli studenti" />
             </section>
           )}
           {live && lesson.reminder_sent_at && (
