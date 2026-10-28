@@ -1,8 +1,10 @@
 import Link from "next/link";
 import type { Package } from "@/lib/types";
 import { currentPrice, euro, subjectLabel } from "@/lib/format";
+import { PromoCountdown } from "./PromoCountdown";
 
-export function PackageCard({ pkg }: { pkg: Package }) {
+export function PackageCard({ pkg, left = null }: { pkg: Package; left?: number | null }) {
+  const installments = process.env.PAGAMENTO_RATE === "1";
   const price = currentPrice(pkg);
   const dark = pkg.highlight;
 
@@ -28,12 +30,21 @@ export function PackageCard({ pkg }: { pkg: Package }) {
             <span className={`text-[17px] line-through tabular-nums ${dark ? "text-white/50" : "text-mute"}`}>{euro(price.full)}</span>
           )}
         </div>
-        {price.promoActive && pkg.promo_label ? (
+        {price.promoActive && pkg.promo_label && (
           <p className={`mt-3 inline-block rounded-full px-3 py-1 text-[14px] font-medium ${dark ? "bg-white/15 text-ivory" : "bg-ceralacca-soft text-ceralacca"}`}>
             {pkg.promo_label}
           </p>
-        ) : (
-          <p className={`mt-2 text-[14px] ${dark ? "text-white/60" : "text-mute"}`}>Pagamento unico</p>
+        )}
+        {price.promoActive && pkg.promo_until && <PromoCountdown until={pkg.promo_until} dark={dark} />}
+        <p className={`mt-2 text-[14px] ${dark ? "text-white/70" : "text-mute"}`}>
+          {installments ? "Pagamento unico o in 3 rate senza interessi" : "Pagamento unico"}
+        </p>
+        {left !== null && (
+          <p className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[14px] font-semibold ${
+            left === 0 ? (dark ? "bg-white/15 text-white" : "bg-line-soft text-slate") : left <= 10 ? (dark ? "bg-ceralacca text-white" : "bg-ceralacca-soft text-ceralacca") : dark ? "bg-white/15 text-ivory" : "bg-codice-soft text-codice"
+          }`}>
+            {left === 0 ? "Posti esauriti" : left === 1 ? "Resta 1 posto" : `Restano ${left} posti`}
+          </p>
         )}
       </div>
 
@@ -52,7 +63,7 @@ export function PackageCard({ pkg }: { pkg: Package }) {
         href={`/corsi/${pkg.slug}`}
         className={`mt-8 w-full ${dark ? "btn-primary bg-ivory text-codice hover:bg-white" : "btn-primary"}`}
       >
-        Scopri il corso
+        {left === 0 ? "Vedi il corso" : "Scopri il corso"}
       </Link>
     </article>
   );

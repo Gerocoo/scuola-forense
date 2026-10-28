@@ -10,6 +10,7 @@ import { ABOUT, FAQ, HERO, METHOD, SITE, TEAM } from "@/content/site";
 import { createClient } from "@/lib/supabase/server";
 import { initials, SUBJECTS } from "@/lib/format";
 import type { Package } from "@/lib/types";
+import { enrolledCounts, seatsLeft } from "@/lib/seats";
 
 type Props = { searchParams: Promise<{ materia?: string }> };
 
@@ -22,6 +23,7 @@ export default async function HomePage({ searchParams }: Props) {
     .eq("active", true)
     .order("sort")
     .returns<Package[]>();
+  const taken = await enrolledCounts((packages ?? []).filter((p) => p.seats).map((p) => p.id));
 
   return (
     <>
@@ -194,7 +196,7 @@ export default async function HomePage({ searchParams }: Props) {
               {packages.filter((p) => !materia || !p.subject || p.subject === materia).map((p, i) => (
                 <Reveal key={p.id} delay={i * 90} className="h-full">
                   <Spotlight tone={p.highlight ? "dark" : "light"} className="h-full rounded-[28px]">
-                    <PackageCard pkg={p} />
+                    <PackageCard pkg={p} left={seatsLeft(p.seats, taken.get(p.id) ?? 0)} />
                   </Spotlight>
                 </Reveal>
               ))}

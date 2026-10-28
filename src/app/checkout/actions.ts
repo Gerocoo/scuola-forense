@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { getStripe, siteUrl } from "@/lib/stripe";
 import { currentPrice } from "@/lib/format";
 import type { Package } from "@/lib/types";
+import { enrolledCounts } from "@/lib/seats";
 
 export async function startCheckout(formData: FormData) {
   const slug = String(formData.get("slug") ?? "");
@@ -32,6 +33,12 @@ export async function startCheckout(formData: FormData) {
     .maybeSingle();
   if (already && (!already.ends_at || new Date(already.ends_at) > new Date())) {
     redirect("/area?gia_iscritto=1");
+  }
+
+  // posti limitati: niente vendita a corso pieno
+  if (pkg.seats) {
+    const taken = (await enrolledCounts([pkg.id])).get(pkg.id) ?? 0;
+    if (taken >= pkg.seats) redirect(`/corsi/${pkg.slug}?esaurito=1`);
   }
 
   const price = currentPrice(pkg);
