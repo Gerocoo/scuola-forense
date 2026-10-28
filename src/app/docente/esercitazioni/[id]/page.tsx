@@ -132,8 +132,20 @@ export default async function EsercitazioneDocente({ params }: Props) {
               <dd className="mt-0.5 font-medium">{dateTime(a.created_at)}</dd>
             </div>
             <div className="p-4">
-              <dt className="text-sm text-mute">Scadenza</dt>
-              <dd className="mt-0.5 font-medium">{a.due_at ? dateTime(a.due_at) : "Nessuna"}</dd>
+              <dt className="text-sm text-mute">{a.timed ? "Simulazione a tempo" : "Scadenza"}</dt>
+              <dd className="mt-0.5 font-medium">
+                {a.timed && a.opens_at ? (
+                  <>
+                    dalle {dateTime(a.opens_at)}
+                    <br />
+                    alle {a.due_at ? dateTime(a.due_at) : "—"}
+                  </>
+                ) : a.due_at ? (
+                  dateTime(a.due_at)
+                ) : (
+                  "Nessuna"
+                )}
+              </dd>
             </div>
           </dl>
           <AssignmentAdmin

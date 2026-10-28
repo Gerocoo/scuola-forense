@@ -41,6 +41,9 @@ export function NewAssignmentForm({
   const [title, setTitle] = useState("");
   const [instructions, setInstructions] = useState("");
   const [due, setDue] = useState("");
+  const [timed, setTimed] = useState(false);
+  const [opens, setOpens] = useState("");
+  const [hours, setHours] = useState("7");
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +70,7 @@ export function NewAssignmentForm({
     setError(null);
     if (!course && !selected.size) return setError("Scegli almeno un discente.");
     if (!title.trim()) return setError("Inserisci un titolo.");
+    if (timed && !opens) return setError("Indica quando si apre la simulazione.");
 
     const batchId = crypto.randomUUID();
     try {
@@ -86,6 +90,7 @@ export function NewAssignmentForm({
         files: metas,
         lessonId: lessonId || null,
         packageId: course?.id ?? null,
+        timed: timed ? { opensLocal: opens, durationMin: Math.round(Number(hours.replace(",", ".")) * 60) } : null,
       });
       if (!res.ok) throw new Error(res.error);
       router.push(
@@ -133,11 +138,37 @@ export function NewAssignmentForm({
               placeholder="Testo della traccia, tempo a disposizione, indicazioni sulla consegna."
             />
           </div>
+          <div className={`rounded-[14px] border p-4 ${timed ? "border-codice bg-codice-soft/50" : "border-line"}`}>
+            <label className="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" className="mt-1 size-4 accent-codice" checked={timed} onChange={(e) => setTimed(e.target.checked)} />
+              <span>
+                <span className="block text-[15px] font-semibold">Simulazione d&apos;esame a tempo</span>
+                <span className="block text-[14px] text-slate">
+                  La traccia resta nascosta fino all&apos;ora di inizio, poi parte il conto alla rovescia. Allo scadere la consegna si chiude, come all&apos;esame.
+                </span>
+              </span>
+            </label>
+            {timed && (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="opens" className="label">Inizio</label>
+                  <input id="opens" type="datetime-local" className="field" value={opens} onChange={(e) => setOpens(e.target.value)} required />
+                </div>
+                <div>
+                  <label htmlFor="hours" className="label">Durata (ore)</label>
+                  <input id="hours" inputMode="decimal" className="field" value={hours} onChange={(e) => setHours(e.target.value)} />
+                  <p className="hint">All&apos;esame ogni prova scritta dura 7 ore.</p>
+                </div>
+              </div>
+            )}
+          </div>
           <div className="grid gap-5 sm:grid-cols-2">
-            <div>
-              <label htmlFor="due" className="label">Scadenza (facoltativa)</label>
-              <input id="due" type="datetime-local" className="field" value={due} onChange={(e) => setDue(e.target.value)} />
-            </div>
+            {!timed && (
+              <div>
+                <label htmlFor="due" className="label">Scadenza (facoltativa)</label>
+                <input id="due" type="datetime-local" className="field" value={due} onChange={(e) => setDue(e.target.value)} />
+              </div>
+            )}
             <div>
               <label htmlFor="lesson" className="label">Collegata alla lezione</label>
               <select id="lesson" className="field" value={lessonId} onChange={(e) => setLessonId(e.target.value)}>

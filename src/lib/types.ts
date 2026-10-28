@@ -110,6 +110,8 @@ export interface Assignment {
   created_at: string;
   lesson_id: string | null;
   package_id?: string | null;
+  opens_at?: string | null;
+  timed?: boolean;
 }
 
 export interface CourseExercise {
@@ -123,6 +125,8 @@ export interface CourseExercise {
   lesson_id: string | null;
   files: UploadedMeta[];
   created_at: string;
+  opens_at?: string | null;
+  timed?: boolean;
 }
 
 export interface AssignmentFile extends StoredFile {

@@ -7,6 +7,7 @@ import { AssignmentTimeline } from "@/components/app/AssignmentTimeline";
 import { SubmissionPanel } from "./SubmissionPanel";
 import { AnnotateButton, type Annotations } from "@/components/app/PdfAnnotator";
 import { requireUser } from "@/lib/auth";
+import { ExamTimer } from "@/components/app/ExamTimer";
 import { dateTime, KIND_LABEL } from "@/lib/format";
 import type { Assignment, AssignmentFile, Profile, Review } from "@/lib/types";
 
@@ -17,7 +18,30 @@ export default async function EsercitazionePage({ params }: Props) {
   const { supabase, user } = await requireUser();
 
   const { data: a } = await supabase.from("assignments").select("*").eq("id", id).eq("student_id", user.id).maybeSingle<Assignment>();
-  if (!a) notFound();
+  if (!a) {
+    // simulazione non ancora aperta: il database nasconde la traccia, mostriamo solo l'attesa
+    const { data: upcoming } = await supabase.rpc("my_upcoming_exams");
+    const exam = ((upcoming ?? []) as { id: string; title: string; kind: Assignment["kind"]; opens_at: string; due_at: string | null }[]).find((e) => e.id === id);
+    if (!exam) notFound();
+    const minutes = exam.due_at ? Math.round((new Date(exam.due_at).getTime() - new Date(exam.opens_at).getTime()) / 60000) : null;
+    return (
+      <>
+        <PageHeader back={{ href: "/area/esercitazioni", label: "Esercitazioni" }} title={exam.title} description={`Simulazione d'esame · ${KIND_LABEL[exam.kind]}`} />
+        <div className="mx-auto max-w-xl space-y-5">
+          <ExamTimer target={exam.opens_at} mode="start" />
+          <section className="panel p-5 sm:p-6">
+            <h2 className="text-[17px] font-semibold">Come funziona</h2>
+            <ul className="mt-3 space-y-2 text-[15px] leading-relaxed text-slate">
+              <li>La traccia compare in questa pagina <strong className="text-ink">{dateTime(exam.opens_at)}</strong>: non serve ricaricare.</li>
+              {minutes && <li>Da quel momento hai <strong className="text-ink">{minutes % 60 ? `${Math.floor(minutes / 60)} ore e ${minutes % 60} minuti` : `${minutes / 60} ore`}</strong>, come all&apos;esame.</li>}
+              {exam.due_at && <li>La consegna si chiude <strong className="text-ink">{dateTime(exam.due_at)}</strong>: dopo non si può più caricare l&apos;elaborato.</li>}
+              <li>Tieni pronti i codici annotati e lavora senza interruzioni, come in aula.</li>
+            </ul>
+          </section>
+        </div>
+      </>
+    );
+  }
 
   const [{ data: files }, { data: review }, { data: teacher }, { data: annotations }] = await Promise.all([
     supabase.from("assignment_files").select("*").eq("assignment_id", id).order("created_at").returns<AssignmentFile[]>(),
@@ -31,7 +55,9 @@ export default async function EsercitazionePage({ params }: Props) {
   );
 
   const byRole = (r: AssignmentFile["role"]) => (files ?? []).filter((f) => f.role === r);
-  const editable = a.status === "assegnato" || a.status === "consegnato";
+  const timeUp = !!(a.timed && a.due_at && Date.now() > new Date(a.due_at).getTime() + 5 * 60_000);
+  const editable = (a.status === "assegnato" || a.status === "consegnato") && !timeUp;
+  const examRunning = !!(a.timed && a.due_at && (a.status === "assegnato" || a.status === "consegnato"));
   const late = a.status === "assegnato" && a.due_at && new Date(a.due_at) < new Date();
   const teacherName = teacher?.full_name || "il docente";
 
@@ -54,6 +80,12 @@ export default async function EsercitazionePage({ params }: Props) {
           ) : null
         }
       />
+
+      {examRunning && (
+        <div className="mb-6">
+          <ExamTimer target={a.due_at!} mode="end" totalMin={a.opens_at ? Math.round((new Date(a.due_at!).getTime() - new Date(a.opens_at).getTime()) / 60000) : undefined} />
+        </div>
+      )}
 
       <AssignmentTimeline assignment={a} />
 

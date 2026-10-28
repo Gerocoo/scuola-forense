@@ -28,6 +28,8 @@ export async function createAssignments(input: {
   lessonId?: string | null;
   /** Esercizio di corso: va a tutti gli iscritti attivi e, in automatico, a chi si iscrive dopo. */
   packageId?: string | null;
+  /** Simulazione d'esame a tempo: apertura e durata in minuti (la scadenza si calcola da sole). */
+  timed?: { opensLocal: string; durationMin: number } | null;
 }): Promise<ActionResult & { firstId?: string; count?: number }> {
   const { supabase, user, profile } = await requireStaff();
 
@@ -38,7 +40,17 @@ export async function createAssignments(input: {
     return { ok: false, error: "Percorso dei file non valido." };
   }
 
-  const due = fromLocalInput(input.dueLocal);
+  let due = fromLocalInput(input.dueLocal);
+  let opensAt: string | null = null;
+  if (input.timed) {
+    opensAt = fromLocalInput(input.timed.opensLocal);
+    const minutes = Math.round(Number(input.timed.durationMin));
+    if (!opensAt) return { ok: false, error: "Indica data e ora di inizio della simulazione." };
+    if (new Date(opensAt).getTime() < Date.now() - 60_000) return { ok: false, error: "L'inizio della simulazione è già passato." };
+    if (!minutes || minutes < 15 || minutes > 24 * 60) return { ok: false, error: "Durata non valida." };
+    due = new Date(new Date(opensAt).getTime() + minutes * 60_000).toISOString();
+  }
+  const timedCols = { opens_at: opensAt, timed: !!input.timed };
 
   if (input.packageId) {
     const { data: allowed } = await supabase.rpc("teaches_package", { pid: input.packageId });
@@ -53,6 +65,7 @@ export async function createAssignments(input: {
       due_at: due,
       lesson_id: input.lessonId || null,
       files: input.files,
+      ...timedCols,
     });
     if (ceErr) {
       console.error("[createAssignments course]", ceErr);
@@ -80,6 +93,7 @@ export async function createAssignments(input: {
     due_at: due,
     lesson_id: input.lessonId || null,
     package_id: input.packageId || null,
+    ...timedCols,
   }));
 
   const { data: created, error } = await supabase.from("assignments").insert(rows).select("id, student_id");
@@ -114,13 +128,21 @@ export async function createAssignments(input: {
       const a = created.find((c) => c.student_id === s.id)!;
       return notify({
         to: s.email,
-        subject: `Nuova traccia: ${title}`,
-        html: emailLayout(
-          "Hai una nuova traccia da svolgere",
-          `<p>${escapeHtml(profile.full_name || "Il docente")} ti ha assegnato <strong>${escapeHtml(title)}</strong> (${KIND_LABEL[input.kind].toLowerCase()}).</p>
-           ${due ? `<p>Scadenza: <strong>${dateTime(due)}</strong>.</p>` : ""}`,
-          { label: "Apri la traccia", href: `${siteUrl()}/area/esercitazioni/${a.id}` },
-        ),
+        subject: opensAt ? `Simulazione d'esame: ${title}` : `Nuova traccia: ${title}`,
+        html: opensAt
+          ? emailLayout(
+              "Simulazione d'esame in calendario",
+              `<p>${escapeHtml(profile.full_name || "Il docente")} ha fissato la simulazione <strong>${escapeHtml(title)}</strong> (${KIND_LABEL[input.kind].toLowerCase()}).</p>
+               <p>La traccia si apre <strong>${dateTime(opensAt)}</strong> e va consegnata entro <strong>${dateTime(due)}</strong>, come all'esame.</p>
+               <p>Tieni a portata di mano i codici annotati.</p>`,
+              { label: "Vedi la simulazione", href: `${siteUrl()}/area/esercitazioni/${a.id}` },
+            )
+          : emailLayout(
+              "Hai una nuova traccia da svolgere",
+              `<p>${escapeHtml(profile.full_name || "Il docente")} ti ha assegnato <strong>${escapeHtml(title)}</strong> (${KIND_LABEL[input.kind].toLowerCase()}).</p>
+               ${due ? `<p>Scadenza: <strong>${dateTime(due)}</strong>.</p>` : ""}`,
+              { label: "Apri la traccia", href: `${siteUrl()}/area/esercitazioni/${a.id}` },
+            ),
       });
     }),
   );

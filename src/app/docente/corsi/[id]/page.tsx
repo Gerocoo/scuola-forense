@@ -130,8 +130,10 @@ export default async function CorsoPage({ params }: Props) {
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-semibold">{ex.title}</p>
                           <p className="mt-0.5 text-[14px] text-mute">
-                            {KIND_LABEL[ex.kind]} · assegnato il {dateShort(ex.created_at)}
-                            {ex.due_at ? ` · scadenza ${dateTime(ex.due_at)}` : ""}
+                            {KIND_LABEL[ex.kind]}
+                            {ex.timed && ex.opens_at
+                              ? ` · simulazione a tempo: ${dateTime(ex.opens_at)} → ${ex.due_at ? dateTime(ex.due_at) : ""}`
+                              : ` · assegnato il ${dateShort(ex.created_at)}${ex.due_at ? ` · scadenza ${dateTime(ex.due_at)}` : ""}`}
                           </p>
                           <div className="mt-3 flex items-center gap-3">
                             <span className="h-1.5 max-w-[240px] flex-1 overflow-hidden rounded-full bg-line-soft">
