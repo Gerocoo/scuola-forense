@@ -14,7 +14,8 @@ const GROUPS: { status: AssignmentStatus[]; title: string; empty: string }[] = [
   { status: ["corretto"], title: "Corrette", empty: "Ancora nessuna correzione." },
 ];
 
-export default async function EsercitazioniPage() {
+export default async function EsercitazioniPage({ searchParams }: { searchParams: Promise<{ prova?: string }> }) {
+  const { prova } = await searchParams;
   const { supabase, user } = await requireUser();
   const { data } = await supabase
     .from("assignments")
@@ -34,6 +35,11 @@ export default async function EsercitazioniPage() {
         title="Esercitazioni"
         description="Scarica la traccia, svolgila e carica il tuo elaborato. Quando il docente pubblica la correzione la trovi nella stessa pagina."
       />
+      {prova === "1" && (
+        <p role="status" className="mb-8 rounded-[14px] bg-codice-soft px-4 py-3 text-[15px] text-codice">
+          Prova gratuita attiva per 30 giorni. La traccia compare qui appena è pronta e ti avvisiamo anche via email.
+        </p>
+      )}
       {upcoming.length > 0 && (
         <section className="mb-10">
           <h2 className="text-lg font-semibold">Simulazioni in calendario</h2>

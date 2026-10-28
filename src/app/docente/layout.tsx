@@ -30,7 +30,11 @@ export default async function DocenteLayout({ children }: { children: React.Reac
     { href: "/docente/messaggi", label: "Messaggi", badge: unread ?? 0 },
   ];
   if (profile.role === "admin" || profile.is_super) {
-    nav.push({ href: "/docente/pacchetti", label: "Corsi in vendita" }, { href: "/docente/utenti", label: "Utenti e ruoli" });
+    nav.push(
+      { href: "/docente/pacchetti", label: "Corsi in vendita" },
+      { href: "/docente/utenti", label: "Utenti e ruoli" },
+      { href: "/docente/contatti", label: "Contatti" },
+    );
   }
   if (profile.is_super) nav.push({ href: "/docente/registro", label: "Registro attività" });
   nav.push({ href: "/docente/impostazioni", label: "Impostazioni" }, { href: "/docente/profilo", label: "Profilo" });

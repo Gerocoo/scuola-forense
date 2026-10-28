@@ -38,6 +38,7 @@ export default async function HomePage({ searchParams }: Props) {
           <p className="hero-in [animation-delay:260ms] mx-auto mt-6 max-w-2xl text-[19px] leading-relaxed text-slate sm:text-[21px]">{HERO.body}</p>
           <div className="hero-in [animation-delay:400ms] mt-10 flex flex-wrap items-center justify-center gap-4">
             <Link href="#corsi" className="btn-primary btn-lg btn-shine">Scegli il corso</Link>
+            <Link href="/prova-gratuita" className="btn-secondary btn-lg">Prova gratis</Link>
             <Link href="#metodo" className="btn-ghost btn-lg btn-arrow">
               Come funziona
               <svg aria-hidden viewBox="0 0 16 16" className="size-4"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -232,7 +233,10 @@ export default async function HomePage({ searchParams }: Props) {
           <span className="temple-float"><LogoMark className="glow size-20" /></span>
           <h2 className="mt-8 text-[30px] font-semibold leading-tight sm:text-[48px]">La prova si prepara scrivendo.</h2>
           <p className="mt-4 text-[19px] leading-relaxed text-slate">Inizia dal corso più adatto a te. {SITE.brand} ti accompagna fino all&apos;abilitazione.</p>
-          <Link href="#corsi" className="btn-primary btn-lg btn-shine mt-10">Scegli il corso</Link>
+          <div className="mt-10 flex flex-wrap justify-center gap-3">
+            <Link href="#corsi" className="btn-primary btn-lg btn-shine">Scegli il corso</Link>
+            <Link href="/prova-gratuita" className="btn-secondary btn-lg">Prova gratis una traccia</Link>
+          </div>
         </Reveal>
       </section>
     </>
