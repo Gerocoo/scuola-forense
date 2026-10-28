@@ -31,15 +31,15 @@ export function FileList({
   return (
     <ul className="divide-y divide-line-soft rounded-[14px] bg-surface shadow-[var(--shadow-card)]">
       {files.map((f) => (
-        <li key={f.id} className="flex items-center gap-3 px-4 py-3">
+        <li key={f.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
           <FileIcon name={f.file_name} />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[15px] font-medium text-ink">{f.file_name}</p>
+          <div className="min-w-0 flex-1 basis-[180px]">
+            <p className="break-words text-[15px] font-medium leading-snug text-ink sm:truncate">{f.file_name}</p>
             <p className="text-sm text-mute">
               {fileSize(f.size_bytes)}, caricato il {dateShort(f.created_at)}
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="ml-auto flex shrink-0 items-center gap-1">
             {f.file_name.toLowerCase().endsWith(".pdf") && (
               <a href={`/api/files/${kind}/${f.id}?apri=1`} target="_blank" rel="noopener" className="btn-ghost btn-sm">
                 Apri

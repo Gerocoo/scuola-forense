@@ -71,7 +71,7 @@ export function CorrectionPanel({
   }
 
   return (
-    <section aria-labelledby="correzione" className="rounded-[var(--radius-panel)] border border-ceralacca/30 bg-surface p-6">
+    <section aria-labelledby="correzione" className="rounded-[var(--radius-panel)] border border-ceralacca/30 bg-surface p-4 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="correzione" className="text-lg font-semibold text-ceralacca">La tua correzione</h2>
@@ -138,7 +138,7 @@ export function CorrectionPanel({
       {error && <p role="alert" className="mt-4 text-sm text-ceralacca">{error}</p>}
       {notice && <p role="status" className="mt-4 text-sm text-codice">{notice}</p>}
 
-      <div className="mt-6 flex flex-wrap gap-3 border-t border-line-soft pt-5">
+      <div className="mt-6 flex flex-col gap-3 border-t border-line-soft pt-5 sm:flex-row sm:flex-wrap">
         {published ? (
           <button type="button" className="btn-secondary" disabled={busy} onClick={() => run(() => setAssignmentStatus(assignmentId, "in_correzione"))}>
             Modifica la correzione

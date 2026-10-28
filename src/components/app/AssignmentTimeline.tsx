@@ -17,7 +17,7 @@ export function AssignmentTimeline({ assignment }: { assignment: Pick<Assignment
         return (
           <li key={s.key} aria-current={i === current ? "step" : undefined}>
             <span className={`block h-1.5 rounded-full ${done ? (s.key === "corretto" ? "bg-ceralacca" : "bg-codice") : "bg-line"}`} />
-            <span className={`mt-2 block text-xs sm:text-sm ${i === current ? "font-semibold text-ink" : done ? "text-slate" : "text-mute"}`}>
+            <span className={`mt-2 block text-[11px] leading-tight sm:text-sm ${i === current ? "font-semibold text-ink" : done ? "text-slate" : "text-mute"}`}>
               {s.label}
             </span>
           </li>

@@ -57,11 +57,11 @@ export default async function EsercitazionePage({ params }: Props) {
 
       <AssignmentTimeline assignment={a} />
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="space-y-10">
           {/* La correzione, quando c'è, è la cosa più importante: va in cima */}
           {a.status === "corretto" && (
-            <section aria-labelledby="correzione" className="rounded-[var(--radius-panel)] border border-ceralacca/30 bg-surface p-6">
+            <section aria-labelledby="correzione" className="rounded-[var(--radius-panel)] border border-ceralacca/30 bg-surface p-4 sm:p-6">
               <h2 id="correzione" className="text-lg font-semibold text-ceralacca">Correzione del docente</h2>
               {review?.grade && (
                 <p className="mt-3 text-[15px]">
@@ -69,7 +69,7 @@ export default async function EsercitazionePage({ params }: Props) {
                 </p>
               )}
               {review?.feedback && (
-                <div className="prose-legal mt-4 whitespace-pre-wrap border-l-2 border-ceralacca/40 pl-4">{review.feedback}</div>
+                <div className="prose-legal mt-4 whitespace-pre-wrap break-words border-l-2 border-ceralacca/40 pl-4">{review.feedback}</div>
               )}
               {annotated.length > 0 && (
                 <ul className="mt-6 space-y-2">
@@ -77,12 +77,12 @@ export default async function EsercitazionePage({ params }: Props) {
                     const f = (files ?? []).find((ff) => ff.id === x.file_id);
                     if (!f) return null;
                     return (
-                      <li key={x.file_id} className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] bg-ceralacca-soft/60 px-4 py-3">
+                      <li key={x.file_id} className="flex flex-col gap-3 rounded-[14px] bg-ceralacca-soft/60 p-4 sm:flex-row sm:items-center sm:justify-between">
                         <span className="min-w-0">
                           <span className="block text-[15px] font-semibold">Il tuo elaborato corretto</span>
-                          <span className="block truncate text-[13px] text-slate">{f.file_name}, con segni e note del docente</span>
+                          <span className="block break-words text-[13px] text-slate">{f.file_name}, con segni e note del docente</span>
                         </span>
-                        <AnnotateButton fileId={f.id} fileName={f.file_name} initial={x.data} readOnly label="Vedi la correzione" />
+                        <AnnotateButton fileId={f.id} fileName={f.file_name} initial={x.data} readOnly label="Vedi la correzione" className="btn-primary btn-sm w-full sm:w-auto" />
                       </li>
                     );
                   })}

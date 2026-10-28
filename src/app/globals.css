@@ -42,6 +42,16 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
+  /* niente scorrimento orizzontale: su telefono la pagina non deve mai essere più larga dello schermo
+     (clip, non hidden, per non rompere le barre fisse in alto) */
+  html,
+  body {
+    overflow-x: clip;
+  }
+  /* gli elementi di una griglia possono restringersi: i nomi lunghi vanno a capo o si troncano */
+  .grid > * {
+    min-width: 0;
+  }
   body {
     background: var(--color-paper);
     color: var(--color-ink);

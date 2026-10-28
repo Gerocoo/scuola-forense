@@ -59,7 +59,7 @@ export default async function EsercitazioneDocente({ params }: Props) {
 
       <AssignmentTimeline assignment={a} />
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-10">
           <section aria-labelledby="elaborato">
             <h2 id="elaborato" className="text-lg font-semibold">Elaborato del discente</h2>
@@ -88,12 +88,12 @@ export default async function EsercitazioneDocente({ params }: Props) {
                     .map((f) => {
                       const n = marks(annOf(f.id));
                       return (
-                        <li key={f.id} className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] bg-surface px-3.5 py-2.5">
+                        <li key={f.id} className="flex flex-col gap-2.5 rounded-[12px] bg-surface p-3.5 sm:flex-row sm:items-center sm:justify-between">
                           <span className="min-w-0">
-                            <span className="block truncate text-[14px] font-medium">{f.file_name}</span>
+                            <span className="block break-words text-[14px] font-medium sm:truncate">{f.file_name}</span>
                             <span className="text-[12px] text-mute">{n ? `${n} annotazioni` : "Nessuna annotazione"}</span>
                           </span>
-                          <AnnotateButton fileId={f.id} fileName={f.file_name} initial={annOf(f.id)} label={n ? "Continua la correzione" : "Apri e correggi"} />
+                          <AnnotateButton fileId={f.id} fileName={f.file_name} initial={annOf(f.id)} label={n ? "Continua la correzione" : "Apri e correggi"} className="btn-primary btn-sm w-full sm:w-auto" />
                         </li>
                       );
                     })}
