@@ -15,6 +15,7 @@ function sender() {
  */
 export async function notify({ to, subject, html }: { to: string; subject: string; html: string }) {
   if (!to) return;
+  await pushFromEmail(to, subject, html);
   const brevo = process.env.BREVO_API_KEY;
   const resend = process.env.RESEND_API_KEY;
   if (!brevo && !resend) return;
@@ -34,6 +35,34 @@ export async function notify({ to, subject, html }: { to: string; subject: strin
     if (!res.ok) console.error("[notify] invio fallito", res.status, await res.text());
   } catch (e) {
     console.error("[notify] errore", e);
+  }
+}
+
+/** Ogni email di servizio arriva anche come notifica sul telefono, se l'utente le ha attivate. */
+async function pushFromEmail(to: string, subject: string, html: string) {
+  try {
+    const { pushConfigured, sendPush } = await import("@/lib/push");
+    if (!pushConfigured()) return;
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const { data: p } = await createAdminClient().from("profiles").select("id").ilike("email", to).maybeSingle();
+    if (!p) return;
+    const links = [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
+    const url = links.find((l) => l.includes("/area") || l.includes("/docente")) ?? links[0] ?? "/";
+    const body = html
+      .replace(/<h1[\s\S]*?<\/h1>/i, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;|&laquo;|&raquo;/g, " ")
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, "&")
+      .replace(/\s+/g, " ")
+      .split("Ricevi questa email")[0]
+      .replace(SITE.brand, "")
+      .trim()
+      .slice(0, 140);
+    await sendPush([p.id], { title: subject, body, url: url.replace(/^https?:\/\/[^/]+/, "") || "/" });
+  } catch (e) {
+    console.error("[push]", e);
   }
 }
 
