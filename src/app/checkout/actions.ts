@@ -44,8 +44,17 @@ export async function startCheckout(formData: FormData) {
   const price = currentPrice(pkg);
   let url: string | null = null;
 
-  try {
-    const session = await getStripe().checkout.sessions.create({
+  // Metodi di pagamento: di norma decide la dashboard Stripe. Con STRIPE_PAYMENT_METHODS
+  // (es. "card,paypal,klarna,satispay,amazon_pay") l'elenco viene imposto dal sito.
+  // Apple Pay e Google Pay rientrano in "card" e compaiono solo sui dispositivi compatibili.
+  const forced = (process.env.STRIPE_PAYMENT_METHODS ?? "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+  const create = (methods: string[] | null) =>
+    getStripe().checkout.sessions.create({
+      ...(methods?.length ? { payment_method_types: methods as never } : {}),
       mode: "payment",
       locale: "it",
       customer_email: profile.email,
@@ -66,7 +75,7 @@ export async function startCheckout(formData: FormData) {
       metadata: { user_id: user.id, package_id: pkg.id, slug: pkg.slug },
       payment_intent_data: { metadata: { user_id: user.id, package_id: pkg.id } },
       // configurazione dei metodi di pagamento scelta in Stripe (se assente usa quella predefinita dell'account)
-      ...(process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION
+      ...(!methods?.length && process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION
         ? { payment_method_configuration: process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION }
         : {}),
       allow_promotion_codes: true,
@@ -85,9 +94,19 @@ export async function startCheckout(formData: FormData) {
       success_url: `${siteUrl()}/checkout/successo?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl()}/corsi/${pkg.slug}`,
     });
-    url = session.url;
+
+  try {
+    url = (await create(forced)).url;
   } catch (e) {
     console.error("[checkout]", e);
+    // se un metodo imposto non è attivo sull'account, si riprova con le impostazioni della dashboard
+    if (forced.length) {
+      try {
+        url = (await create(null)).url;
+      } catch (e2) {
+        console.error("[checkout] anche senza metodi imposti", e2);
+      }
+    }
   }
 
   if (!url) redirect(`/corsi/${slug}?errore=1`);
