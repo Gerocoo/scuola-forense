@@ -65,6 +65,10 @@ export async function startCheckout(formData: FormData) {
       ],
       metadata: { user_id: user.id, package_id: pkg.id, slug: pkg.slug },
       payment_intent_data: { metadata: { user_id: user.id, package_id: pkg.id } },
+      // configurazione dei metodi di pagamento scelta in Stripe (se assente usa quella predefinita dell'account)
+      ...(process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION
+        ? { payment_method_configuration: process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION }
+        : {}),
       allow_promotion_codes: true,
       billing_address_collection: "required",
       tax_id_collection: { enabled: true },
