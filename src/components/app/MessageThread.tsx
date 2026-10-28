@@ -49,7 +49,7 @@ export function MessageThread({
                   Riguarda: {assignmentTitles[m.assignment_id]}
                 </Link>
               )}
-              <p className="whitespace-pre-wrap text-[16px] leading-relaxed">{m.body}</p>
+              <p className="whitespace-pre-wrap break-words text-[16px] leading-relaxed">{m.body}</p>
               {mine && (
                 <p className="mt-1 text-right text-xs text-white/60">{m.read_at ? "Letto" : "Non ancora letto"}</p>
               )}

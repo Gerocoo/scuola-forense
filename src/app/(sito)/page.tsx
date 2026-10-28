@@ -29,7 +29,7 @@ export default async function HomePage() {
           <p className="hero-in font-serif text-[19px] italic text-codice sm:text-[21px]">
             Preparazione all&apos;esame di abilitazione alla professione forense
           </p>
-          <h1 className="mx-auto mt-4 max-w-4xl text-[44px] font-semibold leading-[1.04] tracking-[-0.035em] text-ink sm:text-[64px] lg:text-[76px]">
+          <h1 className="mx-auto mt-4 max-w-4xl text-[38px] font-semibold leading-[1.05] tracking-[-0.035em] text-ink sm:text-[64px] lg:text-[76px]">
             <WordsIn text={HERO.title} start={150} />
           </h1>
           <p className="hero-in [animation-delay:260ms] mx-auto mt-6 max-w-2xl text-[19px] leading-relaxed text-slate sm:text-[21px]">{HERO.body}</p>
@@ -68,10 +68,10 @@ export default async function HomePage() {
       </div>
 
       {/* Chi siamo: una dichiarazione, grande */}
-      <section className="mx-auto max-w-[1080px] px-4 py-28 sm:px-6 sm:py-36">
+      <section className="mx-auto max-w-[1080px] px-4 py-20 sm:px-6 sm:py-36">
         <Reveal>
           <p className="text-[15px] font-medium text-codice">{ABOUT.title}</p>
-          <p className="mt-5 max-w-4xl text-[30px] font-semibold leading-[1.2] tracking-[-0.025em] text-ink sm:text-[44px]">
+          <p className="mt-5 max-w-4xl text-[26px] font-semibold leading-[1.2] tracking-[-0.025em] text-ink sm:text-[44px]">
             <ScrollWords text={ABOUT.body[0]} />
           </p>
           <p className="mt-8 max-w-2xl text-[19px] leading-relaxed text-slate">{ABOUT.body[1]}</p>
@@ -79,10 +79,10 @@ export default async function HomePage() {
       </section>
 
       {/* Metodo: sequenza reale, quindi numerata */}
-      <section id="metodo" className="scroll-mt-16 bg-surface py-28 sm:py-32">
+      <section id="metodo" className="scroll-mt-16 bg-surface py-20 sm:py-32">
         <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
           <Reveal className="text-center">
-            <h2 className="text-[40px] font-semibold leading-tight sm:text-[56px]">{METHOD.title}.</h2>
+            <h2 className="text-[32px] font-semibold leading-tight sm:text-[56px]">{METHOD.title}.</h2>
             <p className="mx-auto mt-4 max-w-xl text-[19px] leading-relaxed text-slate">{METHOD.intro}</p>
           </Reveal>
           <Reveal className="relative mt-16 hidden lg:block" >
@@ -110,10 +110,10 @@ export default async function HomePage() {
       </section>
 
       {/* Piattaforma */}
-      <section id="piattaforma" className="scroll-mt-16 py-28 sm:py-32">
+      <section id="piattaforma" className="scroll-mt-16 py-20 sm:py-32">
         <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
           <Reveal className="mb-14 max-w-3xl">
-            <h2 className="text-[40px] font-semibold leading-tight sm:text-[56px]">La scuola, sempre con te.</h2>
+            <h2 className="text-[32px] font-semibold leading-tight sm:text-[56px]">La scuola, sempre con te.</h2>
             <p className="mt-4 text-[19px] leading-relaxed text-slate">
               Lezioni, tracce, correzioni e messaggi in un&apos;unica area riservata, dal computer o dal telefono.
             </p>
@@ -123,7 +123,7 @@ export default async function HomePage() {
       </section>
 
       {/* Docenti: su fondo verde, l'unica sezione scura della pagina */}
-      <section id="docenti" className="relative isolate scroll-mt-16 overflow-hidden bg-codice py-28 text-white sm:py-32">
+      <section id="docenti" className="relative isolate scroll-mt-16 overflow-hidden bg-codice py-20 text-white sm:py-32">
         <svg aria-hidden viewBox="0 0 64 64" className="parallax pointer-events-none absolute -left-24 bottom-0 -z-10 size-[460px] opacity-[0.05]">
           <polygon points="12,22.6 32,11.2 52,22.6" fill="#f4eee2" />
           <rect x="13" y="23.8" width="38" height="2.2" fill="#f4eee2" />
@@ -134,7 +134,7 @@ export default async function HomePage() {
         </svg>
         <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
           <Reveal className="max-w-3xl">
-            <h2 className="text-[40px] font-semibold leading-tight sm:text-[56px]">I docenti.</h2>
+            <h2 className="text-[32px] font-semibold leading-tight sm:text-[56px]">I docenti.</h2>
             <p className="mt-4 text-[19px] leading-relaxed text-white/75">
               Avvocati che correggono personalmente ogni elaborato e rispondono ai tuoi messaggi.
             </p>
@@ -142,7 +142,7 @@ export default async function HomePage() {
           <div className={`mt-14 grid gap-4 ${TEAM.length === 2 ? "md:grid-cols-2 lg:mx-auto lg:max-w-[760px]" : "md:grid-cols-3"}`}>
             {TEAM.map((t, i) => (
               <Reveal key={t.name + t.role} delay={i * 90} className="h-full">
-                <Spotlight tone="dark" className="h-full rounded-[28px] bg-white/[0.07] p-8 ring-1 ring-white/10">
+                <Spotlight tone="dark" className="h-full rounded-[24px] bg-white/[0.07] p-6 ring-1 sm:rounded-[28px] sm:p-8 ring-white/10">
                   <span aria-hidden className="grid size-20 place-items-center rounded-full bg-ivory font-serif text-[28px] text-codice">
                     {initials(t.name.replace(/^(Avv\.|Dott\.|Prof\.)\s*/, ""))}
                   </span>
@@ -162,10 +162,10 @@ export default async function HomePage() {
       </section>
 
       {/* Corsi */}
-      <section id="corsi" className="scroll-mt-16 py-28 sm:py-32">
+      <section id="corsi" className="scroll-mt-16 py-20 sm:py-32">
         <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
           <Reveal className="text-center">
-            <h2 className="text-[40px] font-semibold leading-tight sm:text-[56px]">Scegli il tuo percorso.</h2>
+            <h2 className="text-[32px] font-semibold leading-tight sm:text-[56px]">Scegli il tuo percorso.</h2>
             <p className="mx-auto mt-4 max-w-xl text-[19px] leading-relaxed text-slate">
               In base a quanto manca alla prova. Dopo il pagamento l&apos;area riservata è attiva subito.
             </p>
@@ -189,9 +189,9 @@ export default async function HomePage() {
       </section>
 
       {/* Domande */}
-      <section id="domande" className="scroll-mt-16 bg-surface py-28 sm:py-32">
+      <section id="domande" className="scroll-mt-16 bg-surface py-20 sm:py-32">
         <div className="mx-auto max-w-[760px] px-4 sm:px-6">
-          <h2 className="text-center text-[40px] font-semibold leading-tight sm:text-[48px]">Domande frequenti.</h2>
+          <h2 className="text-center text-[32px] font-semibold leading-tight sm:text-[48px]">Domande frequenti.</h2>
           <div className="mt-12 divide-y divide-line-soft border-y border-line-soft">
             {FAQ.map((f) => (
               <details key={f.q} className="faq group py-6">
@@ -209,10 +209,10 @@ export default async function HomePage() {
       </section>
 
       {/* Chiusura */}
-      <section className="py-28 sm:py-32">
+      <section className="py-20 sm:py-32">
         <Reveal className="mx-auto flex max-w-[760px] flex-col items-center px-4 text-center sm:px-6">
           <span className="temple-float"><LogoMark className="glow size-20" /></span>
-          <h2 className="mt-8 text-[36px] font-semibold leading-tight sm:text-[48px]">La prova si prepara scrivendo.</h2>
+          <h2 className="mt-8 text-[30px] font-semibold leading-tight sm:text-[48px]">La prova si prepara scrivendo.</h2>
           <p className="mt-4 text-[19px] leading-relaxed text-slate">Inizia dal corso più adatto a te. {SITE.brand} ti accompagna fino all&apos;abilitazione.</p>
           <Link href="#corsi" className="btn-primary btn-lg btn-shine mt-10">Scegli il corso</Link>
         </Reveal>

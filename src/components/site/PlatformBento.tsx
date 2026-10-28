@@ -10,7 +10,7 @@ export function PlatformBento() {
     <div className="grid gap-4 md:grid-cols-6">
       {/* Correzione: il riquadro principale */}
       <Reveal className="md:col-span-4">
-        <article className="flex h-full flex-col overflow-hidden lift rounded-[28px] bg-surface p-8 shadow-[var(--shadow-card)] sm:p-10">
+        <article className="flex h-full flex-col overflow-hidden lift rounded-[24px] bg-surface p-6 shadow-[var(--shadow-card)] sm:rounded-[28px] sm:p-10">
           <h3 className="text-[28px] font-semibold leading-tight sm:text-[32px]">Correzione a margine.</h3>
           <p className="mt-2 max-w-md text-[17px] leading-relaxed text-slate">
             Carichi l&apos;elaborato, il docente lo restituisce annotato riga per riga, con un giudizio motivato.
@@ -37,7 +37,7 @@ export function PlatformBento() {
 
       {/* Video lezioni */}
       <Reveal className="md:col-span-2" delay={80}>
-        <article className="lift flex h-full flex-col overflow-hidden rounded-[28px] bg-codice p-8 text-white">
+        <article className="lift flex h-full flex-col overflow-hidden rounded-[24px] bg-codice p-6 text-white sm:rounded-[28px] sm:p-8">
           <h3 className="text-[24px] font-semibold leading-tight">Mini lezioni, quando vuoi.</h3>
           <p className="mt-2 text-[15px] leading-relaxed text-white/75">Tre al mese, da venti minuti. In streaming su ogni dispositivo.</p>
           <div className="mt-auto pt-8">
@@ -57,7 +57,7 @@ export function PlatformBento() {
 
       {/* Calendario */}
       <Reveal className="md:col-span-2">
-        <article className="lift flex h-full flex-col rounded-[28px] bg-surface p-8 shadow-[var(--shadow-card)]">
+        <article className="lift flex h-full flex-col rounded-[24px] bg-surface p-6 shadow-[var(--shadow-card)] sm:rounded-[28px] sm:p-8">
           <h3 className="text-[24px] font-semibold leading-tight">Un incontro in aula al mese.</h3>
           <p className="mt-2 text-[15px] leading-relaxed text-slate">Prenoti il posto, lo aggiungi al tuo calendario, ricevi il promemoria.</p>
           <div className="mt-auto pt-8">
@@ -87,7 +87,7 @@ export function PlatformBento() {
 
       {/* Messaggi */}
       <Reveal className="md:col-span-2" delay={80}>
-        <article className="lift flex h-full flex-col rounded-[28px] bg-surface p-8 shadow-[var(--shadow-card)]">
+        <article className="lift flex h-full flex-col rounded-[24px] bg-surface p-6 shadow-[var(--shadow-card)] sm:rounded-[28px] sm:p-8">
           <h3 className="text-[24px] font-semibold leading-tight">Il docente ti risponde.</h3>
           <p className="mt-2 text-[15px] leading-relaxed text-slate">Messaggi diretti, legati alla traccia di cui state parlando.</p>
           <div aria-hidden className="mt-auto space-y-2 pt-8 text-[13px] leading-snug">
@@ -103,7 +103,7 @@ export function PlatformBento() {
 
       {/* La tua area */}
       <Reveal className="md:col-span-2" delay={160}>
-        <article className="lift flex h-full flex-col rounded-[28px] bg-ivory p-8">
+        <article className="lift flex h-full flex-col rounded-[24px] bg-ivory p-6 sm:rounded-[28px] sm:p-8">
           <h3 className="text-[24px] font-semibold leading-tight">Tutto in un&apos;area riservata.</h3>
           <p className="mt-2 text-[15px] leading-relaxed text-slate">Tracce, consegne, correzioni e lezioni. Accedi con Google o con la tua email.</p>
           <div aria-hidden className="mt-auto flex items-end gap-3 pt-8">

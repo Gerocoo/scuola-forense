@@ -25,44 +25,42 @@ export default async function PacchettiPage() {
         description="Prezzi, promozioni e testi delle schede corso mostrate in vetrina."
         actions={<Link href="/docente/pacchetti/nuovo" className="btn-primary">Nuovo corso</Link>}
       />
-      <div className="overflow-x-auto rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
-        <table className="w-full min-w-[720px] text-left text-[15px]">
-          <thead className="border-b border-line text-sm text-mute">
-            <tr>
-              <th className="px-5 py-3 font-medium">Corso</th>
-              <th className="px-5 py-3 font-medium">Prezzo attuale</th>
-              <th className="px-5 py-3 text-right font-medium">Iscritti</th>
-              <th className="px-5 py-3 text-right font-medium">Incassato</th>
-              <th className="px-5 py-3 font-medium">Vetrina</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line-soft">
-            {(packages ?? []).map((p) => {
-              const price = currentPrice(p);
-              const s = stats(p.id);
-              return (
-                <tr key={p.id} className="hover:bg-paper">
-                  <td className="px-5 py-3">
-                    <Link href={`/docente/pacchetti/${p.id}`} className="font-medium hover:text-codice">{p.title}</Link>
-                    <span className="block text-sm text-mute">{p.period_label}</span>
-                  </td>
-                  <td className="px-5 py-3 tabular-nums">
-                    {euro(price.amount)}
-                    {price.promoActive && <span className="ml-2 text-sm text-ceralacca">in promozione</span>}
-                  </td>
-                  <td className="px-5 py-3 text-right tabular-nums">{s.count}</td>
-                  <td className="px-5 py-3 text-right tabular-nums">{euro(s.total)}</td>
-                  <td className="px-5 py-3">
-                    <span className={`rounded-full px-2.5 py-0.5 text-sm font-medium ${p.active ? "bg-codice-soft text-codice" : "bg-line-soft text-slate"}`}>
-                      {p.active ? "In vendita" : "Nascosto"}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <ul className="grid gap-3 md:grid-cols-2">
+        {(packages ?? []).map((p) => {
+          const price = currentPrice(p);
+          const st = stats(p.id);
+          return (
+            <li key={p.id}>
+              <Link href={`/docente/pacchetti/${p.id}`} className="panel lift flex h-full flex-col p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium text-codice">{p.period_label || "Corso"}</p>
+                    <p className="text-[18px] font-semibold leading-snug">{p.title}</p>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-medium ${p.active ? "bg-codice-soft text-codice" : "bg-line-soft text-slate"}`}>
+                    {p.active ? "In vendita" : "Nascosto"}
+                  </span>
+                </div>
+                <dl className="mt-4 grid grid-cols-3 gap-2">
+                  <div className="rounded-[12px] bg-paper px-3 py-2">
+                    <dt className="text-[11px] text-mute">Prezzo</dt>
+                    <dd className="text-[15px] font-semibold tabular-nums">{euro(price.amount)}</dd>
+                    {price.promoActive && <dd className="text-[11px] text-ceralacca">in promozione</dd>}
+                  </div>
+                  <div className="rounded-[12px] bg-paper px-3 py-2">
+                    <dt className="text-[11px] text-mute">Iscritti</dt>
+                    <dd className="text-[15px] font-semibold tabular-nums">{st.count}</dd>
+                  </div>
+                  <div className="rounded-[12px] bg-paper px-3 py-2">
+                    <dt className="text-[11px] text-mute">Incassato</dt>
+                    <dd className="truncate text-[15px] font-semibold tabular-nums">{euro(st.total)}</dd>
+                  </div>
+                </dl>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </>
   );
 }

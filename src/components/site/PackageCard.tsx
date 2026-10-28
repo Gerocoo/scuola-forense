@@ -8,7 +8,7 @@ export function PackageCard({ pkg }: { pkg: Package }) {
 
   return (
     <article
-      className={`flex h-full flex-col rounded-[28px] p-8 ${
+      className={`flex h-full flex-col rounded-[24px] p-6 sm:rounded-[28px] sm:p-8 ${
         dark ? "bg-codice text-white" : "bg-surface text-ink shadow-[var(--shadow-card)]"
       }`}
     >

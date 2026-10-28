@@ -52,29 +52,32 @@ export default async function EsercitazioniDocente({ searchParams }: Props) {
         actions={<Link href="/docente/esercitazioni/nuova" className="btn-primary">Assegna una traccia</Link>}
       />
 
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        {FILTERS.map((f) => (
-          <Link
-            key={f.key}
-            href={href({ stato: f.key })}
-            aria-current={f.key === filter.key ? "page" : undefined}
-            className={`rounded-full px-3.5 py-1.5 text-[15px] ${
-              f.key === filter.key ? "bg-ink text-white" : "border border-line bg-surface text-slate hover:text-ink"
-            }`}
-          >
-            {f.label}
+      <div className="mb-6 space-y-3">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden">
+          {FILTERS.map((f) => (
+            <Link
+              key={f.key}
+              href={href({ stato: f.key })}
+              aria-current={f.key === filter.key ? "page" : undefined}
+              className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] sm:text-[15px] ${
+                f.key === filter.key ? "bg-ink text-white" : "border border-line bg-surface text-slate hover:text-ink"
+              }`}
+            >
+              {f.label}
+            </Link>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <form className="min-w-0 flex-1 sm:max-w-xs" action="/docente/esercitazioni">
+            <input type="hidden" name="stato" value={filter.key} />
+            {onlyMine && <input type="hidden" name="mie" value="1" />}
+            <label className="sr-only" htmlFor="q">Cerca per titolo</label>
+            <input id="q" name="q" defaultValue={sp.q} placeholder="Cerca per titolo" className="field py-2" />
+          </form>
+          <Link href={href({ mie: onlyMine ? undefined : "1" })} className="text-[14px] font-medium text-codice hover:underline">
+            {onlyMine ? "Mostra di tutti i docenti" : "Solo le mie"}
           </Link>
-        ))}
-        <span className="mx-1 h-5 w-px bg-line" />
-        <Link href={href({ mie: onlyMine ? undefined : "1" })} className="text-[15px] text-slate hover:text-ink">
-          {onlyMine ? "Mostra di tutti i docenti" : "Solo le mie"}
-        </Link>
-        <form className="ml-auto" action="/docente/esercitazioni">
-          <input type="hidden" name="stato" value={filter.key} />
-          {onlyMine && <input type="hidden" name="mie" value="1" />}
-          <label className="sr-only" htmlFor="q">Cerca per titolo</label>
-          <input id="q" name="q" defaultValue={sp.q} placeholder="Cerca per titolo" className="field w-56 py-1.5" />
-        </form>
+        </div>
       </div>
 
       {!data?.length ? (
@@ -83,41 +86,46 @@ export default async function EsercitazioniDocente({ searchParams }: Props) {
           body="Assegna una traccia a uno o più discenti: riceveranno un'email e la troveranno nella loro area."
         />
       ) : (
-        <div className="overflow-x-auto rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
-          <table className="w-full min-w-[640px] text-left text-[15px]">
-            <thead className="border-b border-line text-sm text-mute">
-              <tr>
-                <th className="px-5 py-3 font-medium">Discente</th>
-                <th className="px-5 py-3 font-medium">Traccia</th>
-                <th className="px-5 py-3 font-medium">Scadenza</th>
-                <th className="px-5 py-3 font-medium">Stato</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line-soft">
-              {data.map((a) => {
-                const late = a.status === "assegnato" && a.due_at && a.due_at < now;
-                return (
-                  <tr key={a.id} className="hover:bg-paper">
-                    <td className="px-5 py-3">
-                      <Link href={`/docente/esercitazioni/${a.id}`} className="font-medium hover:text-codice">
-                        {a.student?.full_name || a.student?.email}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className="block">{a.title}</span>
-                      <span className="text-sm text-mute">{KIND_LABEL[a.kind]}</span>
-                    </td>
-                    <td className={`px-5 py-3 tabular-nums ${late ? "text-ceralacca" : "text-slate"}`}>
+        <div className="panel overflow-hidden">
+          <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_110px_150px] gap-4 border-b border-line px-5 py-3 text-sm text-mute md:grid">
+            <span>Discente</span>
+            <span>Traccia</span>
+            <span>Scadenza</span>
+            <span>Stato</span>
+          </div>
+          <ul className="divide-y divide-line-soft">
+            {data.map((a) => {
+              const late = a.status === "assegnato" && a.due_at && a.due_at < now;
+              return (
+                <li key={a.id}>
+                  <Link
+                    href={`/docente/esercitazioni/${a.id}`}
+                    className="grid gap-1 px-4 py-3.5 transition-colors hover:bg-paper md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_110px_150px] md:items-center md:gap-4 md:px-5"
+                  >
+                    <span className="flex items-center justify-between gap-3 md:block">
+                      <span className="truncate text-[15px] font-semibold md:font-medium">{a.student?.full_name || a.student?.email}</span>
+                      <span className="shrink-0 md:hidden">
+                        <StatusBadge status={a.status} view="teacher" />
+                      </span>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-[15px]">{a.title}</span>
+                      <span className="text-[13px] text-mute">
+                        {KIND_LABEL[a.kind]}
+                        <span className={`md:hidden ${late ? "text-ceralacca" : ""}`}>{a.due_at ? ` · scadenza ${dateShort(a.due_at)}` : ""}</span>
+                      </span>
+                    </span>
+                    <span className={`hidden text-[15px] tabular-nums md:block ${late ? "text-ceralacca" : "text-slate"}`}>
                       {a.due_at ? dateShort(a.due_at) : "Nessuna"}
-                    </td>
-                    <td className="px-5 py-3">
+                    </span>
+                    <span className="hidden md:block">
                       <StatusBadge status={a.status} view="teacher" />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       )}
     </>

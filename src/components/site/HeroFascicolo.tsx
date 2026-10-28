@@ -7,13 +7,13 @@ export function HeroFascicolo() {
     <figure className="ink-play relative mx-auto w-full max-w-[560px]" aria-label="Esempio di elaborato corretto dal docente">
       {/* foglio sottostante: il fascicolo */}
       <div aria-hidden className="absolute inset-x-6 -bottom-3 top-6 rotate-[1.5deg] rounded-[6px] border border-line bg-surface" />
-      <div className="relative rounded-[6px] border border-line bg-surface px-6 pb-7 pt-6 shadow-[0_1px_0_#d7dde4,0_18px_40px_-24px_rgba(23,33,47,0.35)] sm:px-8">
+      <div className="relative rounded-[6px] border border-line bg-surface px-4 pb-6 pt-5 shadow-[0_1px_0_#d7dde4,0_18px_40px_-24px_rgba(23,33,47,0.35)] sm:px-8">
         <div className="flex items-baseline justify-between border-b border-line-soft pb-3">
           <p className="font-serif text-[15px] italic text-slate">Parere motivato in materia di diritto civile</p>
           <p className="text-xs text-mute">pag. 2 di 4</p>
         </div>
 
-        <div className="grid grid-cols-[1fr_116px] gap-4 pt-4 sm:grid-cols-[1fr_140px]">
+        <div className="grid grid-cols-[minmax(0,1fr)_96px] gap-3 pt-4 sm:gap-4 sm:grid-cols-[1fr_140px]">
           <div className="space-y-3 font-serif text-[15px] leading-[1.7] text-ink sm:text-[16px]">
             <p>
               Ciò premesso, occorre stabilire se il comportamento di Tizio integri un inadempimento{" "}

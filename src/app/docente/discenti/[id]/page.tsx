@@ -71,26 +71,33 @@ export default async function DiscentePage({ params }: Props) {
       </Link>
 
       {/* ---------- scheda d'intestazione ---------- */}
-      <section className="panel relative overflow-hidden p-6 sm:p-8">
+      <section className="panel relative overflow-hidden p-4 sm:p-6 md:p-8">
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-codice-soft/70 to-transparent" />
-        <div className="relative flex flex-wrap items-center gap-6">
-          <Avatar name={s.full_name} email={s.email} url={s.avatar_url} size="xl" />
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[30px] font-semibold leading-tight tracking-[-0.03em] sm:text-[36px]">{s.full_name || s.email}</h1>
-            <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[15px] text-slate">
-              <a href={`mailto:${s.email}`} className="hover:text-ink">{s.email}</a>
-              {s.phone && <a href={`tel:${s.phone}`} className="hover:text-ink">{s.phone}</a>}
-              <span className="text-mute">Iscritto alla piattaforma dal {dateLong(s.created_at)}</span>
-            </p>
+        <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:gap-6">
+          <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-6">
+            <span className="shrink-0 md:hidden">
+              <Avatar name={s.full_name} email={s.email} url={s.avatar_url} size="lg" />
+            </span>
+            <span className="hidden shrink-0 md:block">
+              <Avatar name={s.full_name} email={s.email} url={s.avatar_url} size="xl" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h1 className="break-words text-[24px] font-semibold leading-tight tracking-[-0.03em] sm:text-[30px] md:text-[36px]">{s.full_name || s.email}</h1>
+              <p className="mt-1 flex flex-col gap-0.5 text-[14px] text-slate sm:flex-row sm:flex-wrap sm:gap-x-4 sm:text-[15px]">
+                <a href={`mailto:${s.email}`} className="break-all hover:text-ink">{s.email}</a>
+                {s.phone && <a href={`tel:${s.phone}`} className="hover:text-ink">{s.phone}</a>}
+                <span className="text-mute">Iscritto dal {dateLong(s.created_at)}</span>
+              </p>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 md:flex md:shrink-0">
             <Link href={`/docente/messaggi/${s.id}`} className="btn-secondary">Scrivi</Link>
-            <Link href={`/docente/esercitazioni/nuova?discente=${s.id}`} className="btn-primary">Assegna una traccia</Link>
+            <Link href={`/docente/esercitazioni/nuova?discente=${s.id}`} className="btn-primary">Assegna traccia</Link>
           </div>
         </div>
 
         {/* numeri chiave */}
-        <dl className="relative mt-8 grid gap-3 sm:grid-cols-3">
+        <dl className="relative mt-6 grid gap-3 sm:grid-cols-3 md:mt-8">
           <div className="flex items-center gap-4 rounded-[18px] bg-paper p-4">
             <div className="relative grid place-items-center">
               <Ring value={pathPct} />

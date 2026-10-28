@@ -43,7 +43,7 @@ export function AppShell({
         </div>
         <NavLinks items={nav} />
       </aside>
-      <main id="contenuto" className="relative min-w-0 px-4 py-8 sm:px-8 lg:px-12 lg:pb-12 lg:pt-20">
+      <main id="contenuto" className="relative min-w-0 px-4 pb-10 pt-6 sm:px-8 sm:pt-8 lg:px-12 lg:pb-12 lg:pt-20">
         <div className="absolute right-8 top-6 z-20 hidden lg:block">{menu}</div>
         <div className="mx-auto max-w-6xl">{children}</div>
       </main>
@@ -63,7 +63,7 @@ export function PageHeader({
   back?: { href: string; label: string };
 }) {
   return (
-    <div className="mb-10">
+    <div className="mb-7 sm:mb-10">
       {back && (
         <a href={back.href} className="mb-3 inline-flex items-center gap-1 text-[15px] font-medium text-codice hover:underline">
           <svg aria-hidden viewBox="0 0 16 16" className="size-3.5"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -72,10 +72,10 @@ export function PageHeader({
       )}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-[32px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[40px]">{title}</h1>
-          {description && <div className="mt-2 max-w-2xl text-[16px] leading-relaxed text-slate">{description}</div>}
+          <h1 className="break-words text-[28px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[40px]">{title}</h1>
+          {description && <div className="mt-2 max-w-2xl text-[15px] leading-relaxed text-slate sm:text-[16px]">{description}</div>}
         </div>
-        {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
+        {actions && <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0 [&>*]:flex-1 sm:[&>*]:flex-none">{actions}</div>}
       </div>
     </div>
   );

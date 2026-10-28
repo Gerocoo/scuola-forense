@@ -75,11 +75,11 @@ export default async function CorsoPage({ params }: Props) {
       </Link>
 
       {/* intestazione */}
-      <section className="panel p-6 sm:p-8">
+      <section className="panel p-4 sm:p-6 md:p-8">
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div className="min-w-0">
             <p className="text-[14px] font-medium text-codice">{course.period_label || "Corso"}</p>
-            <h1 className="mt-1 text-[30px] font-semibold leading-tight tracking-[-0.03em] sm:text-[36px]">{course.title}</h1>
+            <h1 className="mt-1 break-words text-[24px] font-semibold leading-tight tracking-[-0.03em] sm:text-[30px] md:text-[36px]">{course.title}</h1>
             {(course.starts_on || course.access_until) && (
               <p className="mt-1 text-[15px] text-slate">
                 {course.starts_on ? `Dal ${dateLong(course.starts_on)}` : ""}
@@ -87,8 +87,8 @@ export default async function CorsoPage({ params }: Props) {
               </p>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {isAdmin && <Link href={`/docente/pacchetti/${id}`} className="btn-ghost">Modifica corso</Link>}
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+            {isAdmin && <Link href={`/docente/pacchetti/${id}`} className="btn-ghost col-span-2 sm:col-span-1">Modifica corso</Link>}
             <Link href={`/docente/lezioni/nuova?corso=${id}`} className="btn-secondary">Nuova lezione</Link>
             <Link href={`/docente/corsi/${id}/esercizio`} className="btn-primary">Nuovo esercizio</Link>
           </div>

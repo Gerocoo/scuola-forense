@@ -331,7 +331,7 @@ export function LessonPlayer({
       </div>
 
       {/* Quaderno */}
-      <section aria-labelledby="appunti" className="panel flex min-h-[420px] flex-col p-5 xl:h-[calc(100dvh-7rem)] xl:max-h-[720px]">
+      <section aria-labelledby="appunti" className="panel flex min-h-[280px] xl:min-h-[420px] flex-col p-5 xl:h-[calc(100dvh-7rem)] xl:max-h-[720px]">
         <div className="flex items-center justify-between gap-3">
           <h2 id="appunti" className="text-[17px] font-semibold">I miei appunti</h2>
           <span role="status" aria-live="polite" className={`text-[12px] ${status === "error" ? "text-ceralacca" : "text-mute"}`}>

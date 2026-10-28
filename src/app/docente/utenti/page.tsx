@@ -57,51 +57,36 @@ export default async function UtentiPage({ searchParams }: Props) {
           </div>
         )}
       </section>
-      <form action="/docente/utenti" className="mb-6 flex gap-2">
+      <form action="/docente/utenti" className="mb-5 flex gap-2">
         <label htmlFor="q" className="sr-only">Cerca</label>
-        <input id="q" name="q" defaultValue={q} placeholder="Cerca per nome o email" className="field w-72 py-2" />
-        <button className="btn-secondary btn-sm">Cerca</button>
+        <input id="q" name="q" defaultValue={q} placeholder="Cerca per nome o email" className="field min-w-0 flex-1 py-2 sm:max-w-xs" />
+        <button className="btn-secondary btn-sm shrink-0">Cerca</button>
       </form>
-      <div className="overflow-x-auto rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-card)]">
-        <table className="w-full min-w-[640px] text-left text-[15px]">
-          <thead className="border-b border-line text-sm text-mute">
-            <tr>
-              <th className="px-5 py-3 font-medium">Utente</th>
-              <th className="px-5 py-3 font-medium">Registrato</th>
-              <th className="px-5 py-3 font-medium">Ruolo</th>
-              <th className="px-5 py-3 font-medium"><span className="sr-only">Azioni</span></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line-soft">
-            {(data ?? []).map((p) => (
-              <tr key={p.id}>
-                <td className="px-5 py-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar name={p.full_name} email={p.email} url={p.avatar_url} size="sm" />
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{p.full_name || "Senza nome"}</p>
-                      <p className="truncate text-sm text-mute">{p.email}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-5 py-3 text-slate">{dateShort(p.created_at)}</td>
-                <td className="px-5 py-3">
-                  {p.is_super ? (
-                    <span className="rounded-full bg-ink px-2.5 py-1 text-[12px] font-medium text-white">Super amministratore{p.id === user.id ? " (tu)" : ""}</span>
-                  ) : p.id === user.id ? (
-                    <span className="text-slate">Amministratore (tu)</span>
-                  ) : (
-                    <RoleSelect userId={p.id} role={p.role} />
-                  )}
-                </td>
-                <td className="px-5 py-3 text-right">
-                  {p.id !== user.id && !p.is_super && <DeleteUserButton userId={p.id} name={p.full_name || p.email} isStaff={p.role !== "student"} />}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ul className="panel divide-y divide-line-soft overflow-hidden">
+        {(data ?? []).map((p) => (
+          <li key={p.id} className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-5">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <Avatar name={p.full_name} email={p.email} url={p.avatar_url} size="sm" />
+              <div className="min-w-0">
+                <p className="truncate font-medium">{p.full_name || "Senza nome"}</p>
+                <p className="truncate text-[13px] text-mute">
+                  {p.email} · dal {dateShort(p.created_at)}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 pl-11 sm:justify-end sm:pl-0">
+              {p.is_super ? (
+                <span className="rounded-full bg-ink px-2.5 py-1 text-[12px] font-medium text-white">Super amministratore{p.id === user.id ? " (tu)" : ""}</span>
+              ) : p.id === user.id ? (
+                <span className="text-[14px] text-slate">Amministratore (tu)</span>
+              ) : (
+                <RoleSelect userId={p.id} role={p.role} />
+              )}
+              {p.id !== user.id && !p.is_super && <DeleteUserButton userId={p.id} name={p.full_name || p.email} isStaff={p.role !== "student"} />}
+            </div>
+          </li>
+        ))}
+      </ul>
     </>
   );
 }

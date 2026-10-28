@@ -48,6 +48,21 @@
   body {
     overflow-x: clip;
   }
+  /* su telefono i campi restano a 16px: sotto questa misura iPhone ingrandisce la pagina al tocco */
+  @media (max-width: 639px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+  /* tocchi più rapidi, senza il ritardo del doppio tocco */
+  a,
+  button,
+  label,
+  summary {
+    touch-action: manipulation;
+  }
   /* gli elementi di una griglia possono restringersi: i nomi lunghi vanno a capo o si troncano */
   .grid > * {
     min-width: 0;

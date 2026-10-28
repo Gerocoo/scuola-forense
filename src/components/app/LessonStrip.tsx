@@ -38,7 +38,7 @@ export function LessonStrip({ items }: { items: StripItem[] }) {
       <div ref={scroller} className="overflow-x-auto px-4 pb-3 pt-3 [scrollbar-width:none] sm:px-8 lg:px-12">
         <ol className="relative flex w-max items-center gap-5">
           {items.map((it, i) => {
-            const size = it.current ? "size-[140px]" : "size-[92px]"; // lezione aperta circa 3,7 cm, le altre circa 2,5 cm
+            const size = it.current ? "size-[112px] sm:size-[140px]" : "size-[76px] sm:size-[92px]"; // lezione aperta circa 3,7 cm, le altre circa 2,5 cm
             const tile = (
               <span
                 className={`relative block overflow-hidden rounded-[14px] transition-[transform,box-shadow,opacity] duration-300 ${size} ${
