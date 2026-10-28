@@ -6,9 +6,12 @@ import { getStripe, siteUrl } from "@/lib/stripe";
 import { currentPrice } from "@/lib/format";
 import type { Package } from "@/lib/types";
 import { enrolledCounts } from "@/lib/seats";
+import { invoicingConfigured } from "@/lib/invoices";
 
 export async function startCheckout(formData: FormData) {
   const slug = String(formData.get("slug") ?? "");
+  // Codice del consumo, art. 59 lett. o): richiesta di accesso immediato e rinuncia al recesso
+  const waiver = formData.get("rinuncia_recesso") === "on";
   const { supabase, user, profile } = await getSession();
 
   if (!user || !profile) {
@@ -23,6 +26,7 @@ export async function startCheckout(formData: FormData) {
     .eq("active", true)
     .maybeSingle<Package>();
   if (!pkg) redirect("/#corsi");
+  if (!waiver) redirect(`${back}?consenso=1`);
 
   // Già iscritto e attivo: niente doppio pagamento.
   const { data: already } = await supabase
@@ -73,7 +77,7 @@ export async function startCheckout(formData: FormData) {
           },
         },
       ],
-      metadata: { user_id: user.id, package_id: pkg.id, slug: pkg.slug },
+      metadata: { user_id: user.id, package_id: pkg.id, slug: pkg.slug, rinuncia_recesso: new Date().toISOString() },
       payment_intent_data: { metadata: { user_id: user.id, package_id: pkg.id } },
       // configurazione dei metodi di pagamento scelta in Stripe (se assente usa quella predefinita dell'account)
       ...(!methods?.length && process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION
@@ -82,7 +86,8 @@ export async function startCheckout(formData: FormData) {
       allow_promotion_codes: true,
       billing_address_collection: "required",
       tax_id_collection: { enabled: true },
-      invoice_creation: { enabled: true },
+      // con Fatture in Cloud la fattura elettronica parte da lì; altrimenti Stripe invia la sua ricevuta-fattura
+      invoice_creation: { enabled: !invoicingConfigured() },
       custom_fields: [
         {
           key: "codice_fiscale",
@@ -90,6 +95,13 @@ export async function startCheckout(formData: FormData) {
           type: "text",
           optional: false,
           text: { minimum_length: 11, maximum_length: 16 },
+        },
+        {
+          key: "sdi_pec",
+          label: { type: "custom", custom: "Codice SDI o PEC (solo con partita IVA)" },
+          type: "text",
+          optional: true,
+          text: { maximum_length: 120 },
         },
       ],
       success_url: `${siteUrl()}/checkout/successo?session_id={CHECKOUT_SESSION_ID}`,

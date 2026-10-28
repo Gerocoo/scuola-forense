@@ -14,16 +14,22 @@ export default function TerminiPage() {
         <h2>Prezzo e pagamento</h2>
         <p>
           Il prezzo è quello indicato nella scheda del corso al momento dell&apos;acquisto. Il pagamento avviene tramite Stripe; dove
-          indicato è possibile pagare in più rate con i servizi disponibili al momento del pagamento. Al termine si riceve la fattura
-          via email.
+          indicato è possibile pagare in più rate con i servizi disponibili al momento del pagamento.
         </p>
         <h2>Diritto di recesso</h2>
         <p>
-          Il consumatore può recedere entro 14 giorni dall&apos;acquisto scrivendo a <a href={`mailto:${SITE.email}`}>{SITE.email}</a>,
-          con rimborso dell&apos;importo pagato. Trattandosi di contenuti digitali e servizi di formazione erogati subito nell&apos;area
-          riservata, se il discente chiede di iniziare il corso prima della scadenza di questo termine il rimborso è proporzionato a
-          quanto già fruito; con l&apos;accesso ai contenuti digitali e il consenso espresso al loro avvio immediato il diritto di recesso
-          può venire meno, nei limiti previsti dal Codice del consumo (D.Lgs. 206/2005).
+          I corsi sono contenuti digitali e servizi di formazione erogati nell&apos;area riservata subito dopo il pagamento. Prima di
+          pagare, il discente chiede espressamente di accedere immediatamente ai contenuti e prende atto che, con l&apos;avvio
+          dell&apos;erogazione, perde il diritto di recesso, ai sensi dell&apos;art. 59, comma 1, lett. o), del Codice del consumo
+          (D.Lgs. 206/2005). La conferma di questa scelta è riportata nell&apos;email di iscrizione.
+        </p>
+        <p>
+          Per qualsiasi problema con il corso puoi scrivere a <a href={`mailto:${SITE.email}`}>{SITE.email}</a>: valutiamo ogni richiesta.
+        </p>
+        <h2>Fattura</h2>
+        <p>
+          Per ogni pagamento emettiamo fattura elettronica, recapitata tramite il Sistema di Interscambio e disponibile nel cassetto
+          fiscale dell&apos;Agenzia delle Entrate. Chi ha partita IVA può indicare al pagamento il codice destinatario o la PEC.
         </p>
         <h2>Prova gratuita</h2>
         <p>

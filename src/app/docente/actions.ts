@@ -586,6 +586,24 @@ export async function setRole(userId: string, role: Role): Promise<ActionResult>
 /** Iscrizione manuale (bonifico, rate, borse di studio). */
 const METHODS = ["bonifico", "contanti", "pos", "gratuito", "altro"] as const;
 
+function billingFrom(formData: FormData) {
+  const g = (k: string) => String(formData.get(`b_${k}`) ?? "").trim().slice(0, 200);
+  const b = {
+    name: g("name"),
+    tax_code: g("tax_code").toUpperCase(),
+    vat_number: g("vat_number"),
+    address: g("address"),
+    postal_code: g("postal_code"),
+    city: g("city"),
+    province: g("province").toUpperCase(),
+    country: (g("country") || "IT").toUpperCase(),
+    email: g("email"),
+    sdi: g("sdi").toUpperCase(),
+    pec: g("pec"),
+  };
+  return Object.values(b).some((v) => v && v !== "IT") ? b : null;
+}
+
 /**
  * Iscrizione gestita dalla segreteria. Se il pagamento è già arrivato l'iscrizione è subito attiva;
  * altrimenti resta "in attesa di pagamento" (nessun accesso) finché non viene segnata come pagata.
@@ -612,9 +630,17 @@ export async function manualEnroll(userId: string, formData: FormData): Promise<
     payment_note: String(formData.get("payment_note") ?? "").trim().slice(0, 500) || null,
     paid_at: paidNow ? (paidDate ? new Date(`${paidDate}T12:00:00+01:00`).toISOString() : new Date().toISOString()) : null,
     recorded_by: user.id,
+    billing: billingFrom(formData),
   });
   if (error) return { ok: false, error: "Iscrizione non riuscita." };
-  if (paidNow) await sendEnrollmentActive(userId, pkg?.title ?? "il corso");
+  if (paidNow) {
+    await sendEnrollmentActive(userId, pkg?.title ?? "il corso");
+    const { data: last } = await supabase.from("enrollments").select("id").eq("user_id", userId).eq("package_id", packageId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (last && amount > 0) {
+      const { issueInvoice } = await import("@/lib/invoices");
+      await issueInvoice(last.id);
+    }
+  }
   revalidatePath(`/docente/discenti/${userId}`);
   revalidatePath("/docente/pagamenti");
   return { ok: true, message: paidNow ? "Iscrizione attivata." : "Iscrizione registrata in attesa del bonifico: si attiva quando la segni come pagata." };
@@ -639,9 +665,34 @@ export async function markEnrollmentPaid(enrollmentId: string, formData: FormDat
   const pk = (Array.isArray(e.package) ? e.package[0] : e.package) as unknown as { title?: string } | null;
   const title = pk?.title ?? "il corso";
   if (e.status !== "active") await sendEnrollmentActive(e.user_id, title);
+  const { issueInvoice } = await import("@/lib/invoices");
+  await issueInvoice(enrollmentId);
   revalidatePath(`/docente/discenti/${e.user_id}`);
   revalidatePath("/docente/pagamenti");
   return { ok: true, message: "Pagamento registrato: iscrizione attiva." };
+}
+
+/** Dati di fatturazione di un'iscrizione (per bonifici o correzioni). */
+export async function saveBilling(enrollmentId: string, formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireAdmin();
+  const billing = billingFrom(formData);
+  const { error } = await supabase.from("enrollments").update({ billing }).eq("id", enrollmentId);
+  if (error) return { ok: false, error: "Salvataggio non riuscito." };
+  revalidatePath("/docente/pagamenti");
+  return { ok: true, message: "Dati salvati." };
+}
+
+/** Emette o riprova la fattura elettronica di un'iscrizione pagata. */
+export async function retryInvoice(enrollmentId: string): Promise<ActionResult> {
+  await requireAdmin();
+  const { issueInvoice, invoicingConfigured } = await import("@/lib/invoices");
+  if (!invoicingConfigured()) return { ok: false, error: "Fatture in Cloud non è collegato: imposta FIC_ACCESS_TOKEN e FIC_COMPANY_ID su Vercel." };
+  const res = await issueInvoice(enrollmentId, { retry: true });
+  revalidatePath("/docente/pagamenti");
+  if (res.ok) return { ok: true, message: "Fattura emessa." };
+  if (res.reason === "already") return { ok: false, error: "La fattura è già stata emessa o è in corso." };
+  if (res.reason === "nothing") return { ok: false, error: "Iscrizione non pagata o gratuita: nessuna fattura da emettere." };
+  return { ok: false, error: "Fattura non emessa: vedi il dettaglio dell'errore." };
 }
 
 async function sendEnrollmentActive(userId: string, title: string) {

@@ -9,10 +9,10 @@ export function launchChecks(): Check[] {
   const site = process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "";
   const stripe = process.env.STRIPE_SECRET_KEY || "";
   return [
+    { group: "Pagamenti", label: "Fattura elettronica automatica", ok: !!(process.env.FIC_ACCESS_TOKEN && process.env.FIC_COMPANY_ID), hint: "Collega Fatture in Cloud: FIC_ACCESS_TOKEN (token manuale) e FIC_COMPANY_ID su Vercel." },
     { group: "Pagamenti", label: "Stripe collegato", ok: env("STRIPE_SECRET_KEY"), hint: "Variabile STRIPE_SECRET_KEY su Vercel." },
     { group: "Pagamenti", label: "Pagamenti reali (non di prova)", ok: stripe.startsWith("sk_live_"), hint: "Per incassare davvero serve la chiave sk_live_ e il webhook in modalità live." },
     { group: "Pagamenti", label: "Webhook Stripe", ok: env("STRIPE_WEBHOOK_SECRET"), hint: "Senza webhook l'iscrizione non si attiva dopo il pagamento." },
-    { group: "Pagamenti", label: "Fatture automatiche", ok: env("STRIPE_SECRET_KEY"), hint: "Attive nel pagamento: Stripe invia la fattura con codice fiscale o partita IVA." },
     { group: "Pagamenti", label: "Pagamento a rate mostrato", ok: process.env.PAGAMENTO_RATE === "1", hint: "Attiva Klarna/PayPal in Stripe, poi metti PAGAMENTO_RATE=1." },
     { group: "Email e notifiche", label: "Email della piattaforma", ok: env("BREVO_API_KEY") || env("RESEND_API_KEY"), hint: "BREVO_API_KEY ed EMAIL_FROM su Vercel." },
     { group: "Email e notifiche", label: "Mittente impostato", ok: env("EMAIL_FROM"), hint: "EMAIL_FROM, ad esempio: Pronao <segreteria@dominio.it>." },

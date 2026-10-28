@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { startCheckout } from "@/app/checkout/actions";
+import { CheckoutForm } from "@/components/site/CheckoutForm";
 import { ARCHIVE_SLUG, type ArchiveFilters, type ArchiveTrack } from "@/lib/archive";
 import { euro } from "@/lib/format";
 
@@ -18,13 +18,12 @@ function LockIcon({ className = "size-4" }: { className?: string }) {
 }
 
 /** Pulsante d'acquisto dell'archivio completo. */
-export function UnlockButton({ price, className = "btn-primary" }: { price: number | null; className?: string }) {
+export function UnlockButton({ price, className = "btn-primary", tone = "light" }: { price: number | null; className?: string; tone?: "light" | "dark" }) {
   if (price == null) return null;
   return (
-    <form action={startCheckout}>
-      <input type="hidden" name="slug" value={ARCHIVE_SLUG} />
-      <button className={className}>Sblocca tutto l&apos;archivio · {euro(price)}</button>
-    </form>
+    <div className="max-w-sm">
+      <CheckoutForm slug={ARCHIVE_SLUG} label={<>Sblocca tutto l&apos;archivio · {euro(price)}</>} className={className} tone={tone} />
+    </div>
   );
 }
 

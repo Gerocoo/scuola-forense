@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { manualEnroll, markEnrollmentPaid, setEnrollmentStatus } from "@/app/docente/actions";
 import type { Package } from "@/lib/types";
+import { BillingFields } from "@/components/app/BillingFields";
 
 const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Rome" });
 
@@ -86,6 +87,15 @@ export function EnrollmentAdd({ userId, packages }: { userId: string; packages: 
             <input id="payment_reference" name="payment_reference" className="field" placeholder="facoltativo" />
           </div>
         </div>
+      )}
+      {method !== "gratuito" && (
+        <details className="rounded-[12px] border border-line p-3">
+          <summary className="cursor-pointer text-[14px] font-medium">Dati per la fattura elettronica</summary>
+          <div className="mt-3">
+            <BillingFields idPrefix="add" />
+          </div>
+          <p className="mt-2 text-[13px] text-mute">Servono per emettere la fattura in automatico quando il pagamento risulta incassato.</p>
+        </details>
       )}
       <div>
         <label htmlFor="payment_note" className="label">Nota interna</label>

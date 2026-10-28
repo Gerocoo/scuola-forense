@@ -3,13 +3,12 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { currentPrice, dateLong, euro } from "@/lib/format";
-import { startCheckout } from "@/app/checkout/actions";
+import { CheckoutForm } from "@/components/site/CheckoutForm";
 import { enrolledCounts, seatsLeft } from "@/lib/seats";
 import { PromoCountdown } from "@/components/site/PromoCountdown";
-import { SubmitButton } from "@/components/ui/SubmitButton";
 import type { Package } from "@/lib/types";
 
-type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ errore?: string; esaurito?: string }> };
+type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ errore?: string; esaurito?: string; consenso?: string }> };
 
 async function load(slug: string) {
   const supabase = await createClient();
@@ -25,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CorsoPage({ params, searchParams }: Props) {
   const { slug } = await params;
   if (slug === "archivio-tracce") redirect("/area/archivio");
-  const { errore, esaurito } = await searchParams;
+  const { errore, esaurito, consenso } = await searchParams;
   const pkg = await load(slug);
   if (!pkg) notFound();
 
@@ -98,12 +97,12 @@ export default async function CorsoPage({ params, searchParams }: Props) {
             {left === 0 ? (
               <a href="/prova-gratuita" className="btn-secondary mt-6 w-full">Intanto prova gratis una traccia</a>
             ) : (
-              <form action={startCheckout} className="mt-6">
-                <input type="hidden" name="slug" value={pkg.slug} />
-                <SubmitButton className="btn-primary w-full" pendingLabel="Apertura del pagamento…">
-                  Iscriviti e paga
-                </SubmitButton>
-              </form>
+              <div className="mt-6">
+                <CheckoutForm slug={pkg.slug} label="Iscriviti e paga" />
+              </div>
+            )}
+            {consenso && (
+              <p role="alert" className="mt-3 text-sm text-ceralacca">Per procedere conferma la richiesta di accesso immediato ai contenuti.</p>
             )}
             {esaurito && (
               <p role="alert" className="mt-3 text-sm text-ceralacca">I posti di questo corso sono appena terminati.</p>

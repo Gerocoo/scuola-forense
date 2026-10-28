@@ -6,10 +6,10 @@ import { loadArchive } from "@/lib/archive";
 
 export const metadata = { title: "Archivio tracce" };
 
-type Props = { searchParams: Promise<{ materia?: string; tipo?: string; anno?: string; errore?: string }> };
+type Props = { searchParams: Promise<{ materia?: string; tipo?: string; anno?: string; errore?: string; consenso?: string }> };
 
 export default async function ArchivioPage({ searchParams }: Props) {
-  const { errore, ...filters } = await searchParams;
+  const { errore, consenso, ...filters } = await searchParams;
   const { supabase } = await requireUser();
   const { tracks, years, access, total, freeCount, price } = await loadArchive(supabase, filters);
   return (
@@ -21,6 +21,11 @@ export default async function ArchivioPage({ searchParams }: Props) {
       {errore && (
         <p role="alert" className="mb-5 rounded-[14px] bg-ceralacca-soft px-4 py-3 text-[15px] text-ceralacca">
           Il pagamento non è partito. Riprova tra qualche minuto o scrivi alla segreteria.
+        </p>
+      )}
+      {consenso && (
+        <p role="alert" className="mb-5 rounded-[14px] bg-ambra-soft px-4 py-3 text-[15px] text-ink">
+          Per procedere conferma la richiesta di accesso immediato ai contenuti.
         </p>
       )}
       {!access && (
@@ -36,7 +41,7 @@ export default async function ArchivioPage({ searchParams }: Props) {
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
-              <UnlockButton price={price} className="btn-primary bg-white text-codice-deep hover:bg-white/90" />
+              <UnlockButton price={price} tone="dark" className="btn-primary w-full bg-white text-codice-deep hover:bg-white/90" />
               <Link href="/#corsi" className="btn-ghost text-white hover:bg-white/10">Vedi i corsi</Link>
             </div>
           </div>
