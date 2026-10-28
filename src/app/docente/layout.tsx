@@ -34,6 +34,7 @@ export default async function DocenteLayout({ children }: { children: React.Reac
     nav.push(
       { href: "/docente/pacchetti", label: "Corsi in vendita" },
       { href: "/docente/utenti", label: "Utenti e ruoli" },
+      { href: "/docente/statistiche", label: "Statistiche" },
       { href: "/docente/contatti", label: "Contatti" },
     );
   }
