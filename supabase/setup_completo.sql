@@ -1,7 +1,7 @@
 -- =====================================================================
 --  INSTALLAZIONE COMPLETA: copia TUTTO questo file nell'SQL Editor di
 --  Supabase e premi Run. Si può rieseguire senza danni.
---  (contiene 0001_schema.sql + 0002_video_calendario.sql + 0003_appunti.sql + 0004_integrazioni.sql + 0005_percorso.sql + 0006_inviti_docenti.sql + 0007_gestione_account.sql + 0008_corsi_docenti.sql + 0009_promemoria_correzioni.sql + 0010_superadmin_registro.sql + 0011_inviti_con_corsi.sql + 0012_annotazioni_pdf.sql + 0013_foto_profilo.sql + seed.sql)
+--  (contiene 0001_schema.sql + 0002_video_calendario.sql + 0003_appunti.sql + 0004_integrazioni.sql + 0005_percorso.sql + 0006_inviti_docenti.sql + 0007_gestione_account.sql + 0008_corsi_docenti.sql + 0009_promemoria_correzioni.sql + 0010_superadmin_registro.sql + 0011_inviti_con_corsi.sql + 0012_annotazioni_pdf.sql + 0013_foto_profilo.sql + 0014…0022 + seed.sql)
 -- =====================================================================
 
 -- =====================================================================
@@ -1023,6 +1023,319 @@ create policy "annotazioni: discente a correzione pubblicata" on public.assignme
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('avatars', 'avatars', true, 2097152, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do update set public = true, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+
+-- =====================================================================
+--  0014_simulazioni_a_tempo.sql
+-- =====================================================================
+-- Simulazione d'esame a tempo: la traccia si apre a un'ora precisa e si consegna entro la durata stabilita.
+-- Prima dell'apertura il discente non può leggere né la traccia né i suoi file (regola del database).
+
+alter table public.assignments add column if not exists opens_at timestamptz;
+alter table public.assignments add column if not exists timed boolean not null default false;
+alter table public.course_exercises add column if not exists opens_at timestamptz;
+alter table public.course_exercises add column if not exists timed boolean not null default false;
+
+drop policy if exists "esercitazioni: lettura" on public.assignments;
+create policy "esercitazioni: lettura" on public.assignments for select to authenticated
+  using (public.is_staff() or (student_id = auth.uid() and (opens_at is null or opens_at <= now())));
+
+-- Prossime simulazioni del discente (solo dati di calendario, senza testo della traccia)
+create or replace function public.my_upcoming_exams()
+returns table (id uuid, title text, kind assignment_kind, opens_at timestamptz, due_at timestamptz)
+language sql stable security definer set search_path = public as $$
+  select a.id, a.title, a.kind, a.opens_at, a.due_at
+  from public.assignments a
+  where a.student_id = auth.uid() and a.opens_at is not null and a.opens_at > now()
+  order by a.opens_at
+$$;
+
+-- Consegna: per le simulazioni a tempo non si accettano consegne oltre la scadenza (5 minuti di tolleranza)
+create or replace function public.submit_assignment(aid uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare a public.assignments;
+begin
+  select * into a from public.assignments where id = aid for update;
+  if a.id is null or a.student_id <> auth.uid() then
+    raise exception 'Esercitazione non trovata';
+  end if;
+  if a.opens_at is not null and a.opens_at > now() then
+    raise exception 'La simulazione non è ancora iniziata';
+  end if;
+  if a.timed and a.due_at is not null and now() > a.due_at + interval '5 minutes' then
+    raise exception 'Il tempo della simulazione è scaduto';
+  end if;
+  if a.status not in ('assegnato', 'consegnato') then
+    raise exception 'L''esercitazione è già in correzione';
+  end if;
+  if not exists (select 1 from public.assignment_files where assignment_id = aid and role = 'svolgimento') then
+    raise exception 'Carica almeno un file prima di consegnare';
+  end if;
+  update public.assignments set status = 'consegnato', submitted_at = now() where id = aid;
+end $$;
+
+drop policy if exists "file esercitazione: caricamento discente" on public.assignment_files;
+create policy "file esercitazione: caricamento discente" on public.assignment_files for insert to authenticated
+  with check (
+    role = 'svolgimento'
+    and uploaded_by = auth.uid()
+    and storage_path like 'svolgimenti/' || assignment_id::text || '/%'
+    and exists (
+      select 1 from public.assignments a
+      where a.id = assignment_id and a.student_id = auth.uid() and a.status in ('assegnato','consegnato')
+        and (a.opens_at is null or a.opens_at <= now())
+        and (not a.timed or a.due_at is null or now() <= a.due_at + interval '5 minutes')
+    )
+  );
+
+-- Copia agli iscritti successivi anche apertura e modalità a tempo
+create or replace function public.copy_course_assignments()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  ce record;
+  new_id uuid;
+begin
+  if new.status <> 'active' then
+    return new;
+  end if;
+
+  for ce in
+    select c.* from public.course_exercises c
+    where c.package_id = new.package_id
+      and c.teacher_id is not null
+      and not exists (select 1 from public.assignments x where x.batch_id = c.id and x.student_id = new.user_id)
+    order by c.created_at
+  loop
+    insert into public.assignments (batch_id, teacher_id, student_id, kind, title, instructions, due_at, lesson_id, package_id, opens_at, timed)
+    values (ce.id, ce.teacher_id, new.user_id, ce.kind, ce.title, ce.instructions, ce.due_at, ce.lesson_id, ce.package_id, ce.opens_at, ce.timed)
+    returning id into new_id;
+
+    insert into public.assignment_files (assignment_id, role, uploaded_by, storage_path, file_name, size_bytes, mime_type)
+    select new_id, 'traccia', ce.teacher_id, f->>'path', f->>'name', coalesce((f->>'size')::bigint, 0), nullif(f->>'type', '')
+    from jsonb_array_elements(ce.files) f;
+  end loop;
+
+  return new;
+end $$;
+
+
+-- =====================================================================
+--  0015_griglia_valutazione.sql
+-- =====================================================================
+-- Griglia di valutazione con i criteri del nuovo esame: punteggio per criterio e totale in trentesimi.
+alter table public.assignment_reviews add column if not exists scores jsonb;
+alter table public.assignment_reviews add column if not exists total smallint check (total between 0 and 30);
+
+
+-- =====================================================================
+--  0016_correzione_collettiva.sql
+-- =====================================================================
+-- Correzione collettiva degli esercizi di corso: traccia svolta, errori frequenti, link alla correzione in classe.
+-- Ai discenti si mostra dopo la scadenza (lettura tramite server, con controllo dell'iscrizione).
+alter table public.course_exercises add column if not exists solution text not null default '';
+alter table public.course_exercises add column if not exists common_errors text not null default '';
+alter table public.course_exercises add column if not exists review_url text;
+alter table public.course_exercises add column if not exists solution_files jsonb not null default '[]';
+alter table public.course_exercises add column if not exists collective_published boolean not null default false;
+
+
+-- =====================================================================
+--  0017_materie.sql
+-- =====================================================================
+-- Percorsi per materia: materia del corso (vuota = tutte) e materia scelta dal discente per l'esame.
+alter table public.packages add column if not exists subject text check (subject in ('civile', 'penale', 'amministrativo'));
+alter table public.profiles add column if not exists exam_subject text check (exam_subject in ('civile', 'penale', 'amministrativo'));
+
+
+-- =====================================================================
+--  0018_orale.sql
+-- =====================================================================
+-- Preparazione all'orale: quiz (deontologia, ordinamento, previdenza) e simulazioni d'orale prenotabili.
+
+create table if not exists public.quiz_questions (
+  id          uuid primary key default gen_random_uuid(),
+  topic       text not null check (topic in ('deontologia', 'ordinamento', 'previdenza')),
+  question    text not null,
+  options     text[] not null check (cardinality(options) between 2 and 5),
+  correct     smallint not null check (correct >= 0 and correct < 5),
+  explanation text not null default '',
+  active      boolean not null default true,
+  created_by  uuid references public.profiles(id) on delete set null,
+  created_at  timestamptz not null default now()
+);
+alter table public.quiz_questions enable row level security;
+create policy "quiz: lettura iscritti e staff" on public.quiz_questions for select to authenticated
+  using (public.is_staff() or (active and public.has_active_enrollment()));
+create policy "quiz: gestione staff" on public.quiz_questions for all to authenticated
+  using (public.is_staff()) with check (public.is_staff());
+
+create table if not exists public.quiz_attempts (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references public.profiles(id) on delete cascade,
+  topic      text,
+  score      smallint not null,
+  total      smallint not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists quiz_attempts_user_idx on public.quiz_attempts(user_id, created_at desc);
+alter table public.quiz_attempts enable row level security;
+create policy "tentativi: propri" on public.quiz_attempts for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "tentativi: lettura staff" on public.quiz_attempts for select to authenticated using (public.is_staff());
+
+create table if not exists public.oral_slots (
+  id           uuid primary key default gen_random_uuid(),
+  teacher_id   uuid not null references public.profiles(id) on delete cascade,
+  starts_at    timestamptz not null,
+  duration_min smallint not null default 30 check (duration_min between 10 and 180),
+  meeting_url  text,
+  note         text not null default '',
+  booked_by    uuid references public.profiles(id) on delete set null,
+  booked_at    timestamptz,
+  created_at   timestamptz not null default now()
+);
+create index if not exists oral_slots_time_idx on public.oral_slots(starts_at);
+alter table public.oral_slots enable row level security;
+create policy "orale: lettura" on public.oral_slots for select to authenticated
+  using (public.is_staff() or booked_by = auth.uid() or (booked_by is null and public.has_active_enrollment()));
+create policy "orale: gestione staff" on public.oral_slots for all to authenticated
+  using (public.is_staff()) with check (public.is_staff());
+
+create or replace function public.book_oral_slot(sid uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.has_active_enrollment() then
+    raise exception 'Serve un corso attivo per prenotare';
+  end if;
+  if (select count(*) from public.oral_slots where booked_by = auth.uid() and starts_at > now()) >= 2 then
+    raise exception 'Hai già due simulazioni in programma';
+  end if;
+  update public.oral_slots set booked_by = auth.uid(), booked_at = now()
+   where id = sid and booked_by is null and starts_at > now() + interval '1 hour';
+  if not found then
+    raise exception 'Questo orario non è più disponibile';
+  end if;
+end $$;
+
+create or replace function public.cancel_oral_slot(sid uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update public.oral_slots set booked_by = null, booked_at = null
+   where id = sid and booked_by = auth.uid() and starts_at > now() + interval '2 hours';
+  if not found then
+    raise exception 'Non è più possibile annullare: mancano meno di due ore';
+  end if;
+end $$;
+
+
+-- =====================================================================
+--  0018b_domande_esempio.sql
+-- =====================================================================
+-- Domande di esempio per il quiz dell'orale (da verificare e ampliare a cura dei docenti).
+insert into public.quiz_questions (topic, question, options, correct, explanation) values
+('deontologia', 'Quale articolo del Codice deontologico forense disciplina il dovere di riserbo e il segreto professionale?', array['Art. 13','Art. 28','Art. 37','Art. 46'], 1, 'L''art. 28 del Codice deontologico forense riguarda riserbo e segreto professionale.'),
+('deontologia', 'Il conflitto di interessi è disciplinato dal Codice deontologico forense all''articolo:', array['Art. 24','Art. 15','Art. 35','Art. 50'], 0, 'L''art. 24 disciplina il conflitto di interessi.'),
+('deontologia', 'Quale articolo del Codice deontologico vieta l''accaparramento di clientela?', array['Art. 9','Art. 23','Art. 37','Art. 57'], 2, 'L''art. 37 vieta all''avvocato di acquisire rapporti di clientela con modi non conformi a correttezza e decoro.'),
+('deontologia', 'Il dovere di aggiornamento professionale e di formazione continua è previsto dall''articolo:', array['Art. 15','Art. 28','Art. 42','Art. 63'], 0, 'L''art. 15 del Codice deontologico prevede il dovere di aggiornamento e formazione continua.'),
+('deontologia', 'Qual è la sanzione disciplinare più grave tra quelle previste per l''avvocato?', array['Censura','Sospensione','Avvertimento','Radiazione'], 3, 'Le sanzioni sono, in ordine di gravità: avvertimento, censura, sospensione, radiazione.'),
+('ordinamento', 'Qual è la legge che disciplina l''ordinamento della professione forense?', array['Legge n. 247 del 2012','Legge n. 241 del 1990','R.D.L. n. 1578 del 1933, tuttora unico riferimento','Legge n. 69 del 2009'], 0, 'La legge 31 dicembre 2012, n. 247 contiene la nuova disciplina dell''ordinamento della professione forense.'),
+('ordinamento', 'Quale organo decide in primo grado sui procedimenti disciplinari a carico degli avvocati?', array['Il Consiglio dell''Ordine circondariale','Il Consiglio distrettuale di disciplina','Il Consiglio nazionale forense','La Corte d''appello'], 1, 'Con la legge n. 247/2012 il potere disciplinare è affidato ai Consigli distrettuali di disciplina.'),
+('ordinamento', 'Contro le decisioni del Consiglio distrettuale di disciplina si propone ricorso:', array['Al TAR','Alla Corte di cassazione direttamente','Al Consiglio nazionale forense','Al Consiglio dell''Ordine'], 2, 'Le decisioni del Consiglio distrettuale di disciplina sono impugnabili davanti al Consiglio nazionale forense.'),
+('previdenza', 'Qual è l''ente di previdenza e assistenza degli avvocati?', array['INPS, gestione separata','Cassa Nazionale di Previdenza e Assistenza Forense','INAIL','ENPAP'], 1, 'La previdenza degli avvocati è gestita dalla Cassa Nazionale di Previdenza e Assistenza Forense.'),
+('previdenza', 'L''iscrizione alla Cassa Forense per l''avvocato iscritto all''albo è:', array['Facoltativa','Obbligatoria','Prevista solo oltre una soglia di reddito','Prevista solo per gli avvocati cassazionisti'], 1, 'Con la legge n. 247/2012 l''iscrizione all''albo comporta l''iscrizione obbligatoria alla Cassa Forense.');
+
+
+-- =====================================================================
+--  0019_prova_gratuita.sql
+-- =====================================================================
+-- Prova gratuita: contatti raccolti dalla pagina pubblica e corso di prova (nascosto dalla vetrina).
+create table if not exists public.leads (
+  id         uuid primary key default gen_random_uuid(),
+  email      text not null,
+  name       text not null default '',
+  source     text not null default 'prova-gratuita',
+  user_id    uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create unique index if not exists leads_email_source_idx on public.leads(lower(email), source);
+alter table public.leads enable row level security;
+create policy "contatti: solo amministratori" on public.leads for select to authenticated using (public.is_admin());
+
+insert into public.packages (slug, title, tagline, description, period_label, price_cents, active, sort, features)
+values ('prova-gratuita', 'Prova gratuita', 'Una traccia d''esame con correzione personale', 'Corso di prova: ricevi una traccia, la svolgi e un docente la corregge.', '30 giorni', 0, false, 999, array['Una traccia d''esame','Correzione personale del docente'])
+on conflict (slug) do nothing;
+create unique index if not exists leads_email_source_key on public.leads(email, source);
+
+
+-- =====================================================================
+--  0020_archivio_tracce.sql
+-- =====================================================================
+-- Archivio delle tracce d'esame degli anni passati, per materia e tipo di prova.
+create table if not exists public.past_tracks (
+  id         uuid primary key default gen_random_uuid(),
+  year       smallint not null check (year between 1990 and 2100),
+  session    text not null default '',
+  subject    text not null check (subject in ('civile', 'penale', 'amministrativo')),
+  kind       text not null check (kind in ('parere', 'atto')),
+  title      text not null,
+  body       text not null default '',
+  file       jsonb,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create index if not exists past_tracks_idx on public.past_tracks(subject, kind, year desc);
+alter table public.past_tracks enable row level security;
+create policy "archivio: lettura iscritti e staff" on public.past_tracks for select to authenticated
+  using (public.is_staff() or public.has_active_enrollment());
+create policy "archivio: gestione staff" on public.past_tracks for all to authenticated
+  using (public.is_staff()) with check (public.is_staff());
+
+
+-- =====================================================================
+--  0021_notifiche_push.sql
+-- =====================================================================
+-- Notifiche push: dispositivi iscritti e ultima notifica da mostrare (il push arriva senza contenuto).
+create table if not exists public.push_subscriptions (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references public.profiles(id) on delete cascade,
+  endpoint   text not null unique,
+  created_at timestamptz not null default now()
+);
+create index if not exists push_subscriptions_user_idx on public.push_subscriptions(user_id);
+alter table public.push_subscriptions enable row level security;
+create policy "push: propri" on public.push_subscriptions for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+create table if not exists public.push_last (
+  user_id uuid primary key references public.profiles(id) on delete cascade,
+  payload jsonb not null,
+  at      timestamptz not null default now()
+);
+alter table public.push_last enable row level security;
+create policy "push: ultima notifica propria" on public.push_last for select to authenticated using (user_id = auth.uid());
+
+
+-- =====================================================================
+--  0022_permessi_funzioni.sql
+-- =====================================================================
+-- Sicurezza: azioni che richiedono l'accesso non richiamabili da anonimi; funzioni dei trigger non esposte come API.
+revoke execute on function public.book_lesson(uuid) from public, anon;
+revoke execute on function public.cancel_booking(uuid) from public, anon;
+revoke execute on function public.book_oral_slot(uuid) from public, anon;
+revoke execute on function public.cancel_oral_slot(uuid) from public, anon;
+revoke execute on function public.mark_thread_read(uuid, uuid) from public, anon;
+revoke execute on function public.submit_assignment(uuid) from public, anon;
+revoke execute on function public.my_upcoming_exams() from public, anon;
+revoke execute on function public.reassign_staff(uuid, uuid) from public, anon, authenticated;
+revoke execute on function public.audit_row() from public, anon, authenticated;
+revoke execute on function public.audit_login() from public, anon, authenticated;
+revoke execute on function public.copy_course_assignments() from public, anon, authenticated;
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+revoke execute on function public.protect_profile_fields() from public, anon, authenticated;
+grant execute on function public.handle_new_user() to supabase_auth_admin;
+grant execute on function public.audit_login() to supabase_auth_admin;
+grant execute on function public.audit_row() to supabase_auth_admin;
+alter function public.touch_updated_at() set search_path = public;
 
 
 -- Pacchetti di esempio: modificare testi e prezzi dal pannello "Pacchetti" o qui.
