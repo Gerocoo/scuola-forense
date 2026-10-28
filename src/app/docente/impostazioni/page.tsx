@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/app/AppShell";
 import { DisconnectYoutube } from "./DisconnectYoutube";
 import { requireStaff } from "@/lib/auth";
+import { launchChecks } from "@/lib/launch";
 import { getLink, youtubeConfigured } from "@/lib/youtube";
 import { dateLong } from "@/lib/format";
 
@@ -17,7 +18,10 @@ const ESITI: Record<string, { ok: boolean; text: string }> = {
 };
 
 export default async function ImpostazioniPage({ searchParams }: Props) {
-  await requireStaff();
+  const { profile } = await requireStaff();
+  const isAdmin = profile.role === "admin" || !!profile.is_super;
+  const checks = isAdmin ? launchChecks() : [];
+  const ready = checks.filter((c) => c.ok).length;
   const { youtube } = await searchParams;
   const esito = youtube ? ESITI[youtube] : null;
   const configured = youtubeConfigured();
@@ -95,6 +99,44 @@ export default async function ImpostazioniPage({ searchParams }: Props) {
           </ol>
         </details>
       </section>
+      {isAdmin && (
+        <section className="panel mt-8 max-w-2xl p-6 sm:p-8">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-[19px] font-semibold">Checklist di lancio</h2>
+            <span className={`rounded-full px-3 py-1 text-[14px] font-semibold ${ready === checks.length ? "bg-codice-soft text-codice" : "bg-ambra-soft text-ambra"}`}>
+              {ready} di {checks.length} pronti
+            </span>
+          </div>
+          <p className="mt-1 text-[15px] text-slate">Cosa è configurato e cosa manca prima di aprire le iscrizioni. I valori segreti non vengono mai mostrati.</p>
+          {[...new Set(checks.map((c) => c.group))].map((g) => (
+            <div key={g} className="mt-5">
+              <p className="text-[13px] font-semibold uppercase tracking-wide text-mute">{g}</p>
+              <ul className="mt-2 divide-y divide-line-soft rounded-[14px] border border-line">
+                {checks
+                  .filter((c) => c.group === g)
+                  .map((c) => (
+                    <li key={c.label} className="flex items-start gap-3 px-3.5 py-3">
+                      <span
+                        aria-hidden
+                        className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-white ${c.ok ? "bg-codice" : "bg-line"}`}
+                      >
+                        {c.ok ? (
+                          <svg viewBox="0 0 16 16" className="size-3"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        ) : (
+                          <span className="size-1.5 rounded-full bg-white" />
+                        )}
+                      </span>
+                      <div className="min-w-0">
+                        <p className={`text-[15px] ${c.ok ? "text-ink" : "font-medium text-ink"}`}>{c.label}</p>
+                        {!c.ok && <p className="text-[14px] text-slate">{c.hint}</p>}
+                      </div>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      )}
     </>
   );
 }

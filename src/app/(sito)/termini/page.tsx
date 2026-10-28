@@ -11,8 +11,23 @@ export default function TerminiPage() {
           Il contratto è concluso con {SITE.name} al completamento del pagamento. L&apos;accesso all&apos;area riservata
           è personale e non cedibile, e dura fino alla data indicata nella scheda del corso.
         </p>
+        <h2>Prezzo e pagamento</h2>
         <p>
-          Diritto di recesso, modalità di rimborso e condizioni di erogazione dei contenuti digitali vanno indicati qui.
+          Il prezzo è quello indicato nella scheda del corso al momento dell&apos;acquisto. Il pagamento avviene tramite Stripe; dove
+          indicato è possibile pagare in più rate con i servizi disponibili al momento del pagamento. Al termine si riceve la fattura
+          via email.
+        </p>
+        <h2>Diritto di recesso</h2>
+        <p>
+          Il consumatore può recedere entro 14 giorni dall&apos;acquisto scrivendo a <a href={`mailto:${SITE.email}`}>{SITE.email}</a>,
+          con rimborso dell&apos;importo pagato. Trattandosi di contenuti digitali e servizi di formazione erogati subito nell&apos;area
+          riservata, se il discente chiede di iniziare il corso prima della scadenza di questo termine il rimborso è proporzionato a
+          quanto già fruito; con l&apos;accesso ai contenuti digitali e il consenso espresso al loro avvio immediato il diritto di recesso
+          può venire meno, nei limiti previsti dal Codice del consumo (D.Lgs. 206/2005).
+        </p>
+        <h2>Prova gratuita</h2>
+        <p>
+          La prova gratuita comprende una traccia con correzione personale, è valida 30 giorni e non comporta alcun impegno di acquisto.
         </p>
         <h2>Video delle lezioni</h2>
         <p>
