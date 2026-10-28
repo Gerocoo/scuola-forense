@@ -8,6 +8,7 @@ import { SubmissionPanel } from "./SubmissionPanel";
 import { AnnotateButton, type Annotations } from "@/components/app/PdfAnnotator";
 import { requireUser } from "@/lib/auth";
 import { ExamTimer } from "@/components/app/ExamTimer";
+import { ScoreCard } from "@/components/app/ScoreCard";
 import { dateTime, KIND_LABEL } from "@/lib/format";
 import type { Assignment, AssignmentFile, Profile, Review } from "@/lib/types";
 
@@ -100,6 +101,7 @@ export default async function EsercitazionePage({ params }: Props) {
                   Giudizio: <strong className="text-[18px]">{review.grade}</strong>
                 </p>
               )}
+              <ScoreCard scores={review?.scores} total={review?.total} />
               {review?.feedback && (
                 <div className="prose-legal mt-4 whitespace-pre-wrap break-words border-l-2 border-ceralacca/40 pl-4">{review.feedback}</div>
               )}

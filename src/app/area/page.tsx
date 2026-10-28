@@ -3,6 +3,8 @@ import { PageHeader } from "@/components/app/AppShell";
 import { EmptyState } from "@/components/app/EmptyState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { requireUser } from "@/lib/auth";
+import { loadScorePoints } from "@/lib/grading";
+import { ProgressChart } from "@/components/app/ProgressChart";
 import { dateLong, dateShort, dateTime, KIND_LABEL } from "@/lib/format";
 import type { Assignment, Enrollment, Lesson } from "@/lib/types";
 
@@ -57,6 +59,7 @@ export default async function AreaHome({ searchParams }: Props) {
     ]);
 
   const active = (enrollments ?? []).filter((e) => !e.ends_at || e.ends_at > nowIso);
+  const points = await loadScorePoints(supabase, user.id);
 
   if (!active.length) {
     return (
@@ -173,6 +176,11 @@ export default async function AreaHome({ searchParams }: Props) {
           )}
         </section>
       </div>
+      {points.length > 0 && (
+        <div className="mt-8">
+          <ProgressChart points={points} />
+        </div>
+      )}
     </>
   );
 }

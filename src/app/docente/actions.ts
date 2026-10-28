@@ -10,6 +10,7 @@ import { fromLocalInput, KIND_LABEL, dateTime } from "@/lib/format";
 import { bunnyConfigured, createUpload, deleteVideo, getVideo } from "@/lib/bunny";
 import { enrolledStudents, inBatches } from "@/lib/recipients";
 import type { ActionResult, AssignmentKind, LessonKind, Role, UploadedMeta } from "@/lib/types";
+import { cleanScores, totalOf } from "@/lib/grading";
 
 const KINDS: AssignmentKind[] = ["parere", "atto", "esercizio", "documento"];
 
@@ -259,31 +260,33 @@ export async function removeTeacherFile(fileId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
-export async function saveReview(assignmentId: string, feedback: string, grade: string): Promise<ActionResult> {
+export async function saveReview(assignmentId: string, feedback: string, grade: string, scores?: unknown): Promise<ActionResult> {
   const { supabase } = await requireStaff();
+  const clean = cleanScores(scores);
   const { error } = await supabase.from("assignment_reviews").upsert({
     assignment_id: assignmentId,
     feedback: feedback.slice(0, 20000),
     grade: grade.trim().slice(0, 60) || null,
+    scores: clean,
+    total: totalOf(clean),
     updated_at: new Date().toISOString(),
   });
   if (error) return { ok: false, error: "Salvataggio della bozza non riuscito." };
   return { ok: true, message: "Bozza salvata." };
 }
 
-export async function publishCorrection(assignmentId: string, feedback: string, grade: string): Promise<ActionResult> {
+export async function publishCorrection(assignmentId: string, feedback: string, grade: string, scores?: unknown): Promise<ActionResult> {
   const { supabase } = await requireStaff();
 
-  const saved = await saveReview(assignmentId, feedback, grade);
+  const saved = await saveReview(assignmentId, feedback, grade, scores);
   if (!saved.ok) return saved;
 
-  const { count: corrFiles } = await supabase
-    .from("assignment_files")
-    .select("id", { count: "exact", head: true })
-    .eq("assignment_id", assignmentId)
-    .eq("role", "correzione");
-  if (!corrFiles && !feedback.trim()) {
-    return { ok: false, error: "Allega l'elaborato annotato o scrivi un commento prima di pubblicare." };
+  const [{ count: corrFiles }, { count: annotated }] = await Promise.all([
+    supabase.from("assignment_files").select("id", { count: "exact", head: true }).eq("assignment_id", assignmentId).eq("role", "correzione"),
+    supabase.from("assignment_annotations").select("file_id", { count: "exact", head: true }).eq("assignment_id", assignmentId),
+  ]);
+  if (!corrFiles && !annotated && !feedback.trim() && !totalOf(cleanScores(scores))) {
+    return { ok: false, error: "Annota l'elaborato, compila la griglia o scrivi un commento prima di pubblicare." };
   }
 
   const { data: a, error } = await supabase

@@ -6,6 +6,8 @@ import { EnrollmentAdd, EnrollmentStatus } from "./EnrollmentAdmin";
 import { ChangeEmailForm, DeleteUserButton } from "@/app/docente/utenti/AccountAdmin";
 import { requireStaff } from "@/lib/auth";
 import { loadPath } from "@/lib/progress";
+import { loadScorePoints } from "@/lib/grading";
+import { ProgressChart } from "@/components/app/ProgressChart";
 import { dateLong, dateShort, euro, KIND_LABEL } from "@/lib/format";
 import type { Assignment, Enrollment, Package, Profile } from "@/lib/types";
 
@@ -54,7 +56,7 @@ export default async function DiscentePage({ params }: Props) {
   ]);
 
   const now = new Date().toISOString();
-  const path = await loadPath(supabase, id);
+  const [path, points] = await Promise.all([loadPath(supabase, id), loadScorePoints(supabase, id)]);
   const done = path.filter((p) => p.completed).length;
   const pathPct = path.length ? Math.round((done / path.length) * 100) : 0;
   const list = assignments ?? [];
@@ -129,6 +131,7 @@ export default async function DiscentePage({ params }: Props) {
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
         {/* ---------- colonna principale ---------- */}
         <div className="min-w-0 space-y-8">
+          {points.length > 0 && <ProgressChart points={points} title="Andamento dei punteggi" />}
           <section>
             <h2 className="mb-3 text-[19px] font-semibold">Percorso delle lezioni</h2>
             {path.length > 0 ? (

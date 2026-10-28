@@ -140,6 +140,8 @@ export interface Review {
   feedback: string;
   grade: string | null;
   updated_at: string;
+  scores?: Record<string, number> | null;
+  total?: number | null;
 }
 
 export interface Message {

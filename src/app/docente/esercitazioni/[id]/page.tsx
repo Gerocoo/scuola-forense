@@ -109,6 +109,7 @@ export default async function EsercitazioneDocente({ params }: Props) {
               files={byRole("correzione")}
               initialFeedback={review?.feedback ?? ""}
               initialGrade={review?.grade ?? ""}
+              initialScores={(review?.scores as Record<string, number> | null) ?? null}
             />
           )}
 
