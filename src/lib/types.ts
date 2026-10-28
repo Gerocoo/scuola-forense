@@ -127,6 +127,11 @@ export interface CourseExercise {
   created_at: string;
   opens_at?: string | null;
   timed?: boolean;
+  solution?: string;
+  common_errors?: string;
+  review_url?: string | null;
+  solution_files?: UploadedMeta[];
+  collective_published?: boolean;
 }
 
 export interface AssignmentFile extends StoredFile {

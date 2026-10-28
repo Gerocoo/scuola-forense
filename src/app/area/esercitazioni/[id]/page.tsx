@@ -7,6 +7,7 @@ import { AssignmentTimeline } from "@/components/app/AssignmentTimeline";
 import { SubmissionPanel } from "./SubmissionPanel";
 import { AnnotateButton, type Annotations } from "@/components/app/PdfAnnotator";
 import { requireUser } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ExamTimer } from "@/components/app/ExamTimer";
 import { ScoreCard } from "@/components/app/ScoreCard";
 import { dateTime, KIND_LABEL } from "@/lib/format";
@@ -51,6 +52,19 @@ export default async function EsercitazionePage({ params }: Props) {
     // visibili solo a correzione pubblicata (regola del database)
     supabase.from("assignment_annotations").select("file_id, data").eq("assignment_id", id).returns<{ file_id: string; data: Annotations }[]>(),
   ]);
+  // correzione collettiva dell'esercizio di corso (dopo la scadenza)
+  const { data: collective } = a.package_id
+    ? await createAdminClient()
+        .from("course_exercises")
+        .select("solution, common_errors, review_url, solution_files, due_at, collective_published")
+        .eq("id", a.batch_id)
+        .maybeSingle<{ solution: string; common_errors: string; review_url: string | null; solution_files: { name: string }[]; due_at: string | null; collective_published: boolean }>()
+    : { data: null };
+  const showCollective =
+    !!collective?.collective_published &&
+    (!collective.due_at || new Date(collective.due_at) < new Date()) &&
+    !!(collective.solution || collective.common_errors || collective.review_url || collective.solution_files?.length);
+
   const annotated = (annotations ?? []).filter((x) =>
     Object.values(x.data?.pages ?? {}).some((p) => (p.strokes?.length ?? 0) + (p.notes?.length ?? 0) > 0),
   );
@@ -130,6 +144,46 @@ export default async function EsercitazionePage({ params }: Props) {
               {!annotated.length && !byRole("correzione").length && !review?.feedback && (
                 <p className="mt-4 text-[15px] text-slate">Il docente non ha allegato annotazioni.</p>
               )}
+            </section>
+          )}
+
+          {showCollective && collective && (
+            <section aria-labelledby="collettiva" className="panel p-4 sm:p-6">
+              <h2 id="collettiva" className="text-lg font-semibold">Correzione collettiva</h2>
+              <p className="mt-1 text-[14px] text-mute">La traccia svolta e gli errori che il docente ha visto più spesso in classe.</p>
+              {collective.common_errors && (
+                <div className="mt-4 rounded-[14px] bg-ambra-soft/70 p-4">
+                  <p className="text-[15px] font-semibold text-ambra">Errori più frequenti</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-[15px] leading-relaxed text-ink">
+                    {collective.common_errors
+                      .split("\n")
+                      .map((l) => l.replace(/^[-•*]\s*/, "").trim())
+                      .filter(Boolean)
+                      .map((l, i) => (
+                        <li key={i}>{l}</li>
+                      ))}
+                  </ul>
+                </div>
+              )}
+              {collective.solution && (
+                <details className="faq group mt-4 rounded-[14px] border border-line p-4">
+                  <summary className="flex cursor-pointer list-none items-center justify-between text-[15px] font-semibold">
+                    Traccia svolta
+                    <span aria-hidden className="text-[18px] transition-transform group-open:rotate-45">+</span>
+                  </summary>
+                  <div className="prose-legal mt-3 whitespace-pre-wrap break-words">{collective.solution}</div>
+                </details>
+              )}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {collective.review_url && (
+                  <a href={collective.review_url} target="_blank" rel="noopener" className="btn-primary btn-sm">Guarda la correzione in classe</a>
+                )}
+                {(collective.solution_files ?? []).map((f, i) => (
+                  <a key={i} href={`/api/soluzione/${a.batch_id}/${i}`} className="btn-secondary btn-sm">
+                    Scarica {f.name}
+                  </a>
+                ))}
+              </div>
             </section>
           )}
 

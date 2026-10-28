@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Avatar } from "@/components/app/Avatar";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { AddTeacher, InviteToCourse, RemoveTeacher, RetireExercise } from "./CourseControls";
+import { CollectiveReview } from "./CollectiveReview";
 import { requireStaff } from "@/lib/auth";
 import { activeByPackage, canTeach, type CourseTeacher } from "@/lib/courses";
 import { dateLong, dateShort, dateTime, KIND_LABEL } from "@/lib/format";
@@ -167,6 +168,17 @@ export default async function CorsoPage({ params }: Props) {
                         ) : (
                           <p className="px-5 py-3 text-[14px] text-slate">Ancora nessun iscritto: lo riceveranno appena si iscrivono.</p>
                         )}
+                        <CollectiveReview
+                          exerciseId={ex.id}
+                          dueAt={ex.due_at}
+                          initial={{
+                            solution: ex.solution ?? "",
+                            commonErrors: ex.common_errors ?? "",
+                            reviewUrl: ex.review_url ?? "",
+                            files: ex.solution_files ?? [],
+                            published: !!ex.collective_published,
+                          }}
+                        />
                         <div className="flex justify-end border-t border-line-soft px-5 py-2.5">
                           <RetireExercise id={ex.id} title={ex.title} />
                         </div>

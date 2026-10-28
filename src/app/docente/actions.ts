@@ -812,3 +812,60 @@ export async function saveAnnotations(fileId: string, data: unknown): Promise<Ac
   await supabase.from("assignments").update({ status: "in_correzione" }).eq("id", file.assignment_id).eq("status", "consegnato");
   return { ok: true };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Correzione collettiva                                              */
+/* ------------------------------------------------------------------ */
+
+export async function saveCollectiveReview(
+  exerciseId: string,
+  input: { solution: string; commonErrors: string; reviewUrl: string; files: UploadedMeta[]; publish: boolean },
+): Promise<ActionResult> {
+  const { supabase, profile } = await requireStaff();
+  const { data: ce } = await supabase
+    .from("course_exercises")
+    .select("package_id, title, due_at, collective_published, solution_files")
+    .eq("id", exerciseId)
+    .maybeSingle();
+  if (!ce) return { ok: false, error: "Esercizio non trovato." };
+  if (input.files.some((f) => !f.path.startsWith(`soluzioni/${exerciseId}/`))) return { ok: false, error: "Percorso dei file non valido." };
+  const url = input.reviewUrl.trim();
+  if (url && !/^https?:\/\//i.test(url)) return { ok: false, error: "Il link deve iniziare con https://" };
+
+  const { error } = await supabase
+    .from("course_exercises")
+    .update({
+      solution: input.solution.slice(0, 40000),
+      common_errors: input.commonErrors.slice(0, 20000),
+      review_url: url || null,
+      solution_files: input.files,
+      collective_published: input.publish,
+    })
+    .eq("id", exerciseId);
+  if (error) return { ok: false, error: "Salvataggio non riuscito." };
+
+  // avviso ai discenti alla prima pubblicazione, se la scadenza è già passata
+  const visibleNow = !ce.due_at || new Date(ce.due_at) < new Date();
+  if (input.publish && !ce.collective_published && visibleNow) {
+    const { data: rows } = await supabase.from("assignments").select("id, student_id").eq("batch_id", exerciseId);
+    const ids = (rows ?? []).map((r) => r.student_id);
+    if (ids.length) {
+      const { data: people } = await createAdminClient().from("profiles").select("id, email").in("id", ids);
+      await inBatches(people ?? [], 5, (p) => {
+        const a = rows!.find((r) => r.student_id === p.id)!;
+        return notify({
+          to: p.email,
+          subject: `Correzione collettiva: ${ce.title}`,
+          html: emailLayout(
+            "È disponibile la correzione collettiva",
+            `<p>${escapeHtml(profile.full_name || "Il docente")} ha pubblicato la traccia svolta e gli errori più frequenti di <strong>${escapeHtml(ce.title)}</strong>.</p>`,
+            { label: "Apri la correzione", href: `${siteUrl()}/area/esercitazioni/${a.id}` },
+          ),
+        });
+      });
+    }
+  }
+
+  revalidatePath(`/docente/corsi/${ce.package_id}`);
+  return { ok: true, message: input.publish ? (visibleNow ? "Pubblicata: i discenti la vedono." : "Pubblicata: i discenti la vedranno dopo la scadenza.") : "Bozza salvata." };
+}
