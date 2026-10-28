@@ -1022,6 +1022,7 @@ export async function savePastTrack(input: {
   kind: string;
   title: string;
   body: string;
+  free?: boolean;
   file: UploadedMeta | null;
 }): Promise<ActionResult> {
   const { supabase, user } = await requireStaff();
@@ -1040,12 +1041,22 @@ export async function savePastTrack(input: {
     title,
     body: input.body.slice(0, 40000),
     file: input.file,
+    free: !!input.free,
     created_by: user.id,
   });
   if (error) return { ok: false, error: "Salvataggio non riuscito." };
   revalidatePath("/docente/archivio");
   revalidatePath("/area/archivio");
   return { ok: true, message: "Traccia aggiunta all'archivio." };
+}
+
+export async function setPastTrackFree(id: string, free: boolean): Promise<ActionResult> {
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.from("past_tracks").update({ free }).eq("id", id);
+  if (error) return { ok: false, error: "Non riuscito." };
+  revalidatePath("/docente/archivio");
+  revalidatePath("/area/archivio");
+  return { ok: true };
 }
 
 export async function deletePastTrack(id: string): Promise<ActionResult> {

@@ -21,6 +21,7 @@ export default async function HomePage({ searchParams }: Props) {
     .from("packages")
     .select("*")
     .eq("active", true)
+    .neq("slug", "archivio-tracce")
     .order("sort")
     .returns<Package[]>();
   const taken = await enrolledCounts((packages ?? []).filter((p) => p.seats).map((p) => p.id));

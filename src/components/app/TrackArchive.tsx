@@ -1,18 +1,32 @@
 import Link from "next/link";
+import { startCheckout } from "@/app/checkout/actions";
+import { ARCHIVE_SLUG, type ArchiveFilters, type ArchiveTrack } from "@/lib/archive";
+import { euro } from "@/lib/format";
 
-export type PastTrack = {
-  id: string;
-  year: number;
-  session: string;
-  subject: "civile" | "penale" | "amministrativo";
-  kind: "parere" | "atto";
-  title: string;
-  body: string;
-  file: { name: string } | null;
-};
+export type PastTrack = ArchiveTrack;
 
 const SUBJ = { civile: "Civile", penale: "Penale", amministrativo: "Amministrativo" } as const;
 const KIND = { parere: "Parere", atto: "Atto" } as const;
+
+function LockIcon({ className = "size-4" }: { className?: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
+
+/** Pulsante d'acquisto dell'archivio completo. */
+export function UnlockButton({ price, className = "btn-primary" }: { price: number | null; className?: string }) {
+  if (price == null) return null;
+  return (
+    <form action={startCheckout}>
+      <input type="hidden" name="slug" value={ARCHIVE_SLUG} />
+      <button className={className}>Sblocca tutto l&apos;archivio · {euro(price)}</button>
+    </form>
+  );
+}
 
 /** Filtri e elenco dell'archivio tracce (usato da discenti e docenti). */
 export function TrackArchive({
@@ -20,13 +34,15 @@ export function TrackArchive({
   base,
   filters,
   years,
+  price = null,
   renderAction,
 }: {
-  tracks: PastTrack[];
+  tracks: ArchiveTrack[];
   base: string;
-  filters: { materia?: string; tipo?: string; anno?: string };
+  filters: ArchiveFilters;
   years: number[];
-  renderAction?: (t: PastTrack) => React.ReactNode;
+  price?: number | null;
+  renderAction?: (t: ArchiveTrack) => React.ReactNode;
 }) {
   const href = (o: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
@@ -66,10 +82,14 @@ export function TrackArchive({
       {tracks.length ? (
         <ul className="space-y-3">
           {tracks.map((t) => (
-            <li key={t.id} className="panel overflow-hidden">
+            <li key={t.id} className={`panel overflow-hidden ${t.locked ? "bg-paper/60" : ""}`}>
               <details className="faq group">
                 <summary className="flex cursor-pointer list-none items-start gap-4 p-4 sm:p-5">
-                  <span className="grid size-12 shrink-0 place-items-center rounded-[12px] bg-codice-soft text-center font-semibold leading-tight text-codice">
+                  <span
+                    className={`grid size-12 shrink-0 place-items-center rounded-[12px] text-center font-semibold leading-tight ${
+                      t.locked ? "bg-line-soft text-mute" : "bg-codice-soft text-codice"
+                    }`}
+                  >
                     <span className="text-[15px] tabular-nums">{t.year}</span>
                   </span>
                   <span className="min-w-0 flex-1">
@@ -77,22 +97,45 @@ export function TrackArchive({
                       <span className="rounded-full bg-paper px-2 py-0.5 text-[12px] font-medium text-slate">{SUBJ[t.subject]}</span>
                       <span className="rounded-full bg-paper px-2 py-0.5 text-[12px] font-medium text-slate">{KIND[t.kind]}</span>
                       {t.session && <span className="rounded-full bg-paper px-2 py-0.5 text-[12px] text-mute">{t.session}</span>}
+                      {t.free && <span className="rounded-full bg-codice px-2 py-0.5 text-[12px] font-medium text-white">Gratis</span>}
                     </span>
-                    <span className="mt-1 block font-semibold leading-snug">{t.title}</span>
+                    <span className={`mt-1 block font-semibold leading-snug ${t.locked ? "text-slate" : ""}`}>{t.title}</span>
                   </span>
-                  <span aria-hidden className="mt-1 text-[18px] text-mute transition-transform group-open:rotate-45">+</span>
+                  {t.locked ? (
+                    <span className="mt-1 text-mute" title="Traccia riservata">
+                      <LockIcon className="size-[18px]" />
+                    </span>
+                  ) : (
+                    <span aria-hidden className="mt-1 text-[18px] text-mute transition-transform group-open:rotate-45">+</span>
+                  )}
                 </summary>
                 <div className="border-t border-line-soft p-4 sm:p-5">
-                  {t.body && <div className="prose-legal whitespace-pre-wrap break-words">{t.body}</div>}
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
-                    {t.file && (
-                      <>
-                        <a href={`/api/archivio/${t.id}?apri=1`} target="_blank" rel="noopener" className="btn-secondary btn-sm">Apri il file</a>
-                        <a href={`/api/archivio/${t.id}`} className="btn-ghost btn-sm">Scarica</a>
-                      </>
-                    )}
-                    {renderAction?.(t)}
-                  </div>
+                  {t.locked ? (
+                    <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="flex items-start gap-2 text-[15px] text-slate">
+                        <LockIcon className="mt-0.5 size-4 shrink-0" />
+                        Il testo di questa traccia è riservato. Sbloccalo con l&apos;archivio completo o con uno dei nostri corsi.
+                      </p>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <UnlockButton price={price} className="btn-primary btn-sm" />
+                        <Link href="/#corsi" className="btn-ghost btn-sm">Vedi i corsi</Link>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {t.body && <div className="prose-legal whitespace-pre-wrap break-words">{t.body}</div>}
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                        {t.file && (
+                          <>
+                            <a href={`/api/archivio/${t.id}?apri=1`} target="_blank" rel="noopener" className="btn-secondary btn-sm">Apri il file</a>
+                            <a href={`/api/archivio/${t.id}`} className="btn-ghost btn-sm">Scarica</a>
+                          </>
+                        )}
+                        {renderAction?.(t)}
+                      </div>
+                    </>
+                  )}
+                  {t.locked && renderAction && <div className="mt-3">{renderAction(t)}</div>}
                 </div>
               </details>
             </li>
@@ -101,19 +144,9 @@ export function TrackArchive({
       ) : (
         <p className="panel p-6 text-[15px] text-slate">Nessuna traccia con questi filtri.</p>
       )}
+      <p className="mt-6 text-[13px] text-mute">
+        Le tracce riportano i fatti e la richiesta delle prove ministeriali; per il testo ufficiale fa fede la pubblicazione del Ministero della Giustizia.
+      </p>
     </>
   );
-}
-
-export async function loadTracks(
-  supabase: { from: (t: string) => any }, // eslint-disable-line @typescript-eslint/no-explicit-any
-  f: { materia?: string; tipo?: string; anno?: string },
-) {
-  let q = supabase.from("past_tracks").select("id, year, session, subject, kind, title, body, file").order("year", { ascending: false }).order("created_at", { ascending: false });
-  if (f.materia) q = q.eq("subject", f.materia);
-  if (f.tipo) q = q.eq("kind", f.tipo);
-  if (f.anno && /^\d{4}$/.test(f.anno)) q = q.eq("year", Number(f.anno));
-  const [{ data }, { data: ys }] = await Promise.all([q.limit(300), supabase.from("past_tracks").select("year")]);
-  const years = [...new Set(((ys ?? []) as { year: number }[]).map((y) => y.year))].sort((a, b) => b - a);
-  return { tracks: (data ?? []) as PastTrack[], years };
 }

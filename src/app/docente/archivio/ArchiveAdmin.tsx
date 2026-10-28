@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { Dropzone } from "@/components/app/Dropzone";
 import { uploadFile } from "@/lib/upload";
-import { deletePastTrack, savePastTrack } from "@/app/docente/actions";
+import { deletePastTrack, savePastTrack, setPastTrackFree } from "@/app/docente/actions";
 import type { UploadedMeta } from "@/lib/types";
 
 export function TrackForm() {
@@ -40,6 +40,7 @@ export function TrackForm() {
             kind: String(fd.get("kind") ?? ""),
             title: String(fd.get("title") ?? ""),
             body: String(fd.get("body") ?? ""),
+            free: fd.get("free") === "on",
             file,
           });
           setMsg(res.ok ? { ok: true, text: res.message ?? "Fatto." } : { ok: false, text: res.error });
@@ -92,6 +93,10 @@ export function TrackForm() {
       ) : (
         <Dropzone onFiles={pick} disabled={busy} label={busy ? "Caricamento…" : "Allega il file della traccia (facoltativo)"} />
       )}
+      <label className="flex items-center gap-2 text-[15px]">
+        <input type="checkbox" name="free" className="size-4 accent-codice" />
+        Gratuita: visibile a tutti gli utenti registrati, anche senza corso
+      </label>
       <div className="flex flex-wrap items-center gap-3">
         <button className="btn-primary" disabled={pending || busy}>{pending ? "Salvataggio…" : "Aggiungi all'archivio"}</button>
         {msg && <p role="status" className={`text-[14px] ${msg.ok ? "text-codice" : "text-ceralacca"}`}>{msg.text}</p>}
@@ -117,6 +122,26 @@ export function DeleteTrack({ id }: { id: string }) {
       }}
     >
       Elimina
+    </button>
+  );
+}
+
+export function ToggleFree({ id, free }: { id: string; free: boolean }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      className={`btn-sm ${free ? "btn-secondary" : "btn-ghost"}`}
+      onClick={() =>
+        start(async () => {
+          await setPastTrackFree(id, !free);
+          router.refresh();
+        })
+      }
+    >
+      {pending ? "…" : free ? "Rendi a pagamento" : "Rendi gratuita"}
     </button>
   );
 }

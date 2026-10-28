@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { currentPrice, dateLong, euro } from "@/lib/format";
 import { startCheckout } from "@/app/checkout/actions";
@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CorsoPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  if (slug === "archivio-tracce") redirect("/area/archivio");
   const { errore, esaurito } = await searchParams;
   const pkg = await load(slug);
   if (!pkg) notFound();
