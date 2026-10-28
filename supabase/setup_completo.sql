@@ -1,7 +1,7 @@
 -- =====================================================================
 --  INSTALLAZIONE COMPLETA: copia TUTTO questo file nell'SQL Editor di
 --  Supabase e premi Run. Si può rieseguire senza danni.
---  (contiene 0001_schema.sql + 0002_video_calendario.sql + 0003_appunti.sql + 0004_integrazioni.sql + 0005_percorso.sql + 0006_inviti_docenti.sql + 0007_gestione_account.sql + 0008_corsi_docenti.sql + 0009_promemoria_correzioni.sql + 0010_superadmin_registro.sql + 0011_inviti_con_corsi.sql + 0012_annotazioni_pdf.sql + seed.sql)
+--  (contiene 0001_schema.sql + 0002_video_calendario.sql + 0003_appunti.sql + 0004_integrazioni.sql + 0005_percorso.sql + 0006_inviti_docenti.sql + 0007_gestione_account.sql + 0008_corsi_docenti.sql + 0009_promemoria_correzioni.sql + 0010_superadmin_registro.sql + 0011_inviti_con_corsi.sql + 0012_annotazioni_pdf.sql + 0013_foto_profilo.sql + seed.sql)
 -- =====================================================================
 
 -- =====================================================================
@@ -1014,6 +1014,15 @@ create policy "annotazioni: discente a correzione pubblicata" on public.assignme
     select 1 from public.assignments a
     where a.id = assignment_id and a.student_id = auth.uid() and a.status = 'corretto'
   ));
+
+
+-- =====================================================================
+--  0013: foto profilo
+-- =====================================================================
+-- Foto profilo: archivio pubblico in sola lettura (i caricamenti passano dal server).
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 2097152, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update set public = true, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
 
 
 -- Pacchetti di esempio: modificare testi e prezzi dal pannello "Pacchetti" o qui.

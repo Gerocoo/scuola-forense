@@ -177,3 +177,42 @@ export async function saveVideoProgress(
   }
   return { ok: true, percent, completed: !!completedAt, justCompleted };
 }
+
+/* ---------- foto profilo ---------- */
+
+/** Carica la foto profilo (già ridimensionata nel browser) nell'archivio pubblico delle foto. */
+export async function uploadAvatar(formData: FormData): Promise<ActionResult & { url?: string }> {
+  const { user } = await requireUser();
+  const file = formData.get("file");
+  if (!(file instanceof File) || !file.size) return { ok: false, error: "Scegli un'immagine." };
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) return { ok: false, error: "Formato non supportato: usa JPG o PNG." };
+  if (file.size > 2 * 1024 * 1024) return { ok: false, error: "Immagine troppo grande." };
+
+  const admin = createAdminClient();
+  const path = `${user.id}/${Date.now()}.jpg`;
+  const { error } = await admin.storage.from("avatars").upload(path, file, { contentType: file.type, upsert: false });
+  if (error) return { ok: false, error: "Caricamento non riuscito. Riprova." };
+
+  const { data: pub } = admin.storage.from("avatars").getPublicUrl(path);
+  await admin.from("profiles").update({ avatar_url: pub.publicUrl }).eq("id", user.id);
+
+  // elimina le foto precedenti
+  const { data: old } = await admin.storage.from("avatars").list(user.id);
+  const stale = (old ?? []).map((o) => `${user.id}/${o.name}`).filter((p) => p !== path);
+  if (stale.length) await admin.storage.from("avatars").remove(stale);
+
+  revalidatePath("/area", "layout");
+  revalidatePath("/docente", "layout");
+  return { ok: true, url: pub.publicUrl, message: "Foto aggiornata." };
+}
+
+export async function removeAvatar(): Promise<ActionResult> {
+  const { user } = await requireUser();
+  const admin = createAdminClient();
+  const { data: old } = await admin.storage.from("avatars").list(user.id);
+  if (old?.length) await admin.storage.from("avatars").remove(old.map((o) => `${user.id}/${o.name}`));
+  await admin.from("profiles").update({ avatar_url: null }).eq("id", user.id);
+  revalidatePath("/area", "layout");
+  revalidatePath("/docente", "layout");
+  return { ok: true, message: "Foto rimossa." };
+}

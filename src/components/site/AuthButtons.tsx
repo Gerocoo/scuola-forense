@@ -69,7 +69,8 @@ export function AuthButtons({
             user={user}
             links={[
               { href: home, label: staff ? "Area docenti" : "La tua area" },
-              { href: `${home}/profilo`, label: "Profilo" },
+              { href: `${home}/profilo`, label: "Profilo e foto" },
+        { href: `${home}/profilo#password`, label: "Cambia password" },
             ]}
           />
         )}

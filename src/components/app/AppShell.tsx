@@ -27,7 +27,8 @@ export function AppShell({
       user={{ name: profile.full_name, email: profile.email, avatar: profile.avatar_url }}
       links={[
         { href: home, label: areaLabel },
-        { href: `${home}/profilo`, label: "Profilo" },
+        { href: `${home}/profilo`, label: "Profilo e foto" },
+        { href: `${home}/profilo#password`, label: "Cambia password" },
       ]}
       />
     </div>

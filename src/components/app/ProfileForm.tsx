@@ -8,7 +8,8 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(updateProfile, null);
 
   return (
-    <form action={action} className="panel max-w-xl space-y-5 p-6">
+    <form action={action} className="panel space-y-5 p-5 sm:p-6">
+      <h2 className="text-[17px] font-semibold">I tuoi dati</h2>
       <div>
         <label htmlFor="full_name" className="label">Nome e cognome</label>
         <input id="full_name" name="full_name" defaultValue={profile.full_name} required className="field" autoComplete="name" />
