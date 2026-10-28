@@ -636,7 +636,8 @@ export async function markEnrollmentPaid(enrollmentId: string, formData: FormDat
   if (amount != null && !Number.isNaN(amount)) patch.amount_cents = amount;
   const { error } = await supabase.from("enrollments").update(patch).eq("id", enrollmentId);
   if (error) return { ok: false, error: "Modifica non riuscita." };
-  const title = (Array.isArray(e.package) ? e.package[0]?.title : (e.package as { title?: string } | null)?.title) ?? "il corso";
+  const pk = (Array.isArray(e.package) ? e.package[0] : e.package) as unknown as { title?: string } | null;
+  const title = pk?.title ?? "il corso";
   if (e.status !== "active") await sendEnrollmentActive(e.user_id, title);
   revalidatePath(`/docente/discenti/${e.user_id}`);
   revalidatePath("/docente/pagamenti");

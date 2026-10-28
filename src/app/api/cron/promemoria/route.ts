@@ -198,11 +198,11 @@ export async function GET(req: Request) {
       .eq("status", "pending")
       .lte("created_at", new Date(now - 7 * 86400000).toISOString());
     if (waiting?.length) {
-      const one = <T,>(x: T | T[] | null) => (Array.isArray(x) ? x[0] : x);
+      const one = <T,>(x: unknown) => ((Array.isArray(x) ? x[0] : x) ?? null) as T | null;
       const rows = waiting
         .map((w) => {
-          const st = one(w.student as { full_name: string | null; email: string } | null);
-          const pk = one(w.package as { title: string } | null);
+          const st = one<{ full_name: string | null; email: string }>(w.student);
+          const pk = one<{ title: string }>(w.package);
           return `<li style="margin-bottom:6px">${escapeHtml(st?.full_name || st?.email || "discente")} · ${escapeHtml(pk?.title ?? "")} · ${euro(w.amount_cents)} · dal ${new Date(w.created_at).toLocaleDateString("it-IT", { day: "numeric", month: "long" })}</li>`;
         })
         .join("");
