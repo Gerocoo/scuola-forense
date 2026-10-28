@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 export default async function DocenteLayout({ children }: { children: React.ReactNode }) {
   const { supabase, user, profile } = await requireStaff();
 
-  const [{ count: unread }, { count: toCorrect }, notices] = await Promise.all([
+  const isAdmin = profile.role === "admin" || !!profile.is_super;
+  const [{ count: unread }, { count: toCorrect }, notices, { count: toCollect }] = await Promise.all([
     supabase
       .from("messages")
       .select("id", { count: "exact", head: true })
@@ -17,6 +18,9 @@ export default async function DocenteLayout({ children }: { children: React.Reac
       .is("read_at", null),
     supabase.from("assignments").select("id", { count: "exact", head: true }).eq("status", "consegnato"),
     staffNotices(supabase, profile),
+    isAdmin
+      ? supabase.from("enrollments").select("id", { count: "exact", head: true }).eq("status", "pending")
+      : Promise.resolve({ count: 0 }),
   ]);
 
   const nav: NavItem[] = [
@@ -30,9 +34,10 @@ export default async function DocenteLayout({ children }: { children: React.Reac
     { href: "/docente/archivio", label: "Archivio tracce" },
     { href: "/docente/messaggi", label: "Messaggi", badge: unread ?? 0 },
   ];
-  if (profile.role === "admin" || profile.is_super) {
+  if (isAdmin) {
     nav.push(
       { href: "/docente/pacchetti", label: "Corsi in vendita" },
+      { href: "/docente/pagamenti", label: "Pagamenti", badge: toCollect ?? 0 },
       { href: "/docente/utenti", label: "Utenti e ruoli" },
       { href: "/docente/statistiche", label: "Statistiche" },
       { href: "/docente/contatti", label: "Contatti" },

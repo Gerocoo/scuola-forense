@@ -4,8 +4,8 @@ import type { Package, Profile } from "@/lib/types";
 export type CourseTeacher = Pick<Profile, "id" | "full_name" | "email" | "avatar_url">;
 
 /** Corsi visibili al docente: quelli assegnati a lui (l'amministratore li vede tutti). */
-export async function myCourseIds(supabase: SupabaseClient, me: Pick<Profile, "id" | "role">) {
-  if (me.role === "admin") {
+export async function myCourseIds(supabase: SupabaseClient, me: Pick<Profile, "id" | "role"> & { is_super?: boolean | null }) {
+  if (me.role === "admin" || me.is_super) {
     const { data } = await supabase.from("packages").select("id");
     return (data ?? []).map((p: { id: string }) => p.id);
   }
@@ -13,8 +13,8 @@ export async function myCourseIds(supabase: SupabaseClient, me: Pick<Profile, "i
   return (data ?? []).map((r: { package_id: string }) => r.package_id);
 }
 
-export async function canTeach(supabase: SupabaseClient, me: Pick<Profile, "id" | "role">, packageId: string) {
-  if (me.role === "admin") return true;
+export async function canTeach(supabase: SupabaseClient, me: Pick<Profile, "id" | "role"> & { is_super?: boolean | null }, packageId: string) {
+  if (me.role === "admin" || me.is_super) return true;
   const { data } = await supabase.from("package_teachers").select("package_id").eq("teacher_id", me.id).eq("package_id", packageId).maybeSingle();
   return !!data;
 }

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/app/AppShell";
 import { requireStaff } from "@/lib/auth";
+import { courseCommitments } from "@/lib/commitments";
+import { myCourseIds } from "@/lib/courses";
+import { CommitmentPanel } from "@/components/app/CommitmentPanel";
 import { dateShort, dateTime, KIND_LABEL, relative } from "@/lib/format";
 import type { Assignment, Lesson, Message, Profile } from "@/lib/types";
 
@@ -40,6 +43,9 @@ export default async function DocenteHome() {
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "student"),
   ]);
 
+  const commitments = await courseCommitments(supabase, await myCourseIds(supabase, profile));
+  const behind = commitments.filter((c) => c.missing > 0).sort((a, b) => b.missing - a.missing);
+
   const senderIds = [...new Set((inbox ?? []).map((m) => m.student_id))];
   const { data: senders } = senderIds.length
     ? await supabase.from("profiles").select("id, full_name, email").in("id", senderIds)
@@ -56,6 +62,14 @@ export default async function DocenteHome() {
         description={`${students ?? 0} discenti registrati sulla piattaforma.`}
         actions={<Link href="/docente/esercitazioni/nuova" className="btn-primary">Assegna una traccia</Link>}
       />
+
+      {behind.length > 0 && (
+        <div className="mb-6 grid gap-4 md:grid-cols-2">
+          {behind.slice(0, 4).map((c) => (
+            <CommitmentPanel key={c.packageId} c={c} showTitle />
+          ))}
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         <section className="panel p-6 lg:row-span-2">

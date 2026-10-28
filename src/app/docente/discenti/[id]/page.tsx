@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/app/Avatar";
 import { StatusBadge } from "@/components/app/StatusBadge";
-import { EnrollmentAdd, EnrollmentStatus } from "./EnrollmentAdmin";
+import { EnrollmentAdd, EnrollmentStatus, MarkPaid, METHOD_LABEL } from "./EnrollmentAdmin";
 import { ChangeEmailForm, DeleteUserButton } from "@/app/docente/utenti/AccountAdmin";
 import { requireStaff } from "@/lib/auth";
 import { loadPath } from "@/lib/progress";
@@ -37,7 +37,7 @@ function Ring({ value, size = 64 }: { value: number; size?: number }) {
 export default async function DiscentePage({ params }: Props) {
   const { id } = await params;
   const { supabase, profile: me } = await requireStaff();
-  const isAdmin = me.role === "admin";
+  const isAdmin = me.role === "admin" || !!me.is_super;
 
   const { data: s } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle<Profile>();
   if (!s) notFound();
@@ -51,8 +51,8 @@ export default async function DiscentePage({ params }: Props) {
       .returns<Enrollment[]>(),
     supabase.from("assignments").select("*").eq("student_id", id).order("created_at", { ascending: false }).returns<Assignment[]>(),
     isAdmin
-      ? supabase.from("packages").select("id, title, period_label").order("sort").returns<Pick<Package, "id" | "title" | "period_label">[]>()
-      : Promise.resolve({ data: [] as Pick<Package, "id" | "title" | "period_label">[] }),
+      ? supabase.from("packages").select("id, title, period_label, price_cents").order("sort").returns<Pick<Package, "id" | "title" | "period_label" | "price_cents">[]>()
+      : Promise.resolve({ data: [] as Pick<Package, "id" | "title" | "period_label" | "price_cents">[] }),
   ]);
 
   const now = new Date().toISOString();
@@ -231,16 +231,31 @@ export default async function DiscentePage({ params }: Props) {
                         <p className="font-medium leading-snug">{e.package?.title}</p>
                         <span
                           className={`shrink-0 rounded-full px-2 py-0.5 text-[13px] font-medium ${
-                            active ? "bg-codice-soft text-codice" : e.status === "refunded" ? "bg-ceralacca-soft text-ceralacca" : "bg-line-soft text-mute"
+                            active
+                              ? "bg-codice-soft text-codice"
+                              : e.status === "pending"
+                                ? "bg-ambra-soft text-ambra"
+                                : e.status === "refunded"
+                                  ? "bg-ceralacca-soft text-ceralacca"
+                                  : "bg-line-soft text-mute"
                           }`}
                         >
-                          {active ? "Attivo" : e.status === "refunded" ? "Rimborsato" : "Scaduto"}
+                          {active ? "Attivo" : e.status === "pending" ? "Da pagare" : e.status === "refunded" ? "Rimborsato" : "Scaduto"}
                         </span>
                       </div>
                       <p className="mt-1 text-[14px] text-slate">
                         {euro(e.amount_cents)}
+                        {e.payment_method ? ` · ${METHOD_LABEL[e.payment_method] ?? e.payment_method}` : ""}
                         {e.ends_at ? ` · fino al ${dateLong(e.ends_at)}` : ""}
                       </p>
+                      {e.paid_at && e.status !== "pending" && (
+                        <p className="text-[13px] text-mute">
+                          Incassato il {dateLong(e.paid_at)}
+                          {e.payment_reference ? ` · rif. ${e.payment_reference}` : ""}
+                        </p>
+                      )}
+                      {e.payment_note && <p className="text-[13px] text-mute">{e.payment_note}</p>}
+                      {isAdmin && e.status === "pending" && <MarkPaid enrollmentId={e.id} amountCents={e.amount_cents} />}
                       {isAdmin && <EnrollmentStatus enrollmentId={e.id} status={e.status} />}
                     </li>
                   );

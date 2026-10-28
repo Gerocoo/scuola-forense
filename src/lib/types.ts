@@ -34,18 +34,25 @@ export interface Package {
   active: boolean;
   sort: number;
   subject?: "civile" | "penale" | "amministrativo" | null;
+  promise_recorded_month?: number | null;
+  promise_live_month?: number | null;
+  promise_exercises_month?: number | null;
 }
 
 export interface Enrollment {
   id: string;
   user_id: string;
   package_id: string;
-  status: "active" | "expired" | "refunded";
+  status: "active" | "expired" | "refunded" | "pending";
   amount_cents: number;
   currency: string;
   starts_at: string;
   ends_at: string | null;
   created_at: string;
+  payment_method?: "stripe" | "bonifico" | "contanti" | "pos" | "gratuito" | "altro" | null;
+  payment_reference?: string | null;
+  paid_at?: string | null;
+  payment_note?: string | null;
   package?: Pick<Package, "title" | "period_label" | "slug"> | null;
 }
 

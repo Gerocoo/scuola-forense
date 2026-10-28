@@ -10,7 +10,7 @@ export async function enrolledStudents(packageIds: string[]): Promise<Recipient[
   const now = new Date().toISOString();
   const { data } = await admin
     .from("enrollments")
-    .select("ends_at, user:profiles(id, email, full_name, role)")
+    .select("ends_at, user:profiles!enrollments_user_id_fkey(id, email, full_name, role)")
     .in("package_id", packageIds)
     .eq("status", "active");
 

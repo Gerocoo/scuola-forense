@@ -114,6 +114,28 @@ export function PackageForm({
         </div>
       </div>
 
+      <div className="panel p-6">
+        <h2 className="font-semibold">Impegni mensili dei docenti</h2>
+        <p className="mt-1 text-[15px] text-slate">
+          Quanto materiale va pubblicato ogni mese per rispettare ciò che è stato venduto. I docenti del corso vedono l&apos;avanzamento e
+          ricevono un promemoria via email quando il mese sta per chiudersi e mancano contenuti. Lascia vuoto per non monitorare.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <div>
+            <label className="label" htmlFor="promise_recorded_month">Video lezioni al mese</label>
+            <input id="promise_recorded_month" name="promise_recorded_month" type="number" min={0} max={60} defaultValue={pkg?.promise_recorded_month ?? ""} className="field" />
+          </div>
+          <div>
+            <label className="label" htmlFor="promise_live_month">Incontri dal vivo al mese</label>
+            <input id="promise_live_month" name="promise_live_month" type="number" min={0} max={30} defaultValue={pkg?.promise_live_month ?? ""} className="field" />
+          </div>
+          <div>
+            <label className="label" htmlFor="promise_exercises_month">Tracce al mese</label>
+            <input id="promise_exercises_month" name="promise_exercises_month" type="number" min={0} max={30} defaultValue={pkg?.promise_exercises_month ?? ""} className="field" />
+          </div>
+        </div>
+      </div>
+
       <div className="panel flex flex-wrap items-center gap-6 p-6">
         <label className="flex items-center gap-3 text-[15px] font-medium">
           <input type="checkbox" name="active" defaultChecked={pkg?.active ?? true} className="size-4 accent-codice" />

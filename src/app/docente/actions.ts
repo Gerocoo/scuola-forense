@@ -540,6 +540,9 @@ export async function savePackage(id: string | null, formData: FormData): Promis
     highlight: formData.get("highlight") === "on",
     active: formData.get("active") === "on",
     subject: ["civile", "penale", "amministrativo"].includes(String(formData.get("subject"))) ? String(formData.get("subject")) : null,
+    promise_recorded_month: formData.get("promise_recorded_month") === "" ? null : Number(formData.get("promise_recorded_month")) || 0,
+    promise_live_month: formData.get("promise_live_month") === "" ? null : Number(formData.get("promise_live_month")) || 0,
+    promise_exercises_month: formData.get("promise_exercises_month") === "" ? null : Number(formData.get("promise_exercises_month")) || 0,
     sort: Number(formData.get("sort")) || 0,
   };
 
@@ -581,25 +584,80 @@ export async function setRole(userId: string, role: Role): Promise<ActionResult>
 }
 
 /** Iscrizione manuale (bonifico, rate, borse di studio). */
+const METHODS = ["bonifico", "contanti", "pos", "gratuito", "altro"] as const;
+
+/**
+ * Iscrizione gestita dalla segreteria. Se il pagamento è già arrivato l'iscrizione è subito attiva;
+ * altrimenti resta "in attesa di pagamento" (nessun accesso) finché non viene segnata come pagata.
+ */
 export async function manualEnroll(userId: string, formData: FormData): Promise<ActionResult> {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
   const packageId = String(formData.get("package_id") ?? "");
   const amount = cents(formData.get("amount")) ?? 0;
+  const method = String(formData.get("payment_method") ?? "bonifico");
+  const paidNow = formData.get("paid") === "on" || method === "gratuito";
   if (!packageId) return { ok: false, error: "Scegli il corso." };
-  const { data: pkg } = await supabase.from("packages").select("access_until").eq("id", packageId).single();
+  if (!METHODS.includes(method as (typeof METHODS)[number])) return { ok: false, error: "Metodo di pagamento non valido." };
+  if (Number.isNaN(amount)) return { ok: false, error: "Importo non valido." };
+  const paidDate = String(formData.get("paid_at") ?? "");
+  const { data: pkg } = await supabase.from("packages").select("access_until, title").eq("id", packageId).single();
   const { error } = await supabase.from("enrollments").insert({
     user_id: userId,
     package_id: packageId,
-    status: "active",
-    amount_cents: Number.isNaN(amount) ? 0 : amount,
+    status: paidNow ? "active" : "pending",
+    amount_cents: amount,
     ends_at: pkg?.access_until ? new Date(`${pkg.access_until}T23:59:59+01:00`).toISOString() : null,
+    payment_method: method,
+    payment_reference: String(formData.get("payment_reference") ?? "").trim().slice(0, 120) || null,
+    payment_note: String(formData.get("payment_note") ?? "").trim().slice(0, 500) || null,
+    paid_at: paidNow ? (paidDate ? new Date(`${paidDate}T12:00:00+01:00`).toISOString() : new Date().toISOString()) : null,
+    recorded_by: user.id,
   });
   if (error) return { ok: false, error: "Iscrizione non riuscita." };
+  if (paidNow) await sendEnrollmentActive(userId, pkg?.title ?? "il corso");
   revalidatePath(`/docente/discenti/${userId}`);
-  return { ok: true, message: "Iscrizione attivata." };
+  revalidatePath("/docente/pagamenti");
+  return { ok: true, message: paidNow ? "Iscrizione attivata." : "Iscrizione registrata in attesa del bonifico: si attiva quando la segni come pagata." };
 }
 
-export async function setEnrollmentStatus(enrollmentId: string, status: "active" | "expired" | "refunded"): Promise<ActionResult> {
+/** Il bonifico è arrivato: l'iscrizione si attiva e il discente riceve l'email (e gli esercizi del corso). */
+export async function markEnrollmentPaid(enrollmentId: string, formData: FormData): Promise<ActionResult> {
+  const { supabase, user } = await requireAdmin();
+  const paidDate = String(formData.get("paid_at") ?? "");
+  const amount = cents(formData.get("amount"));
+  const { data: e } = await supabase.from("enrollments").select("user_id, status, package:packages(title)").eq("id", enrollmentId).maybeSingle();
+  if (!e) return { ok: false, error: "Iscrizione non trovata." };
+  const patch: Record<string, unknown> = {
+    status: "active",
+    paid_at: paidDate ? new Date(`${paidDate}T12:00:00+01:00`).toISOString() : new Date().toISOString(),
+    payment_reference: String(formData.get("payment_reference") ?? "").trim().slice(0, 120) || null,
+    recorded_by: user.id,
+  };
+  if (amount != null && !Number.isNaN(amount)) patch.amount_cents = amount;
+  const { error } = await supabase.from("enrollments").update(patch).eq("id", enrollmentId);
+  if (error) return { ok: false, error: "Modifica non riuscita." };
+  const title = (Array.isArray(e.package) ? e.package[0]?.title : (e.package as { title?: string } | null)?.title) ?? "il corso";
+  if (e.status !== "active") await sendEnrollmentActive(e.user_id, title);
+  revalidatePath(`/docente/discenti/${e.user_id}`);
+  revalidatePath("/docente/pagamenti");
+  return { ok: true, message: "Pagamento registrato: iscrizione attiva." };
+}
+
+async function sendEnrollmentActive(userId: string, title: string) {
+  const { data: p } = await createAdminClient().from("profiles").select("email, full_name").eq("id", userId).maybeSingle();
+  if (!p?.email) return;
+  await notify({
+    to: p.email,
+    subject: `Iscrizione attiva: ${title}`,
+    html: emailLayout(
+      "La tua iscrizione è attiva",
+      `<p>${p.full_name ? `Ciao ${escapeHtml(p.full_name.split(" ")[0])}, a` : "A"}bbiamo registrato il pagamento: da ora hai accesso a <strong>${escapeHtml(title)}</strong>.</p><p>Nella tua area trovi lezioni, tracce e calendario degli incontri.</p>`,
+      { label: "Entra nella tua area", href: `${siteUrl()}/area` },
+    ),
+  });
+}
+
+export async function setEnrollmentStatus(enrollmentId: string, status: "active" | "expired" | "refunded" | "pending"): Promise<ActionResult> {
   const { supabase } = await requireAdmin();
   const { data, error } = await supabase.from("enrollments").update({ status }).eq("id", enrollmentId).select("user_id").single();
   if (error || !data) return { ok: false, error: "Modifica non riuscita." };

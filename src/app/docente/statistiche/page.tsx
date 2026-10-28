@@ -22,7 +22,7 @@ export default async function StatistichePage() {
   const now = Date.now();
 
   const [{ data: enr }, { data: pkgs }, { data: asg }, { data: people }, { data: leads }] = await Promise.all([
-    admin.from("enrollments").select("package_id, user_id, status, amount_cents, created_at, ends_at"),
+    admin.from("enrollments").select("package_id, user_id, status, amount_cents, created_at, ends_at, paid_at"),
     admin.from("packages").select("id, title, slug, seats"),
     admin.from("assignments").select("teacher_id, status, submitted_at, corrected_at"),
     admin.from("profiles").select("id, full_name, email, role").in("role", ["teacher", "admin"]),
@@ -30,7 +30,10 @@ export default async function StatistichePage() {
   ]);
 
   const enrollments = enr ?? [];
-  const paid = enrollments.filter((e) => e.status !== "refunded" && e.amount_cents > 0);
+  const paid = enrollments
+    .filter((e) => e.status !== "refunded" && e.status !== "pending" && e.amount_cents > 0)
+    .map((e) => ({ ...e, created_at: e.paid_at ?? e.created_at }));
+  const toCollect = enrollments.filter((e) => e.status === "pending");
   const revenue = paid.reduce((s, e) => s + e.amount_cents, 0);
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
   const revenueMonth = paid.filter((e) => new Date(e.created_at).getTime() >= monthStart).reduce((s, e) => s + e.amount_cents, 0);
@@ -96,7 +99,7 @@ export default async function StatistichePage() {
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Incassato in totale" value={euro(revenue)} note={`${paid.length} pagamenti`} />
-        <Kpi label="Questo mese" value={euro(revenueMonth)} />
+        <Kpi label="Questo mese" value={euro(revenueMonth)} note={toCollect.length ? `${euro(toCollect.reduce((a, e) => a + e.amount_cents, 0))} in attesa di bonifico` : undefined} />
         <Kpi label="Discenti con corso attivo" value={String(students)} />
         <Kpi label="Prova gratuita" value={`${trial.length}`} note={`${trialUsers.size} account, ${converted} hanno poi acquistato`} />
       </div>

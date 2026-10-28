@@ -5,6 +5,8 @@ import { emailLayout, escapeHtml, notify } from "@/lib/notify";
 import { googleCalendarUrl } from "@/lib/calendar";
 import { dateTime } from "@/lib/format";
 import { siteUrl } from "@/lib/stripe";
+import { courseCommitments, romeMonth, urgency } from "@/lib/commitments";
+import { euro } from "@/lib/format";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -107,5 +109,117 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, report, teachersReminded });
+  /* ---- impegni mensili: materiale promesso agli iscritti ---- */
+  const month = romeMonth();
+  const REMIND_ON = [10, 5, 3, 2, 1]; // giorni mancanti alla fine del mese
+  let commitmentEmails = 0;
+  const commitments = await courseCommitments(admin);
+  const firstOfMonth = month.day === 1;
+
+  if (commitments.length && (firstOfMonth || REMIND_ON.includes(month.daysLeft))) {
+    const { data: links } = await admin
+      .from("package_teachers")
+      .select("package_id, teacher:profiles(id, full_name, email)")
+      .in("package_id", commitments.map((c) => c.packageId));
+    const { data: admins } = await admin.from("profiles").select("id, full_name, email").or("role.eq.admin,is_super.eq.true");
+
+    type Person = { id: string; full_name: string | null; email: string };
+    const byTeacher = new Map<string, { t: Person; items: typeof commitments }>();
+    for (const c of commitments) {
+      if (!firstOfMonth && c.missing === 0) continue;
+      const team = (links ?? [])
+        .filter((l: { package_id: string }) => l.package_id === c.packageId)
+        .map((l: { teacher: Person | Person[] | null }) => (Array.isArray(l.teacher) ? l.teacher[0] : l.teacher))
+        .filter(Boolean) as Person[];
+      for (const t of team.length ? team : ((admins ?? []) as Person[])) {
+        const g = byTeacher.get(t.id) ?? { t, items: [] };
+        g.items.push(c);
+        byTeacher.set(t.id, g);
+      }
+    }
+
+    const block = (c: (typeof commitments)[number]) => {
+      const rows = c.items
+        .map((i) => {
+          const ok = i.done >= i.promised;
+          return `<tr><td style="padding:4px 12px 4px 0">${escapeHtml(i.label)}</td><td style="padding:4px 0;font-weight:600;color:${ok ? "#1d5747" : "#a3301d"}">${i.done} di ${i.promised}${ok ? " ✓" : ""}</td></tr>`;
+        })
+        .join("");
+      return `<div style="margin:0 0 18px;padding:14px 16px;border:1px solid #d9d6cf;border-radius:12px">
+        <p style="margin:0 0 6px;font-weight:600"><a href="${siteUrl()}/docente/corsi/${c.packageId}" style="color:#1d1d1f">${escapeHtml(c.title)}</a></p>
+        <table style="border-collapse:collapse;font-size:15px">${rows}</table></div>`;
+    };
+
+    await inBatches([...byTeacher.values()], 5, async ({ t, items }) => {
+      if (!t.email) return;
+      const missing = items.reduce((s, c) => s + c.missing, 0);
+      const subject = firstOfMonth
+        ? `Impegni di ${month.label}: il materiale da pubblicare`
+        : month.daysLeft === 1
+          ? `Ultimo giorno: ${missing} ${missing === 1 ? "contenuto" : "contenuti"} ancora da pubblicare`
+          : `Mancano ${month.daysLeft} giorni: ${missing} ${missing === 1 ? "contenuto" : "contenuti"} da pubblicare`;
+      const intro = firstOfMonth
+        ? `<p>Ecco il materiale che i corsi hanno promesso agli iscritti per <strong>${month.label}</strong>. Riceverai un promemoria se a fine mese mancherà qualcosa.</p>`
+        : `<p>${t.full_name ? `${escapeHtml(t.full_name.split(" ")[0])}, ` : ""}per rispettare quanto venduto agli iscritti, entro la fine di ${month.label} ${missing === 1 ? "manca ancora un contenuto" : `mancano ancora ${missing} contenuti`}. ${urgency(items[0]).tone === "late" ? "Il mese sta per chiudersi." : ""}</p>`;
+      await notify({
+        to: t.email,
+        subject,
+        html: emailLayout(firstOfMonth ? "Impegni del mese" : "Materiale da pubblicare", `${intro}${items.map(block).join("")}`, {
+          label: "Apri i tuoi corsi",
+          href: `${siteUrl()}/docente/corsi`,
+        }),
+      });
+      commitmentEmails++;
+    });
+
+    /* riepilogo per la direzione negli ultimi 3 giorni: chi è in ritardo */
+    const late = commitments.filter((c) => c.missing > 0);
+    if (!firstOfMonth && month.daysLeft <= 3 && late.length) {
+      await inBatches(((admins ?? []) as Person[]).filter((a) => a.email && !byTeacher.has(a.id)), 5, (a) =>
+        notify({
+          to: a.email,
+          subject: `${late.length} ${late.length === 1 ? "corso" : "corsi"} indietro con il materiale di ${month.label}`,
+          html: emailLayout("Impegni non ancora rispettati", `<p>Corsi con materiale promesso ancora da pubblicare a ${month.daysLeft} ${month.daysLeft === 1 ? "giorno" : "giorni"} dalla fine del mese.</p>${late.map(block).join("")}`, {
+            label: "Apri i corsi",
+            href: `${siteUrl()}/docente/corsi`,
+          }),
+        }),
+      );
+    }
+  }
+
+  /* ---- bonifici in attesa da oltre 7 giorni: riepilogo del lunedì alla direzione ---- */
+  let transfersReminded = 0;
+  const weekday = new Date().toLocaleDateString("en-GB", { weekday: "short", timeZone: "Europe/Rome" });
+  if (weekday === "Mon") {
+    const { data: waiting } = await admin
+      .from("enrollments")
+      .select("id, amount_cents, created_at, student:profiles!enrollments_user_id_fkey(full_name, email), package:packages(title)")
+      .eq("status", "pending")
+      .lte("created_at", new Date(now - 7 * 86400000).toISOString());
+    if (waiting?.length) {
+      const one = <T,>(x: T | T[] | null) => (Array.isArray(x) ? x[0] : x);
+      const rows = waiting
+        .map((w) => {
+          const st = one(w.student as { full_name: string | null; email: string } | null);
+          const pk = one(w.package as { title: string } | null);
+          return `<li style="margin-bottom:6px">${escapeHtml(st?.full_name || st?.email || "discente")} · ${escapeHtml(pk?.title ?? "")} · ${euro(w.amount_cents)} · dal ${new Date(w.created_at).toLocaleDateString("it-IT", { day: "numeric", month: "long" })}</li>`;
+        })
+        .join("");
+      const { data: heads } = await admin.from("profiles").select("email").or("role.eq.admin,is_super.eq.true");
+      await inBatches((heads ?? []).filter((h) => h.email), 5, (h) =>
+        notify({
+          to: h.email,
+          subject: `${waiting.length} ${waiting.length === 1 ? "bonifico" : "bonifici"} in attesa da più di una settimana`,
+          html: emailLayout("Bonifici da verificare", `<p>Queste iscrizioni sono registrate ma il pagamento non risulta ancora arrivato. Controlla l'estratto conto e segnale come pagate.</p><ul style="padding-left:18px">${rows}</ul>`, {
+            label: "Apri i pagamenti",
+            href: `${siteUrl()}/docente/pagamenti`,
+          }),
+        }),
+      );
+      transfersReminded = waiting.length;
+    }
+  }
+
+  return NextResponse.json({ ok: true, report, teachersReminded, commitmentEmails, transfersReminded });
 }

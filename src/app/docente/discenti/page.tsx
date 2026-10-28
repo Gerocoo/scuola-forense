@@ -15,7 +15,7 @@ export default async function DiscentiPage({ searchParams }: Props) {
 
   let query = supabase
     .from("profiles")
-    .select("id, full_name, email, avatar_url, created_at, exam_subject, enrollments(status, ends_at, package:packages(title)), assignments!assignments_student_id_fkey(status)")
+    .select("id, full_name, email, avatar_url, created_at, exam_subject, enrollments!enrollments_user_id_fkey(status, ends_at, package:packages(title)), assignments!assignments_student_id_fkey(status)")
     .eq("role", "student")
     .order("full_name");
   if (sp.q) {

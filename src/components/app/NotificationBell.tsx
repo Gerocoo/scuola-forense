@@ -57,6 +57,7 @@ const ICONS: Record<NoticeKind, { bg: string; path: string }> = {
   correzione: { bg: "bg-codice-soft text-codice", path: "M5 12.5l4.5 4.5L19 7.5" },
   traccia: { bg: "bg-paper text-ink", path: "M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h4" },
   incontro: { bg: "bg-paper text-ink", path: "M4 6h16v14H4z M4 10h16 M9 3v5 M15 3v5" },
+  impegno: { bg: "bg-ceralacca-soft text-ceralacca", path: "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M12 7v5l3 2" },
 };
 
 function when(iso: string) {

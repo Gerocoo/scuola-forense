@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/app/AppShell";
 import { Avatar } from "@/components/app/Avatar";
 import { requireStaff } from "@/lib/auth";
 import { activeByPackage, myCourseIds, type CourseSummary, type CourseTeacher } from "@/lib/courses";
+import { courseCommitments, urgency } from "@/lib/commitments";
 
 export const metadata = { title: "Corsi" };
 
@@ -35,7 +36,7 @@ export default async function CorsiDocente() {
     );
   }
 
-  const [{ data: courses }, { data: enr }, { data: exercises }, { data: toCorrect }, { data: lessons }, { data: teachers }] = await Promise.all([
+  const [{ data: courses }, { data: enr }, { data: exercises }, { data: toCorrect }, { data: lessons }, { data: teachers }, commitments] = await Promise.all([
     supabase
       .from("packages")
       .select("id, title, period_label, active, starts_on, ends_on")
@@ -51,6 +52,7 @@ export default async function CorsiDocente() {
       .select("package_id, teacher:profiles(id, full_name, email, avatar_url)")
       .in("package_id", ids)
       .returns<{ package_id: string; teacher: CourseTeacher | null }[]>(),
+    courseCommitments(supabase, ids),
   ]);
 
   const active = activeByPackage(enr ?? []);
@@ -64,6 +66,8 @@ export default async function CorsiDocente() {
           const pending = count(toCorrect, c.id);
           const team = (teachers ?? []).filter((t) => t.package_id === c.id && t.teacher).map((t) => t.teacher!);
           const nLessons = (lessons ?? []).filter((l: { package_ids: string[] }) => l.package_ids.includes(c.id)).length;
+          const cm = commitments.find((x) => x.packageId === c.id);
+          const u = cm ? urgency(cm) : null;
           return (
             <Link key={c.id} href={`/docente/corsi/${c.id}`} className="panel lift group flex flex-col p-6">
               <div className="flex items-start justify-between gap-3">
@@ -90,6 +94,17 @@ export default async function CorsiDocente() {
                   </div>
                 ))}
               </dl>
+
+              {cm && u && (
+                <div className={`mt-4 rounded-[14px] px-3.5 py-2.5 ${u.tone === "ok" ? "bg-codice-soft" : u.tone === "late" ? "bg-ceralacca-soft" : "bg-ambra-soft"}`}>
+                  <p className={`text-[14px] font-medium ${u.tone === "ok" ? "text-codice" : u.tone === "late" ? "text-ceralacca" : "text-ambra"}`}>
+                    {u.tone === "ok" ? `Impegni di ${cm.monthLabel.split(" ")[0]} rispettati` : u.text}
+                  </p>
+                  <p className="mt-0.5 text-[13px] text-slate">
+                    {cm.items.map((i) => `${i.label} ${i.done}/${i.promised}`).join(" · ")}
+                  </p>
+                </div>
+              )}
 
               <div className="mt-5 flex items-center justify-between gap-3">
                 <div className="flex -space-x-2">

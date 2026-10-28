@@ -13,7 +13,7 @@ export default async function NuovaEsercitazione({ searchParams }: Props) {
 
   const { data: students } = await supabase
     .from("profiles")
-    .select("id, full_name, email, enrollments(status, ends_at, package:packages(title))")
+    .select("id, full_name, email, enrollments!enrollments_user_id_fkey(status, ends_at, package:packages(title))")
     .eq("role", "student")
     .order("full_name");
 

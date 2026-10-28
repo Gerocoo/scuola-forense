@@ -5,6 +5,8 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { AddTeacher, InviteToCourse, RemoveTeacher, RetireExercise } from "./CourseControls";
 import { CollectiveReview } from "./CollectiveReview";
 import { requireStaff } from "@/lib/auth";
+import { courseCommitments } from "@/lib/commitments";
+import { CommitmentPanel } from "@/components/app/CommitmentPanel";
 import { activeByPackage, canTeach, type CourseTeacher } from "@/lib/courses";
 import { dateLong, dateShort, dateTime, KIND_LABEL } from "@/lib/format";
 import type { Assignment, CourseExercise, Lesson, Package, Profile } from "@/lib/types";
@@ -23,7 +25,7 @@ export default async function CorsoPage({ params }: Props) {
   const [{ data: enr }, { data: exercises }, { data: assignments }, { data: lessons }, { data: team }, { data: staff }] = await Promise.all([
     supabase
       .from("enrollments")
-      .select("package_id, user_id, status, ends_at, student:profiles(id, full_name, email, avatar_url)")
+      .select("package_id, user_id, status, ends_at, student:profiles!enrollments_user_id_fkey(id, full_name, email, avatar_url)")
       .eq("package_id", id)
       .returns<{ package_id: string; user_id: string; status: string; ends_at: string | null; student: CourseTeacher | null }[]>(),
     supabase.from("course_exercises").select("*").eq("package_id", id).order("created_at", { ascending: false }).returns<CourseExercise[]>(),
@@ -48,6 +50,8 @@ export default async function CorsoPage({ params }: Props) {
       ? supabase.from("profiles").select("id, full_name, email").in("role", ["teacher", "admin"]).order("full_name").returns<Pick<Profile, "id" | "full_name" | "email">[]>()
       : Promise.resolve({ data: [] as Pick<Profile, "id" | "full_name" | "email">[] }),
   ]);
+
+  const [commitment] = await courseCommitments(supabase, [id]);
 
   const { data: invites } = isAdmin
     ? await supabase.from("teacher_invites").select("email").contains("package_ids", [id])
@@ -108,6 +112,12 @@ export default async function CorsoPage({ params }: Props) {
           ))}
         </dl>
       </section>
+
+      {commitment && (
+        <div className="mt-6">
+          <CommitmentPanel c={commitment} />
+        </div>
+      )}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
         {/* esercizi */}

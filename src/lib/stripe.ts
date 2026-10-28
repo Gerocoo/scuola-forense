@@ -63,6 +63,8 @@ export async function fulfillCheckout(sessionId: string) {
     stripe_payment_intent:
       typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null,
     ends_at: endsAt,
+    payment_method: "stripe",
+    paid_at: new Date().toISOString(),
   });
 
   // 23505 = violazione di unicità: un'altra chiamata ha già creato l'iscrizione.

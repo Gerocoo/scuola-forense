@@ -1,7 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Profile } from "@/lib/types";
+import { courseCommitments, urgency } from "@/lib/commitments";
+import { myCourseIds } from "@/lib/courses";
 
-export type NoticeKind = "messaggio" | "consegna" | "correzione" | "traccia" | "incontro";
+export type NoticeKind = "messaggio" | "consegna" | "correzione" | "traccia" | "incontro" | "impegno";
 
 export type Notice = {
   id: string;
@@ -33,7 +35,7 @@ function groupMessages(rows: { counterpart: string; body: string; created_at: st
 const excerpt = (s: string) => (s.length > 90 ? `${s.slice(0, 90).trim()}…` : s);
 
 /** Novità per docenti e amministratori: messaggi non letti, consegne da correggere, incontri dei prossimi giorni. */
-export async function staffNotices(supabase: SupabaseClient, me: Pick<Profile, "id" | "role">): Promise<Notice[]> {
+export async function staffNotices(supabase: SupabaseClient, me: Pick<Profile, "id" | "role"> & { is_super?: boolean | null }): Promise<Notice[]> {
   const now = Date.now();
   const soon = new Date(now + 7 * DAY).toISOString();
 
@@ -104,7 +106,28 @@ export async function staffNotices(supabase: SupabaseClient, me: Pick<Profile, "
       at: l.scheduled_at,
     });
   }
-  return out.sort((a, b) => (a.kind === "incontro" ? 1 : 0) - (b.kind === "incontro" ? 1 : 0) || b.at.localeCompare(a.at));
+  // impegni mensili: negli ultimi 10 giorni del mese il promemoria torna "nuovo" ogni giorno finché il materiale manca
+  try {
+    const commitments = await courseCommitments(supabase, await myCourseIds(supabase, me));
+    const today = new Date();
+    today.setUTCHours(6, 0, 0, 0);
+    for (const c of commitments) {
+      if (c.missing === 0 || c.daysLeft > 10) continue;
+      const missing = c.items.filter((i) => i.done < i.promised).map((i) => `${i.label.toLowerCase()} ${i.done}/${i.promised}`);
+      out.push({
+        id: `c-${c.packageId}-${today.toISOString().slice(0, 10)}`,
+        kind: "impegno",
+        title: `${c.title}: materiale da pubblicare`,
+        body: `${urgency(c).text}. Mancano: ${missing.join(", ")}.`,
+        href: `/docente/corsi/${c.packageId}`,
+        at: today.toISOString(),
+      });
+    }
+  } catch {
+    /* gli impegni non devono mai bloccare la campanella */
+  }
+
+  return out.sort((a, b) => (a.kind === "impegno" ? 0 : 1) - (b.kind === "impegno" ? 0 : 1) || (a.kind === "incontro" ? 1 : 0) - (b.kind === "incontro" ? 1 : 0) || b.at.localeCompare(a.at));
 }
 
 /** Novità per il discente: messaggi, correzioni, nuove tracce, incontri dei prossimi giorni. */

@@ -9,7 +9,7 @@ export async function enrolledCounts(packageIds: string[]) {
     .from("enrollments")
     .select("package_id")
     .in("package_id", packageIds)
-    .eq("status", "active");
+    .in("status", ["active", "pending"]);
   for (const r of data ?? []) map.set(r.package_id, (map.get(r.package_id) ?? 0) + 1);
   return map;
 }

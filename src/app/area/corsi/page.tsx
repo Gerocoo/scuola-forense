@@ -7,7 +7,7 @@ import type { Enrollment } from "@/lib/types";
 
 export const metadata = { title: "I miei corsi" };
 
-const STATUS = { active: "Attivo", expired: "Scaduto", refunded: "Rimborsato" } as const;
+const STATUS = { active: "Attivo", expired: "Scaduto", refunded: "Rimborsato", pending: "In attesa di pagamento" } as const;
 
 export default async function CorsiPage() {
   const { supabase, user } = await requireUser();
@@ -40,6 +40,11 @@ export default async function CorsiPage() {
             const label = expired ? "Scaduto" : STATUS[e.status];
             return (
               <li key={e.id} className="panel p-5">
+                {e.status === "pending" && (
+                  <p className="mb-3 rounded-[12px] bg-ambra-soft px-3 py-2 text-[14px] text-ink">
+                    Iscrizione registrata dalla segreteria. Il corso si attiva appena riceviamo il bonifico: ti avviseremo via email.
+                  </p>
+                )}
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm text-codice">{e.package?.period_label}</p>
@@ -47,7 +52,7 @@ export default async function CorsiPage() {
                   </div>
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-sm font-medium ${
-                      label === "Attivo" ? "bg-codice-soft text-codice" : "bg-line-soft text-slate"
+                      label === "Attivo" ? "bg-codice-soft text-codice" : e.status === "pending" ? "bg-ambra-soft text-ambra" : "bg-line-soft text-slate"
                     }`}
                   >
                     {label}
