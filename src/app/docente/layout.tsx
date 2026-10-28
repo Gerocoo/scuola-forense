@@ -27,6 +27,7 @@ export default async function DocenteLayout({ children }: { children: React.Reac
     { href: "/docente/lezioni", label: "Lezioni" },
     { href: "/docente/calendario", label: "Calendario" },
     { href: "/docente/orale", label: "Orale" },
+    { href: "/docente/archivio", label: "Archivio tracce" },
     { href: "/docente/messaggi", label: "Messaggi", badge: unread ?? 0 },
   ];
   if (profile.role === "admin" || profile.is_super) {

@@ -951,3 +951,48 @@ export async function deleteOralSlot(id: string): Promise<ActionResult> {
   revalidatePath("/docente/orale");
   return { ok: true };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Archivio tracce                                                    */
+/* ------------------------------------------------------------------ */
+
+export async function savePastTrack(input: {
+  year: number;
+  session: string;
+  subject: string;
+  kind: string;
+  title: string;
+  body: string;
+  file: UploadedMeta | null;
+}): Promise<ActionResult> {
+  const { supabase, user } = await requireStaff();
+  const title = input.title.trim().slice(0, 300);
+  if (!title) return { ok: false, error: "Inserisci un titolo." };
+  if (!(input.year >= 1990 && input.year <= 2100)) return { ok: false, error: "Anno non valido." };
+  if (!["civile", "penale", "amministrativo"].includes(input.subject)) return { ok: false, error: "Scegli la materia." };
+  if (!["parere", "atto"].includes(input.kind)) return { ok: false, error: "Scegli il tipo di prova." };
+  if (input.file && !input.file.path.startsWith("archivio/")) return { ok: false, error: "Percorso del file non valido." };
+  if (!input.body.trim() && !input.file) return { ok: false, error: "Incolla il testo della traccia o allega il file." };
+  const { error } = await supabase.from("past_tracks").insert({
+    year: input.year,
+    session: input.session.trim().slice(0, 80),
+    subject: input.subject,
+    kind: input.kind,
+    title,
+    body: input.body.slice(0, 40000),
+    file: input.file,
+    created_by: user.id,
+  });
+  if (error) return { ok: false, error: "Salvataggio non riuscito." };
+  revalidatePath("/docente/archivio");
+  revalidatePath("/area/archivio");
+  return { ok: true, message: "Traccia aggiunta all'archivio." };
+}
+
+export async function deletePastTrack(id: string): Promise<ActionResult> {
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.from("past_tracks").delete().eq("id", id);
+  if (error) return { ok: false, error: "Non riuscito." };
+  revalidatePath("/docente/archivio");
+  return { ok: true };
+}

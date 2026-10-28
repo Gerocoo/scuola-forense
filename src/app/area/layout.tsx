@@ -36,6 +36,7 @@ export default async function AreaLayout({ children }: { children: React.ReactNo
         { href: "/area/calendario", label: "Calendario" },
         { href: "/area/esercitazioni", label: "Esercitazioni", badge: todo ?? 0 },
         { href: "/area/orale", label: "Orale" },
+        { href: "/area/archivio", label: "Archivio tracce" },
         { href: "/area/messaggi", label: "Messaggi", badge: unread ?? 0 },
         { href: "/area/corsi", label: "I miei corsi" },
         { href: "/area/profilo", label: "Profilo" },
