@@ -21,7 +21,10 @@ type MeetingRow = {
   mode: string;
   place: string;
   proposed_by: string | null;
+  kind?: "colloquio" | "lezione" | "revisione";
 };
+
+const KIND_LABEL = { colloquio: "colloquio", lezione: "lezione privata", revisione: "revisione dell'elaborato" } as const;
 
 const when = (iso: string) =>
   new Date(iso).toLocaleString("it-IT", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Rome" });
@@ -71,25 +74,47 @@ export async function requestMeeting(formData: FormData): Promise<ActionResult> 
   const start = parseStart(formData.get("starts_at"));
   if (start.error) return { ok: false, error: start.error };
 
+  // lezioni private e revisioni si pagano con i minuti acquistati
+  const kindRaw = String(formData.get("kind") ?? "colloquio");
+  const kind = (["colloquio", "lezione", "revisione"].includes(kindRaw) ? kindRaw : "colloquio") as "colloquio" | "lezione" | "revisione";
+  const duration = kind === "revisione" ? 30 : kind === "lezione" ? Math.min(180, Math.max(30, Number(formData.get("duration_min")) || 60)) : 30;
+  if (kind !== "colloquio") {
+    const { creditBalance } = await import("@/lib/credits");
+    const bal = await creditBalance(user.id);
+    if (bal.minutes < duration) return { ok: false, error: "Minuti insufficienti: acquista un pacchetto di lezioni private." };
+  }
+
   const row = {
     student_id: user.id,
     teacher_id: teacherId,
     topic,
     note,
     mode,
+    kind,
+    duration_min: duration,
     status: start.iso ? "proposed" : "requested",
     starts_at: start.iso,
     proposed_by: start.iso ? user.id : null,
     created_by: user.id,
   };
-  const { error } = await admin.from("meetings").insert(row);
-  if (error) return { ok: false, error: "Richiesta non inviata. Riprova." };
+  const { data: created, error } = await admin.from("meetings").insert(row).select("id").single();
+  if (error || !created) return { ok: false, error: "Richiesta non inviata. Riprova." };
+  if (kind !== "colloquio") {
+    const { spendCredits } = await import("@/lib/credits");
+    const ok = await spendCredits(user.id, "minutes", duration, { meeting_id: created.id, note: KIND_LABEL[kind] });
+    if (!ok) {
+      await admin.from("meetings").delete().eq("id", created.id);
+      return { ok: false, error: "Minuti insufficienti: acquista un pacchetto di lezioni private." };
+    }
+  }
+  const label = kind === "colloquio" ? "colloquio" : KIND_LABEL[kind];
   await announce(
     row,
     user.id,
-    `📅 Richiesta di colloquio: ${topic}\n${start.iso ? `Orario proposto: ${describe({ ...row, duration_min: 30, place: "" })}` : "Nessun orario indicato: proponine uno tu."}${note ? `\n${note}` : ""}\nRispondi da Colloqui.`,
+    `📅 Richiesta di ${label}: ${topic}${kind !== "colloquio" ? ` (${duration} min, già pagata)` : ""}\n${start.iso ? `Orario proposto: ${describe({ ...row, place: "" })}` : "Nessun orario indicato: proponine uno tu."}${note ? `\n${note}` : ""}\nRispondi da Colloqui.`,
   );
   refresh();
+  revalidatePath("/area/lezioni-private");
   return { ok: true, message: "Richiesta inviata. Il docente ti proporrà o confermerà l'orario." };
 }
 
@@ -176,7 +201,8 @@ export async function proposeMeeting(id: string, formData: FormData): Promise<Ac
     if (MODES.includes(mode as (typeof MODES)[number])) patch.mode = mode;
     if (formData.has("place")) patch.place = String(formData.get("place") ?? "").trim().slice(0, 300);
     const d = Number(formData.get("duration_min"));
-    if (d) patch.duration_min = Math.min(180, Math.max(10, d));
+    // la durata delle lezioni pagate resta quella acquistata
+    if (d && (m.kind ?? "colloquio") === "colloquio") patch.duration_min = Math.min(180, Math.max(10, d));
   }
   const { error } = await admin.from("meetings").update(patch).eq("id", id);
   if (error) return { ok: false, error: "Non riuscito." };
@@ -199,9 +225,25 @@ export async function cancelMeeting(id: string, reason: string): Promise<ActionR
   const { error } = await admin.from("meetings").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", id);
   if (error) return { ok: false, error: "Non riuscito." };
   const why = reason.trim().slice(0, 500);
-  await announce(m, me, `✖ Colloquio annullato: ${m.topic}${m.starts_at ? `\n(era previsto ${when(m.starts_at)})` : ""}${why ? `\nMotivo: ${why}` : ""}`);
+  // minuti restituiti se annulla il docente, se l'orario non era ancora confermato o con almeno 24 ore di preavviso
+  let refunded = false;
+  if ((m.kind ?? "colloquio") !== "colloquio") {
+    const early = !m.starts_at || m.status !== "confirmed" || new Date(m.starts_at).getTime() - Date.now() > 24 * 3600000;
+    if (me !== m.student_id || early) {
+      const { refundCredits } = await import("@/lib/credits");
+      await refundCredits({ meeting_id: m.id });
+      refunded = true;
+    }
+  }
+  const label = KIND_LABEL[m.kind ?? "colloquio"];
+  await announce(
+    m,
+    me,
+    `✖ ${label.charAt(0).toUpperCase() + label.slice(1)} ${(m.kind ?? "colloquio") === "colloquio" ? "annullato" : "annullata"}: ${m.topic}${m.starts_at ? `\n(era previsto ${when(m.starts_at)})` : ""}${why ? `\nMotivo: ${why}` : ""}${(m.kind ?? "colloquio") !== "colloquio" ? (refunded ? "\nI minuti sono stati restituiti." : "\nAnnullata con meno di 24 ore di preavviso: i minuti non vengono restituiti.") : ""}`,
+  );
   refresh();
-  return { ok: true, message: "Colloquio annullato." };
+  revalidatePath("/area/lezioni-private");
+  return { ok: true, message: refunded ? "Annullato: minuti restituiti." : "Annullato." };
 }
 
 /** Messaggio a tutti i partecipanti di un incontro, nei Messaggi della piattaforma. */

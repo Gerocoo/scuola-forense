@@ -17,7 +17,7 @@ export async function loadMeetings(supabase: SupabaseClient, meId: string, side:
   let q = supabase
     .from("meetings")
     .select(
-      "id, topic, note, status, starts_at, duration_min, mode, place, proposed_by, student_id, teacher_id, student:profiles!meetings_student_id_fkey(full_name, email), teacher:profiles!meetings_teacher_id_fkey(full_name, email)",
+      "id, topic, note, status, starts_at, duration_min, mode, place, proposed_by, kind, student_id, teacher_id, student:profiles!meetings_student_id_fkey(full_name, email), teacher:profiles!meetings_teacher_id_fkey(full_name, email)",
     )
     .order("starts_at", { ascending: true, nullsFirst: true })
     .limit(300);
@@ -37,11 +37,12 @@ export async function loadMeetings(supabase: SupabaseClient, meId: string, side:
       mode: r.mode,
       place: r.place,
       proposed_by: r.proposed_by,
+      kind: r.kind ?? "colloquio",
       otherName: all && side === "teacher" && r.teacher_id !== meId ? `${otherName} (docente: ${r.teacher?.full_name || r.teacher?.email})` : otherName,
       otherId: side === "student" ? r.teacher_id : r.student_id,
       calendarUrl: googleCalendarUrl(
         {
-          title: `Colloquio: ${r.topic}`,
+          title: `${r.kind === "lezione" ? "Lezione privata" : r.kind === "revisione" ? "Revisione elaborato" : "Colloquio"}: ${r.topic}`,
           summary: `Colloquio con ${otherName}`,
           scheduled_at: r.starts_at,
           duration_min: r.duration_min,

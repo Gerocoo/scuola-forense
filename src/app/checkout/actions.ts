@@ -7,18 +7,20 @@ import { currentPrice } from "@/lib/format";
 import type { Package } from "@/lib/types";
 import { enrolledCounts } from "@/lib/seats";
 import { invoicingConfigured } from "@/lib/invoices";
+import { backFor } from "@/lib/services";
 
 export async function startCheckout(formData: FormData) {
   const slug = String(formData.get("slug") ?? "");
   // Codice del consumo, art. 59 lett. o): richiesta di accesso immediato e rinuncia al recesso
   const waiver = formData.get("rinuncia_recesso") === "on";
   const { supabase, user, profile } = await getSession();
+  const { data: kindRow } = await supabase.from("packages").select("product").eq("slug", slug).maybeSingle<{ product: string }>();
+  const back = backFor(slug, kindRow?.product);
 
   if (!user || !profile) {
-    redirect(`/accedi?next=${encodeURIComponent(slug === "archivio-tracce" ? "/area/archivio" : slug === "modulo-orale" ? "/area/orale" : `/corsi/${slug}`)}`);
+    redirect(`/accedi?next=${encodeURIComponent(back)}`);
   }
 
-  const back = slug === "archivio-tracce" ? "/area/archivio" : slug === "modulo-orale" ? "/area/orale" : `/corsi/${slug}`;
   const { data: pkg } = await supabase
     .from("packages")
     .select("*")
@@ -33,16 +35,21 @@ export async function startCheckout(formData: FormData) {
     if (!(await hasTakenCourse(user.id))) redirect("/area/orale?requisito=1");
   }
 
-  // Già iscritto e attivo: niente doppio pagamento.
-  const { data: already } = await supabase
-    .from("enrollments")
-    .select("id, ends_at")
-    .eq("user_id", user.id)
-    .eq("package_id", pkg.id)
-    .eq("status", "active")
-    .maybeSingle();
+  // Già iscritto e attivo: niente doppio pagamento (i pacchetti di crediti invece si ricomprano).
+  const repeatable = pkg.product === "lezioni" || pkg.product === "correzioni";
+  const { data: already } = repeatable
+    ? { data: null }
+    : await supabase
+        .from("enrollments")
+        .select("id, ends_at")
+        .eq("user_id", user.id)
+        .eq("package_id", pkg.id)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
   if (already && (!already.ends_at || new Date(already.ends_at) > new Date())) {
-    redirect(slug === "archivio-tracce" ? "/area/archivio" : slug === "modulo-orale" ? "/area/orale" : "/area?gia_iscritto=1");
+    redirect(slug === "archivio-tracce" || slug === "modulo-orale" ? back : "/area?gia_iscritto=1");
   }
 
   // posti limitati: niente vendita a corso pieno
@@ -61,6 +68,20 @@ export async function startCheckout(formData: FormData) {
     .split(",")
     .map((x) => x.trim())
     .filter(Boolean);
+
+  // codice amico arrivato con il link: si applica da solo (altrimenti si può inserire a mano)
+  let referralPromo: string | null = null;
+  try {
+    const { cookies } = await import("next/headers");
+    const code = (await cookies()).get("amico")?.value;
+    if (code && /^[A-Z0-9]{4,20}$/.test(code)) {
+      const found = await getStripe().promotionCodes.list({ code, active: true, limit: 1 });
+      const pc = found.data[0];
+      if (pc && pc.metadata?.referrer_id && pc.metadata.referrer_id !== user.id) referralPromo = pc.id;
+    }
+  } catch (e) {
+    console.error("[checkout amico]", e);
+  }
 
   const create = (methods: string[] | null) =>
     getStripe().checkout.sessions.create({
@@ -88,7 +109,7 @@ export async function startCheckout(formData: FormData) {
       ...(!methods?.length && process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION
         ? { payment_method_configuration: process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION }
         : {}),
-      allow_promotion_codes: true,
+      ...(referralPromo ? { discounts: [{ promotion_code: referralPromo }] } : { allow_promotion_codes: true }),
       billing_address_collection: "required",
       tax_id_collection: { enabled: true },
       // con Fatture in Cloud la fattura elettronica parte da lì; altrimenti Stripe invia la sua ricevuta-fattura

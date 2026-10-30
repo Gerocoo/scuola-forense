@@ -47,7 +47,7 @@ export async function fulfillCheckout(sessionId: string) {
 
   const { data: pkg } = await admin
     .from("packages")
-    .select("title, period_label, access_until")
+    .select("title, period_label, access_until, duration_days")
     .eq("id", packageId)
     .single();
 
@@ -70,7 +70,11 @@ export async function fulfillCheckout(sessionId: string) {
     pec: sdiPec.includes("@") ? sdiPec : "",
   };
 
-  const endsAt = pkg?.access_until ? new Date(`${pkg.access_until}T23:59:59+01:00`).toISOString() : null;
+  const endsAt = pkg?.duration_days
+    ? new Date(Date.now() + pkg.duration_days * 86400000).toISOString()
+    : pkg?.access_until
+      ? new Date(`${pkg.access_until}T23:59:59+01:00`).toISOString()
+      : null;
 
   const { error } = await admin.from("enrollments").insert({
     user_id: userId,
@@ -94,6 +98,10 @@ export async function fulfillCheckout(sessionId: string) {
   if (!error) {
     const { data: created } = await admin.from("enrollments").select("id").eq("stripe_session_id", session.id).maybeSingle();
     if (created) {
+      const { grantPurchaseCredits } = await import("@/lib/credits");
+      await grantPurchaseCredits(created.id);
+      const { rewardReferral } = await import("@/lib/referrals");
+      await rewardReferral(session.id, userId, created.id).catch((e) => console.error("[amici]", e));
       const { issueInvoice } = await import("@/lib/invoices");
       await issueInvoice(created.id);
     }

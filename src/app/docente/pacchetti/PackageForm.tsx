@@ -21,6 +21,7 @@ export function PackageForm({
   const router = useRouter();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
+  const [product, setProduct] = useState(pkg?.product ?? "corso");
 
   return (
     <form
@@ -112,6 +113,45 @@ export function PackageForm({
           <label className="label" htmlFor="access_until">Accesso all&apos;area fino al</label>
           <input id="access_until" name="access_until" type="date" defaultValue={pkg?.access_until ?? ""} className="field" />
         </div>
+      </div>
+
+      <div className="panel grid gap-5 p-6 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label className="label" htmlFor="product">Tipo di prodotto</label>
+          <select id="product" name="product" value={product} onChange={(e) => setProduct(e.target.value as typeof product)} className="field">
+            <option value="corso">Corso (in vetrina tra i corsi)</option>
+            <option value="simulazione">Simulazione d&apos;esame (in Servizi)</option>
+            <option value="lezioni">Lezioni private (in Servizi)</option>
+            <option value="correzioni">Correzioni (in Servizi)</option>
+            <option value="abbonamento">Abbonamento (in Servizi)</option>
+            <option value="accessorio">Accessorio (archivio, orale: venduto dall&apos;area riservata)</option>
+          </select>
+        </div>
+        <div>
+          <label className="label" htmlFor="credit_minutes">Minuti di lezione privata inclusi</label>
+          <input id="credit_minutes" name="credit_minutes" type="number" min={0} max={6000} step={30} defaultValue={pkg?.credit_minutes ?? 0} className="field" />
+        </div>
+        <div>
+          <label className="label" htmlFor="credit_corrections">Correzioni incluse</label>
+          <input id="credit_corrections" name="credit_corrections" type="number" min={0} max={100} defaultValue={pkg?.credit_corrections ?? 0} className="field" />
+        </div>
+        <div>
+          <label className="label" htmlFor="duration_days">Durata dall&apos;acquisto (giorni)</label>
+          <input id="duration_days" name="duration_days" type="number" min={1} max={1100} defaultValue={pkg?.duration_days ?? ""} className="field" placeholder="vuoto = vale «accesso fino al»" />
+        </div>
+        <div className="flex flex-col justify-end gap-2">
+          <label className="flex items-center gap-2 text-[15px]">
+            <input type="checkbox" name="includes_archive" defaultChecked={pkg?.includes_archive ?? false} className="size-4 accent-codice" />
+            Include l&apos;archivio tracce completo
+          </label>
+          <label className="flex items-center gap-2 text-[15px]">
+            <input type="checkbox" name="includes_oral" defaultChecked={pkg?.includes_oral ?? false} className="size-4 accent-codice" />
+            Include il modulo Orale
+          </label>
+        </div>
+        <p className="hint sm:col-span-2">
+          I corsi includono già l&apos;archivio. Minuti e correzioni si aggiungono al saldo del discente a ogni acquisto e si usano dalla sua area.
+        </p>
       </div>
 
       <div className="panel p-6">

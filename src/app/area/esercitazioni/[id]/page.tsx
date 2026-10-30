@@ -10,6 +10,7 @@ import { requireUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ExamTimer } from "@/components/app/ExamTimer";
 import { ScoreCard } from "@/components/app/ScoreCard";
+import { simulationRank } from "@/lib/ranking";
 import { dateTime, KIND_LABEL } from "@/lib/format";
 import type { Assignment, AssignmentFile, Profile, Review } from "@/lib/types";
 
@@ -64,6 +65,9 @@ export default async function EsercitazionePage({ params }: Props) {
     !!collective?.collective_published &&
     (!collective.due_at || new Date(collective.due_at) < new Date()) &&
     !!(collective.solution || collective.common_errors || collective.review_url || collective.solution_files?.length);
+
+  // classifica anonima tra chi ha svolto la stessa traccia (simulazioni e tracce di corso)
+  const rank = a.status === "corretto" && (a.timed || a.package_id) ? await simulationRank(a.batch_id, user.id) : null;
 
   const annotated = (annotations ?? []).filter((x) =>
     Object.values(x.data?.pages ?? {}).some((p) => (p.strokes?.length ?? 0) + (p.notes?.length ?? 0) > 0),
@@ -120,6 +124,22 @@ export default async function EsercitazionePage({ params }: Props) {
                 </div>
               )}
               <ScoreCard scores={review?.scores} total={review?.total} />
+              {rank && (
+                <div className="mt-4 grid grid-cols-3 gap-2 rounded-[14px] bg-paper p-3 text-center">
+                  <div>
+                    <p className="text-[22px] font-semibold tabular-nums">{rank.position}°</p>
+                    <p className="text-[12px] text-mute">su {rank.total} partecipanti</p>
+                  </div>
+                  <div>
+                    <p className="text-[22px] font-semibold tabular-nums">top {rank.top}%</p>
+                    <p className="text-[12px] text-mute">classifica anonima</p>
+                  </div>
+                  <div>
+                    <p className="text-[22px] font-semibold tabular-nums">{rank.avg}</p>
+                    <p className="text-[12px] text-mute">media · {rank.passRate}% sopra 18</p>
+                  </div>
+                </div>
+              )}
               {annotated.length > 0 && (
                 <ul className="mt-6 space-y-2">
                   {annotated.map((x) => {

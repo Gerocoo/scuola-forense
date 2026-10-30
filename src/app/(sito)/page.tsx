@@ -7,6 +7,7 @@ import { Marquee, ScrollWords, WordsIn } from "@/components/site/Motion";
 import { Spotlight } from "@/components/site/Spotlight";
 import { LogoMark } from "@/components/Logo";
 import { ABOUT, FAQ, HERO, METHOD, SITE, STATS, TEAM, TESTIMONIALS } from "@/content/site";
+import { getSetting, publicReviews } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
 import { initials, SUBJECTS } from "@/lib/format";
 import type { Package } from "@/lib/types";
@@ -21,9 +22,15 @@ export default async function HomePage({ searchParams }: Props) {
     .from("packages")
     .select("*")
     .eq("active", true)
-    .not("slug", "in", "(archivio-tracce,modulo-orale)")
+    .eq("product", "corso")
     .order("sort")
     .returns<Package[]>();
+  const [passRate, reviews] = await Promise.all([getSetting<{ percent: number; label: string }>("esito"), publicReviews()]);
+  const stats = passRate?.percent ? [{ value: `${passRate.percent}%`, label: passRate.label }, ...STATS] : STATS;
+  const testimonials = [
+    ...reviews.map((r) => ({ quote: r.quote, name: r.name, detail: "★".repeat(r.rating) + "☆".repeat(5 - r.rating) })),
+    ...TESTIMONIALS,
+  ].slice(0, 6);
   const taken = await enrolledCounts((packages ?? []).filter((p) => p.seats).map((p) => p.id));
 
   return (
@@ -85,10 +92,10 @@ export default async function HomePage({ searchParams }: Props) {
         </Reveal>
       </section>
 
-      {STATS.length > 0 && (
+      {stats.length > 0 && (
         <section aria-label="Risultati" className="border-y border-black/[0.06] bg-surface">
           <dl className="mx-auto grid max-w-[1080px] gap-8 px-4 py-14 text-center sm:grid-cols-3 sm:px-6">
-            {STATS.map((st) => (
+            {stats.map((st) => (
               <Reveal key={st.label}>
                 <dt className="sr-only">{st.label}</dt>
                 <dd className="text-[44px] font-semibold tracking-[-0.03em] text-codice tabular-nums">{st.value}</dd>
@@ -185,15 +192,15 @@ export default async function HomePage({ searchParams }: Props) {
         </div>
       </section>
 
-      {TESTIMONIALS.length > 0 && (
+      {testimonials.length > 0 && (
         <section className="py-20 sm:py-28">
           <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
             <Reveal className="max-w-3xl">
               <h2 className="text-[32px] font-semibold leading-tight sm:text-[48px]">Chi ha studiato con noi.</h2>
             </Reveal>
             <div className="mt-12 grid gap-4 md:grid-cols-3">
-              {TESTIMONIALS.map((t, i) => (
-                <Reveal key={t.name} delay={i * 90} className="h-full">
+              {testimonials.map((t, i) => (
+                <Reveal key={`${t.name}-${i}`} delay={i * 90} className="h-full">
                   <figure className="panel flex h-full flex-col p-6">
                     <blockquote className="flex-1 font-serif text-[18px] italic leading-relaxed text-ink">&ldquo;{t.quote}&rdquo;</blockquote>
                     <figcaption className="mt-5 text-[15px]">

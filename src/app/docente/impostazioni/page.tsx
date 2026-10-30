@@ -4,6 +4,8 @@ import { requireStaff } from "@/lib/auth";
 import { launchChecks } from "@/lib/launch";
 import { getLink, youtubeConfigured } from "@/lib/youtube";
 import { dateLong } from "@/lib/format";
+import { PassRateForm } from "./PassRateForm";
+import { getSetting } from "@/lib/settings";
 
 export const metadata = { title: "Impostazioni" };
 
@@ -26,6 +28,7 @@ export default async function ImpostazioniPage({ searchParams }: Props) {
   const esito = youtube ? ESITI[youtube] : null;
   const configured = youtubeConfigured();
   const link = configured ? await getLink() : null;
+  const passRate = isAdmin ? await getSetting<{ percent: number; label: string }>("esito") : null;
 
   return (
     <>
@@ -35,6 +38,16 @@ export default async function ImpostazioniPage({ searchParams }: Props) {
         <p role="status" className={`mb-6 rounded-[14px] px-4 py-3 text-[15px] ${esito.ok ? "bg-codice-soft text-codice" : "bg-ceralacca-soft text-ceralacca"}`}>
           {esito.text}
         </p>
+      )}
+
+      {isAdmin && (
+        <section className="panel mb-6 max-w-2xl p-6 sm:p-8">
+          <h2 className="text-[19px] font-semibold">Risultati in vetrina</h2>
+          <p className="mt-1 text-[15px] text-slate">La percentuale di promossi compare in evidenza nella pagina principale.</p>
+          <div className="mt-4">
+            <PassRateForm initial={passRate} />
+          </div>
+        </section>
       )}
 
       <section className="panel max-w-2xl p-6 sm:p-8">

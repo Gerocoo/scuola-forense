@@ -14,6 +14,7 @@ export type MeetingView = {
   mode: "video" | "presenza" | "telefono";
   place: string;
   proposed_by: string | null;
+  kind: "colloquio" | "lezione" | "revisione";
   otherName: string;
   otherId: string;
   calendarUrl: string | null;
@@ -63,12 +64,12 @@ function ProposeForm({ id, staff, m, onDone }: { id: string; staff: boolean; m: 
         })
       }
     >
-      <div className={`grid gap-3 ${staff ? "sm:grid-cols-3" : ""}`}>
-        <div className={staff ? "sm:col-span-2" : ""}>
+      <div className={`grid gap-3 ${staff && m.kind === "colloquio" ? "sm:grid-cols-3" : ""}`}>
+        <div className={staff && m.kind === "colloquio" ? "sm:col-span-2" : ""}>
           <label className="label" htmlFor={`st-${id}`}>{m.status === "requested" ? "Data e ora" : "Nuovo orario"}</label>
           <input id={`st-${id}`} name="starts_at" type="datetime-local" required min={nowLocal()} className="field" />
         </div>
-        {staff && (
+        {staff && m.kind === "colloquio" && (
           <div>
             <label className="label" htmlFor={`du-${id}`}>Durata (min)</label>
             <input id={`du-${id}`} name="duration_min" type="number" min={10} max={180} defaultValue={m.duration_min} className="field" />
@@ -126,7 +127,14 @@ export function MeetingCard({ m, meId, staff }: { m: MeetingView; meId: string; 
     <li className={`panel p-4 sm:p-5 ${m.status === "cancelled" ? "opacity-70" : ""}`}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[14px] text-mute">{staff ? "Con" : "Docente:"} {m.otherName}</p>
+          <p className="flex flex-wrap items-center gap-2 text-[14px] text-mute">
+            {m.kind !== "colloquio" && (
+              <span className="rounded-full bg-codice px-2 py-0.5 text-[12px] font-medium text-white">
+                {m.kind === "lezione" ? "Lezione privata" : "Revisione elaborato"}
+              </span>
+            )}
+            {staff ? "Con" : "Docente:"} {m.otherName}
+          </p>
           <h3 className="text-[17px] font-semibold leading-snug">{m.topic}</h3>
         </div>
         <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-medium ${chip}`}>
@@ -206,7 +214,15 @@ export function MeetingCard({ m, meId, staff }: { m: MeetingView; meId: string; 
   );
 }
 
-export function MeetingRequestForm({ teachers }: { teachers: { id: string; name: string }[] }) {
+export function MeetingRequestForm({
+  teachers,
+  paid,
+}: {
+  teachers: { id: string; name: string }[];
+  /** Lezione privata o revisione pagata con i minuti: saldo disponibile in minuti. */
+  paid?: { balance: number };
+}) {
+  const [kind, setKind] = useState<"colloquio" | "lezione" | "revisione">(paid ? "lezione" : "colloquio");
   const router = useRouter();
   const form = useRef<HTMLFormElement>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -224,6 +240,29 @@ export function MeetingRequestForm({ teachers }: { teachers: { id: string; name:
         })
       }
     >
+      {paid && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label" htmlFor="kind">Tipo</label>
+            <select id="kind" name="kind" value={kind} onChange={(e) => setKind(e.target.value as typeof kind)} className="field">
+              <option value="lezione">Lezione privata</option>
+              <option value="revisione">Revisione dell&apos;elaborato (30 min)</option>
+            </select>
+          </div>
+          {kind === "lezione" && (
+            <div>
+              <label className="label" htmlFor="duration_min">Durata</label>
+              <select id="duration_min" name="duration_min" defaultValue={String(Math.min(60, paid.balance >= 60 ? 60 : 30))} className="field">
+                {[30, 60, 90, 120].map((d) => (
+                  <option key={d} value={d} disabled={d > paid.balance}>
+                    {d} minuti{d > paid.balance ? " (minuti insufficienti)" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="label" htmlFor="teacher_id">Docente</label>
@@ -244,8 +283,8 @@ export function MeetingRequestForm({ teachers }: { teachers: { id: string; name:
         </div>
       </div>
       <div>
-        <label className="label" htmlFor="topic">Di cosa vuoi parlare</label>
-        <input id="topic" name="topic" required maxLength={300} className="field" placeholder="Es. dubbi sulla correzione dell'atto penale" />
+        <label className="label" htmlFor="topic">{paid ? "Argomento della lezione" : "Di cosa vuoi parlare"}</label>
+        <input id="topic" name="topic" required maxLength={300} className="field" placeholder={kind === "revisione" ? "Es. correzione dell'atto di appello del 12 marzo" : paid ? "Es. come impostare un ricorso al TAR" : "Es. dubbi sulla correzione dell'atto penale"} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -258,7 +297,7 @@ export function MeetingRequestForm({ teachers }: { teachers: { id: string; name:
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <button className="btn-primary" disabled={pending}>{pending ? "Invio…" : "Chiedi il colloquio"}</button>
+        <button className="btn-primary" disabled={pending}>{pending ? "Invio…" : paid ? "Prenota" : "Chiedi il colloquio"}</button>
         <Msg m={msg} />
       </div>
     </form>

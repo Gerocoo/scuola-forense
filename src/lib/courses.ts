@@ -7,7 +7,7 @@ export type CourseTeacher = Pick<Profile, "id" | "full_name" | "email" | "avatar
 export async function myCourseIds(supabase: SupabaseClient, me: Pick<Profile, "id" | "role"> & { is_super?: boolean | null }) {
   if (me.role === "admin" || me.is_super) {
     // prodotti accessori (archivio, orale) non sono corsi con classe
-    const { data } = await supabase.from("packages").select("id").not("slug", "in", "(archivio-tracce,modulo-orale)");
+    const { data } = await supabase.from("packages").select("id").in("product", ["corso", "simulazione"]);
     return (data ?? []).map((p: { id: string }) => p.id);
   }
   const { data } = await supabase.from("package_teachers").select("package_id").eq("teacher_id", me.id);

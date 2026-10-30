@@ -37,6 +37,12 @@ export interface Package {
   promise_recorded_month?: number | null;
   promise_live_month?: number | null;
   promise_exercises_month?: number | null;
+  product?: "corso" | "lezioni" | "correzioni" | "simulazione" | "abbonamento" | "accessorio";
+  credit_minutes?: number;
+  credit_corrections?: number;
+  includes_oral?: boolean;
+  includes_archive?: boolean;
+  duration_days?: number | null;
 }
 
 export interface Enrollment {

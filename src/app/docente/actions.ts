@@ -351,6 +351,18 @@ export async function saveLesson(id: string | null, formData: FormData): Promise
     package_ids: packageIds,
     published: formData.get("published") === "on",
     sort: Number(formData.get("sort")) || 0,
+    ...(formData.has("product")
+      ? {
+          product: ["corso", "lezioni", "correzioni", "simulazione", "abbonamento", "accessorio"].includes(String(formData.get("product")))
+            ? String(formData.get("product"))
+            : "corso",
+          credit_minutes: Math.min(6000, Math.max(0, Math.round(Number(formData.get("credit_minutes")) || 0))),
+          credit_corrections: Math.min(100, Math.max(0, Math.round(Number(formData.get("credit_corrections")) || 0))),
+          duration_days: formData.get("duration_days") ? Math.min(1100, Math.max(1, Math.round(Number(formData.get("duration_days"))))) : null,
+          includes_archive: formData.get("includes_archive") === "on",
+          includes_oral: formData.get("includes_oral") === "on",
+        }
+      : {}),
   };
 
   if (kind === "in_presenza" && !row.scheduled_at) return { ok: false, error: "Indica data e ora dell'incontro." };
@@ -621,13 +633,17 @@ export async function manualEnroll(userId: string, formData: FormData): Promise<
   if (!METHODS.includes(method as (typeof METHODS)[number])) return { ok: false, error: "Metodo di pagamento non valido." };
   if (Number.isNaN(amount)) return { ok: false, error: "Importo non valido." };
   const paidDate = String(formData.get("paid_at") ?? "");
-  const { data: pkg } = await supabase.from("packages").select("access_until, title").eq("id", packageId).single();
+  const { data: pkg } = await supabase.from("packages").select("access_until, title, duration_days").eq("id", packageId).single();
   const { error } = await supabase.from("enrollments").insert({
     user_id: userId,
     package_id: packageId,
     status: paidNow ? "active" : "pending",
     amount_cents: amount,
-    ends_at: pkg?.access_until ? new Date(`${pkg.access_until}T23:59:59+01:00`).toISOString() : null,
+    ends_at: pkg?.duration_days
+      ? new Date(Date.now() + pkg.duration_days * 86400000).toISOString()
+      : pkg?.access_until
+        ? new Date(`${pkg.access_until}T23:59:59+01:00`).toISOString()
+        : null,
     payment_method: method,
     payment_reference: String(formData.get("payment_reference") ?? "").trim().slice(0, 120) || null,
     payment_note: String(formData.get("payment_note") ?? "").trim().slice(0, 500) || null,
@@ -639,6 +655,10 @@ export async function manualEnroll(userId: string, formData: FormData): Promise<
   if (paidNow) {
     await sendEnrollmentActive(userId, pkg?.title ?? "il corso");
     const { data: last } = await supabase.from("enrollments").select("id").eq("user_id", userId).eq("package_id", packageId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (last) {
+      const { grantPurchaseCredits } = await import("@/lib/credits");
+      await grantPurchaseCredits(last.id);
+    }
     if (last && amount > 0) {
       const { issueInvoice } = await import("@/lib/invoices");
       await issueInvoice(last.id);
@@ -668,11 +688,57 @@ export async function markEnrollmentPaid(enrollmentId: string, formData: FormDat
   const pk = (Array.isArray(e.package) ? e.package[0] : e.package) as unknown as { title?: string } | null;
   const title = pk?.title ?? "il corso";
   if (e.status !== "active") await sendEnrollmentActive(e.user_id, title);
+  const { grantPurchaseCredits } = await import("@/lib/credits");
+  await grantPurchaseCredits(enrollmentId);
   const { issueInvoice } = await import("@/lib/invoices");
   await issueInvoice(enrollmentId);
   revalidatePath(`/docente/discenti/${e.user_id}`);
   revalidatePath("/docente/pagamenti");
   return { ok: true, message: "Pagamento registrato: iscrizione attiva." };
+}
+
+/** Avvisa chi ha frequentato un corso di un prodotto o di un'offerta (es. Orale scontato dopo i risultati). */
+export async function announceToAlumni(packageId: string, formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireAdmin();
+  const admin = createAdminClient();
+  const { data: pkg } = await supabase.from("packages").select("id, slug, title, tagline, active, product").eq("id", packageId).maybeSingle();
+  if (!pkg) return { ok: false, error: "Prodotto non trovato." };
+  if (!pkg.active) return { ok: false, error: "Metti prima il prodotto in vendita." };
+  const message = String(formData.get("message") ?? "").trim().slice(0, 1500);
+  const key = `annuncio:${pkg.id}`;
+  const { data: last } = await admin.from("app_settings").select("value").eq("key", key).maybeSingle();
+  const lastAt = (last?.value as { at?: string } | null)?.at;
+  if (lastAt && Date.now() - new Date(lastAt).getTime() < 20 * 3600000) return { ok: false, error: "Hai già inviato questo avviso nelle ultime 24 ore." };
+
+  // ex corsisti: un corso vero (attivo o concluso), che non hanno già questo prodotto
+  const { data: rows } = await admin
+    .from("enrollments")
+    .select("user_id, package_id, status, package:packages!inner(slug, product)")
+    .in("status", ["active", "expired"]);
+  const alumni = new Set<string>();
+  const owners = new Set<string>();
+  for (const r of (rows ?? []) as unknown as { user_id: string; package_id: string; status: string; package: { slug: string; product: string } }[]) {
+    if (r.package_id === pkg.id && r.status === "active") owners.add(r.user_id);
+    if (r.package.product === "corso" && r.package.slug !== "prova-gratuita") alumni.add(r.user_id);
+  }
+  const targets = [...alumni].filter((u) => !owners.has(u));
+  if (!targets.length) return { ok: false, error: "Nessun ex corsista da avvisare." };
+  const { data: people } = await admin.from("profiles").select("id, email, full_name").in("id", targets).eq("role", "student");
+  const href =
+    pkg.slug === "modulo-orale" ? `${siteUrl()}/area/orale` : pkg.slug === "archivio-tracce" ? `${siteUrl()}/area/archivio` : pkg.product === "corso" ? `${siteUrl()}/corsi/${pkg.slug}` : `${siteUrl()}/servizi`;
+  await inBatches(people ?? [], 5, (p: { email: string; full_name: string | null }) =>
+    notify({
+      to: p.email,
+      subject: pkg.title,
+      html: emailLayout(
+        pkg.title,
+        `<p>${p.full_name ? `Ciao ${escapeHtml(p.full_name.split(" ")[0])}, ` : ""}${escapeHtml(message || pkg.tagline || "")}</p>`,
+        { label: "Scopri di più", href },
+      ),
+    }),
+  );
+  await admin.from("app_settings").upsert({ key, value: { at: new Date().toISOString(), sent: (people ?? []).length }, updated_at: new Date().toISOString() });
+  return { ok: true, message: `Avviso inviato a ${(people ?? []).length} ex corsisti.` };
 }
 
 /** Dati di fatturazione di un'iscrizione (per bonifici o correzioni). */

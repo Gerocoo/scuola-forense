@@ -6,6 +6,12 @@ import type { Package } from "@/lib/types";
 
 export const metadata = { title: "Corsi in vendita" };
 
+const GROUPS = [
+  { title: "Corsi", products: ["corso"] },
+  { title: "Servizi: lezioni, correzioni, simulazioni, abbonamenti", products: ["lezioni", "correzioni", "simulazione", "abbonamento"] },
+  { title: "Accessori: archivio e Orale", products: ["accessorio"] },
+];
+
 export default async function PacchettiPage() {
   const { supabase } = await requireAdmin();
   const [{ data: packages }, { data: enr }] = await Promise.all([
@@ -22,11 +28,17 @@ export default async function PacchettiPage() {
     <>
       <PageHeader
         title="Corsi in vendita"
-        description="Prezzi, promozioni e testi delle schede corso mostrate in vetrina."
+        description="Prezzi, promozioni e testi di corsi e servizi. I servizi compaiono nella pagina Servizi e nell'area dei discenti."
         actions={<Link href="/docente/pacchetti/nuovo" className="btn-primary">Nuovo corso</Link>}
       />
+      {GROUPS.map((g) => {
+        const items = (packages ?? []).filter((p) => g.products.includes(p.product ?? "corso"));
+        if (!items.length) return null;
+        return (
+          <section key={g.title} className="mb-8">
+            <h2 className="mb-3 text-[18px] font-semibold">{g.title}</h2>
       <ul className="grid gap-3 md:grid-cols-2">
-        {(packages ?? []).map((p) => {
+        {items.map((p) => {
           const price = currentPrice(p);
           const st = stats(p.id);
           return (
@@ -61,6 +73,9 @@ export default async function PacchettiPage() {
           );
         })}
       </ul>
+          </section>
+        );
+      })}
     </>
   );
 }

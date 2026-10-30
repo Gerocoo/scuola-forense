@@ -1,4 +1,5 @@
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { ReferralCapture } from "@/components/site/ReferralCapture";
 import { SiteFooter } from "@/components/site/SiteFooter";
 
 // La vetrina dipende da chi è collegato: niente pagine in cache condivise tra utenti.
@@ -11,6 +12,7 @@ export default function SitoLayout({ children }: { children: React.ReactNode }) 
         Vai al contenuto
       </a>
       <SiteHeader />
+      <ReferralCapture />
       <main id="contenuto">{children}</main>
       <SiteFooter />
     </>

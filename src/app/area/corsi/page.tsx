@@ -4,6 +4,8 @@ import { EmptyState } from "@/components/app/EmptyState";
 import { requireUser } from "@/lib/auth";
 import { dateLong, euro } from "@/lib/format";
 import type { Enrollment } from "@/lib/types";
+import { ReviewForm } from "@/components/app/ReviewForm";
+import { hasTakenCourse } from "@/lib/oral";
 
 export const metadata = { title: "I miei corsi" };
 
@@ -19,6 +21,10 @@ export default async function CorsiPage() {
     .returns<Enrollment[]>();
 
   const now = new Date().toISOString();
+  const [canReview, { data: myReview }] = await Promise.all([
+    hasTakenCourse(user.id),
+    supabase.from("reviews").select("rating, body, approved").eq("user_id", user.id).maybeSingle<{ rating: number; body: string; approved: boolean }>(),
+  ]);
 
   return (
     <>
@@ -76,6 +82,15 @@ export default async function CorsiPage() {
             );
           })}
         </ul>
+      )}
+      {canReview && (
+        <section className="panel mt-8 max-w-2xl p-5 sm:p-6">
+          <h2 className="text-[19px] font-semibold">La tua opinione</h2>
+          <p className="mt-1 text-[15px] text-slate">Aiuta chi si prepara all&apos;esame a scegliere: la tua recensione comparirà nel sito con il nome abbreviato.</p>
+          <div className="mt-4">
+            <ReviewForm initial={myReview} />
+          </div>
+        </section>
       )}
     </>
   );

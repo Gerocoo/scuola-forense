@@ -5,10 +5,10 @@ import { AuthButtons } from "./AuthButtons";
 
 const NAV = [
   { href: "/esame-avvocato-2026", label: "Esame 2026" },
-  { href: "/#metodo", label: "Metodo" },
-  { href: "/#piattaforma", label: "Piattaforma" },
   { href: "/#docenti", label: "Docenti" },
   { href: "/#corsi", label: "Corsi" },
+  { href: "/servizi", label: "Servizi" },
+  { href: "/guide", label: "Guide" },
   { href: "/prova-gratuita", label: "Prova gratis" },
 ];
 

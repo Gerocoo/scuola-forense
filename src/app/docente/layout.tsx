@@ -34,6 +34,7 @@ export default async function DocenteLayout({ children }: { children: React.Reac
     { href: "/docente/calendario", label: "Calendario" },
     { href: "/docente/orale", label: "Orale" },
     { href: "/docente/archivio", label: "Archivio tracce" },
+    { href: "/docente/guide", label: "Guide" },
     { href: "/docente/messaggi", label: "Messaggi", badge: unread ?? 0 },
     { href: "/docente/colloqui", label: "Colloqui", badge: meetings },
   ];
@@ -41,6 +42,7 @@ export default async function DocenteLayout({ children }: { children: React.Reac
     nav.push(
       { href: "/docente/pacchetti", label: "Corsi in vendita" },
       { href: "/docente/pagamenti", label: "Pagamenti", badge: toCollect ?? 0 },
+      { href: "/docente/recensioni", label: "Recensioni" },
       { href: "/docente/utenti", label: "Utenti e ruoli" },
       { href: "/docente/contatti", label: "Contatti" },
     );
