@@ -35,7 +35,7 @@ export default async function NuovoEsercizioCorso({ params }: Props) {
         title="Nuovo esercizio"
         description="Ogni iscritto riceve la propria copia, consegna in modo indipendente e riceve la tua correzione."
       />
-      <NewAssignmentForm students={[]} lessons={lessons ?? []} course={{ id, title: course.title, enrolled }} />
+      <NewAssignmentForm lessons={lessons ?? []} course={{ id, title: course.title, enrolled }} />
     </>
   );
 }

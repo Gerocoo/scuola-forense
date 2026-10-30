@@ -31,13 +31,16 @@ export async function createAssignments(input: {
   packageId?: string | null;
   /** Simulazione d'esame a tempo: apertura e durata in minuti (la scadenza si calcola da sole). */
   timed?: { opensLocal: string; durationMin: number } | null;
+  /** Cartella dei file caricati, se diversa dal batch (stessa traccia inviata a più corsi). */
+  uploadBatchId?: string;
 }): Promise<ActionResult & { firstId?: string; count?: number }> {
   const { supabase, user, profile } = await requireStaff();
 
   const title = input.title.trim().slice(0, 200);
   if (!title) return { ok: false, error: "Inserisci un titolo." };
   if (!KINDS.includes(input.kind)) return { ok: false, error: "Tipo non valido." };
-  if (input.files.some((f) => !f.path.startsWith(`tracce/${input.batchId}/`))) {
+  const folder = input.uploadBatchId && /^[0-9a-f-]{36}$/i.test(input.uploadBatchId) ? input.uploadBatchId : input.batchId;
+  if (input.files.some((f) => !f.path.startsWith(`tracce/${folder}/`))) {
     return { ok: false, error: "Percorso dei file non valido." };
   }
 

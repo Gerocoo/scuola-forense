@@ -17,7 +17,7 @@ const FILTERS: { key: string; label: string; status?: AssignmentStatus[] }[] = [
   { key: "tutte", label: "Tutte" },
 ];
 
-type Props = { searchParams: Promise<{ stato?: string; mie?: string; q?: string }> };
+type Props = { searchParams: Promise<{ stato?: string; mie?: string; q?: string; inviata?: string }> };
 
 export default async function EsercitazioniDocente({ searchParams }: Props) {
   const sp = await searchParams;
@@ -51,6 +51,11 @@ export default async function EsercitazioniDocente({ searchParams }: Props) {
         description="Le tracce assegnate ai discenti e gli elaborati da correggere."
         actions={<Link href="/docente/esercitazioni/nuova" className="btn-primary">Assegna una traccia</Link>}
       />
+      {sp.inviata && (
+        <p role="status" className="mb-5 rounded-[14px] bg-codice-soft px-4 py-3 text-[15px] text-codice">
+          Traccia inviata ai corsi scelti{Number(sp.inviata) ? `: ${sp.inviata} discenti` : ""}. La riceveranno anche i nuovi iscritti.
+        </p>
+      )}
 
       <div className="mb-6 space-y-3">
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden">

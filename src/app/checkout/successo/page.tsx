@@ -13,10 +13,12 @@ export default async function SuccessoPage({ searchParams }: Props) {
 
   let state: "ok" | "pending" | "error" = "error";
   let archive = false;
+  let oral = false;
   if (session_id) {
     try {
       const res = await fulfillCheckout(session_id);
       archive = res.session.metadata?.slug === "archivio-tracce";
+      oral = res.session.metadata?.slug === "modulo-orale";
       // La sessione deve appartenere all'utente collegato.
       if (user && res.session.metadata?.user_id !== user.id) state = "error";
       else state = res.fulfilled ? "ok" : "pending";
@@ -36,8 +38,8 @@ export default async function SuccessoPage({ searchParams }: Props) {
             <p className="mt-3 leading-relaxed text-slate">
               Il pagamento è andato a buon fine. Ti abbiamo inviato una email di conferma; la fattura arriva da Stripe.
             </p>
-            <Link href={archive ? "/area/archivio" : "/area"} className="btn-primary mt-8">
-              {archive ? "Apri l'archivio tracce" : "Apri la tua area"}
+            <Link href={archive ? "/area/archivio" : oral ? "/area/orale" : "/area"} className="btn-primary mt-8">
+              {archive ? "Apri l'archivio tracce" : oral ? "Vai all'Orale" : "Apri la tua area"}
             </Link>
           </>
         )}

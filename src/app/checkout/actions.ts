@@ -15,10 +15,10 @@ export async function startCheckout(formData: FormData) {
   const { supabase, user, profile } = await getSession();
 
   if (!user || !profile) {
-    redirect(`/accedi?next=${encodeURIComponent(slug === "archivio-tracce" ? "/area/archivio" : `/corsi/${slug}`)}`);
+    redirect(`/accedi?next=${encodeURIComponent(slug === "archivio-tracce" ? "/area/archivio" : slug === "modulo-orale" ? "/area/orale" : `/corsi/${slug}`)}`);
   }
 
-  const back = slug === "archivio-tracce" ? "/area/archivio" : `/corsi/${slug}`;
+  const back = slug === "archivio-tracce" ? "/area/archivio" : slug === "modulo-orale" ? "/area/orale" : `/corsi/${slug}`;
   const { data: pkg } = await supabase
     .from("packages")
     .select("*")
@@ -27,6 +27,11 @@ export async function startCheckout(formData: FormData) {
     .maybeSingle<Package>();
   if (!pkg) redirect("/#corsi");
   if (!waiver) redirect(`${back}?consenso=1`);
+  // il modulo Orale si acquista solo dopo aver frequentato un corso
+  if (pkg.slug === "modulo-orale") {
+    const { hasTakenCourse } = await import("@/lib/oral");
+    if (!(await hasTakenCourse(user.id))) redirect("/area/orale?requisito=1");
+  }
 
   // Già iscritto e attivo: niente doppio pagamento.
   const { data: already } = await supabase
@@ -37,7 +42,7 @@ export async function startCheckout(formData: FormData) {
     .eq("status", "active")
     .maybeSingle();
   if (already && (!already.ends_at || new Date(already.ends_at) > new Date())) {
-    redirect(slug === "archivio-tracce" ? "/area/archivio" : "/area?gia_iscritto=1");
+    redirect(slug === "archivio-tracce" ? "/area/archivio" : slug === "modulo-orale" ? "/area/orale" : "/area?gia_iscritto=1");
   }
 
   // posti limitati: niente vendita a corso pieno

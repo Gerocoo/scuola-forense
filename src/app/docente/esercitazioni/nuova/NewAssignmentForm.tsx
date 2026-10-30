@@ -9,7 +9,7 @@ import { fileSize } from "@/lib/format";
 import { createAssignments } from "@/app/docente/actions";
 import type { AssignmentKind } from "@/lib/types";
 
-export type StudentOption = { id: string; name: string; email: string; packages: string[] };
+export type CourseOption = { id: string; title: string; period: string | null; enrolled: number };
 
 const KINDS: { value: AssignmentKind; label: string }[] = [
   { value: "parere", label: "Parere" },
@@ -19,14 +19,14 @@ const KINDS: { value: AssignmentKind; label: string }[] = [
 ];
 
 export function NewAssignmentForm({
-  students,
-  preselected,
+  courses = [],
+  preselected = [],
   lessons,
   preselectedLesson,
   course,
 }: {
-  students: StudentOption[];
-  preselected?: string;
+  courses?: CourseOption[];
+  preselected?: string[];
   lessons: { id: string; title: string }[];
   preselectedLesson?: string;
   /** Modalità corso: l'esercizio va a tutti gli iscritti, niente scelta dei discenti. */
@@ -34,9 +34,7 @@ export function NewAssignmentForm({
 }) {
   const [lessonId, setLessonId] = useState(preselectedLesson ?? "");
   const router = useRouter();
-  const [selected, setSelected] = useState<Set<string>>(new Set(preselected ? [preselected] : []));
-  const [filter, setFilter] = useState("");
-  const [onlyActive, setOnlyActive] = useState(true);
+  const [selected, setSelected] = useState<Set<string>>(new Set(preselected));
   const [kind, setKind] = useState<AssignmentKind>("parere");
   const [title, setTitle] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -48,14 +46,7 @@ export function NewAssignmentForm({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const visible = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    return students.filter(
-      (s) =>
-        (!onlyActive || s.packages.length > 0 || selected.has(s.id)) &&
-        (!q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q)),
-    );
-  }, [students, filter, onlyActive, selected]);
+  const recipients = useMemo(() => courses.filter((c) => selected.has(c.id)).reduce((n, c) => n + c.enrolled, 0), [courses, selected]);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -68,34 +59,38 @@ export function NewAssignmentForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!course && !selected.size) return setError("Scegli almeno un discente.");
+    if (!course && !selected.size) return setError("Scegli almeno un corso.");
     if (!title.trim()) return setError("Inserisci un titolo.");
     if (timed && !opens) return setError("Indica quando si apre la simulazione.");
 
-    const batchId = crypto.randomUUID();
+    const uploadBatch = crypto.randomUUID();
     try {
       const metas = [];
       for (const f of files) {
         setBusy(`Caricamento di ${f.name}…`);
-        metas.push(await uploadFile(f, `tracce/${batchId}`));
+        metas.push(await uploadFile(f, `tracce/${uploadBatch}`));
       }
-      setBusy(course ? "Invio agli iscritti…" : "Invio ai discenti…");
-      const res = await createAssignments({
-        batchId,
-        studentIds: course ? [] : [...selected],
-        kind,
-        title,
-        instructions,
-        dueLocal: due,
-        files: metas,
-        lessonId: lessonId || null,
-        packageId: course?.id ?? null,
-        timed: timed ? { opensLocal: opens, durationMin: Math.round(Number(hours.replace(",", ".")) * 60) } : null,
-      });
-      if (!res.ok) throw new Error(res.error);
-      router.push(
-        course ? `/docente/corsi/${course.id}` : res.firstId ? `/docente/esercitazioni/${res.firstId}` : "/docente/esercitazioni?stato=in-attesa",
-      );
+      const targets = course ? [course.id] : [...selected];
+      let total = 0;
+      for (const [i, pid] of targets.entries()) {
+        setBusy(targets.length > 1 ? `Invio al corso ${i + 1} di ${targets.length}…` : "Invio agli iscritti…");
+        const res = await createAssignments({
+          batchId: i === 0 ? uploadBatch : crypto.randomUUID(),
+          uploadBatchId: uploadBatch,
+          studentIds: [],
+          kind,
+          title,
+          instructions,
+          dueLocal: due,
+          files: metas,
+          lessonId: lessonId || null,
+          packageId: pid,
+          timed: timed ? { opensLocal: opens, durationMin: Math.round(Number(hours.replace(",", ".")) * 60) } : null,
+        });
+        if (!res.ok) throw new Error(res.error);
+        total += res.count ?? 0;
+      }
+      router.push(course || targets.length === 1 ? `/docente/corsi/${targets[0]}` : `/docente/esercitazioni?inviata=${total}`);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invio non riuscito.");
@@ -214,52 +209,42 @@ export function NewAssignmentForm({
             </p>
           </div>
         ) : (
-        <div className="panel p-5">
-          <div className="flex items-baseline justify-between">
-            <h2 className="font-semibold">Discenti</h2>
-            <span className="text-sm text-mute tabular-nums">{selected.size} scelti</span>
+          <div className="panel p-5">
+            <div className="flex items-baseline justify-between">
+              <h2 className="font-semibold">Corsi</h2>
+              <span className="text-sm text-mute tabular-nums">{selected.size} scelti</span>
+            </div>
+            <p className="mt-1 text-[14px] text-slate">La traccia va a tutti gli iscritti dei corsi scelti, e in automatico a chi si iscrive dopo.</p>
+            <ul className="mt-3 space-y-1">
+              {courses.map((c) => (
+                <li key={c.id}>
+                  <label className={`flex cursor-pointer items-start gap-3 rounded-[10px] px-2.5 py-2.5 ${selected.has(c.id) ? "bg-codice-soft" : "hover:bg-paper"}`}>
+                    <input type="checkbox" className="mt-1 size-4 accent-codice" checked={selected.has(c.id)} onChange={() => toggle(c.id)} />
+                    <span className="min-w-0">
+                      <span className="block text-[15px] font-medium">{c.title}</span>
+                      <span className="block text-sm text-mute">
+                        {c.period ? `${c.period} · ` : ""}
+                        {c.enrolled === 1 ? "1 iscritto" : `${c.enrolled} iscritti`}
+                      </span>
+                    </span>
+                  </label>
+                </li>
+              ))}
+              {!courses.length && <li className="px-2 py-3 text-sm text-mute">Non sei ancora docente di nessun corso.</li>}
+            </ul>
+            {selected.size > 0 && (
+              <p className="mt-3 text-[14px] text-slate">
+                Destinatari oggi: <strong className="text-ink">{recipients}</strong> {recipients === 1 ? "discente" : "discenti"}
+              </p>
+            )}
           </div>
-          <input
-            className="field mt-3 py-2"
-            placeholder="Cerca per nome o email"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            aria-label="Cerca discente"
-          />
-          <label className="mt-3 flex items-center gap-2 text-sm text-slate">
-            <input type="checkbox" className="size-4 accent-codice" checked={onlyActive} onChange={(e) => setOnlyActive(e.target.checked)} />
-            Solo con un corso attivo
-          </label>
-          <div className="mt-3 flex gap-3 text-sm">
-            <button type="button" className="text-codice hover:underline" onClick={() => setSelected(new Set([...selected, ...visible.map((s) => s.id)]))}>
-              Seleziona tutti
-            </button>
-            <button type="button" className="text-slate hover:underline" onClick={() => setSelected(new Set())}>
-              Deseleziona
-            </button>
-          </div>
-          <ul className="mt-3 max-h-80 space-y-1 overflow-y-auto pr-1">
-            {visible.map((s) => (
-              <li key={s.id}>
-                <label className={`flex cursor-pointer items-start gap-3 rounded-[8px] px-2 py-2 ${selected.has(s.id) ? "bg-codice-soft" : "hover:bg-paper"}`}>
-                  <input type="checkbox" className="mt-1 size-4 accent-codice" checked={selected.has(s.id)} onChange={() => toggle(s.id)} />
-                  <span className="min-w-0">
-                    <span className="block truncate text-[15px] font-medium">{s.name}</span>
-                    <span className="block truncate text-sm text-mute">{s.packages.join(", ") || "Nessun corso attivo"}</span>
-                  </span>
-                </label>
-              </li>
-            ))}
-            {!visible.length && <li className="px-2 py-3 text-sm text-mute">Nessun discente trovato.</li>}
-          </ul>
-        </div>
         )}
 
         {error && <p role="alert" className="text-sm text-ceralacca">{error}</p>}
         <button type="submit" className="btn-primary w-full" disabled={!!busy}>
-          {busy ?? (course ? "Assegna al corso" : selected.size > 1 ? `Assegna a ${selected.size} discenti` : "Assegna la traccia")}
+          {busy ?? (course || selected.size <= 1 ? "Assegna al corso" : `Assegna a ${selected.size} corsi`)}
         </button>
-        <p className="text-sm text-mute">I discenti ricevono un&apos;email con il link alla traccia.</p>
+        <p className="text-sm text-mute">Gli iscritti ricevono la notifica con il link alla traccia.</p>
       </aside>
     </form>
   );

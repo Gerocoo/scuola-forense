@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CorsoPage({ params, searchParams }: Props) {
   const { slug } = await params;
   if (slug === "archivio-tracce") redirect("/area/archivio");
+  if (slug === "modulo-orale") redirect("/area/orale");
   const { errore, esaurito, consenso } = await searchParams;
   const pkg = await load(slug);
   if (!pkg) notFound();

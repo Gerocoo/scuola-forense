@@ -1,6 +1,10 @@
 import { PageHeader } from "@/components/app/AppShell";
 import { QuizRunner, SlotButton, type QuizQuestion } from "./OralClient";
 import { requireUser } from "@/lib/auth";
+import { oralState, ORAL_SLUG } from "@/lib/oral";
+import { CheckoutForm } from "@/components/site/CheckoutForm";
+import { euro } from "@/lib/format";
+import Link from "next/link";
 
 export const metadata = { title: "Orale" };
 
@@ -8,8 +12,12 @@ const TZ = "Europe/Rome";
 const day = (iso: string) => new Date(iso).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long", timeZone: TZ });
 const hour = (iso: string) => new Date(iso).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
 
-export default async function OralePage() {
+type Props = { searchParams: Promise<{ errore?: string; consenso?: string; requisito?: string }> };
+
+export default async function OralePage({ searchParams }: Props) {
   const { supabase, user } = await requireUser();
+  const st = await oralState(supabase, user.id);
+  if (!st.access) return <OralLocked st={st} q={await searchParams} />;
   const now = new Date().toISOString();
   const until = new Date(Date.now() + 45 * 86400000).toISOString();
 
@@ -109,6 +117,52 @@ export default async function OralePage() {
           </div>
         </section>
       </div>
+    </>
+  );
+}
+
+function OralLocked({ st, q }: { st: Awaited<ReturnType<typeof oralState>>; q: { errore?: string; consenso?: string; requisito?: string } }) {
+  return (
+    <>
+      <PageHeader title="Orale" description="Simulazioni d'orale individuali con i docenti e quiz di deontologia, ordinamento e previdenza forense." />
+      <section className="panel mx-auto max-w-2xl overflow-hidden">
+        <div className="bg-codice-deep p-6 text-white sm:p-8">
+          <span className="inline-flex size-11 items-center justify-center rounded-full bg-white/10" aria-hidden>
+            <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
+          </span>
+          <h2 className="mt-4 text-[22px] font-semibold leading-snug">
+            {!st.open ? "L'Orale è momentaneamente chiuso" : st.taken ? "Sblocca il modulo Orale" : "Riservato a chi ha frequentato un corso"}
+          </h2>
+          <p className="mt-2 text-[16px] leading-relaxed text-white/80">
+            {!st.open
+              ? "Stiamo preparando le simulazioni d'orale. Riaprirà a breve per chi ha frequentato uno dei nostri corsi: ti avviseremo."
+              : st.taken
+                ? "Hai già frequentato un corso: puoi aggiungere le simulazioni d'orale individuali con i docenti e i quiz di allenamento."
+                : "Il modulo Orale si sblocca dopo aver frequentato uno dei nostri corsi per la prova scritta."}
+          </p>
+        </div>
+        <div className="space-y-4 p-6 sm:p-8">
+          <ul className="space-y-2 text-[15px] text-slate">
+            <li>• Simulazioni individuali in videochiamata, come davanti alla commissione</li>
+            <li>• Quiz su deontologia, ordinamento e previdenza forense</li>
+            <li>• Domande aggiornate dai docenti</li>
+          </ul>
+          {q.requisito && <p role="alert" className="text-[14px] text-ceralacca">Per acquistare il modulo serve aver frequentato un corso.</p>}
+          {q.consenso && <p role="alert" className="text-[14px] text-ceralacca">Per procedere conferma la richiesta di accesso immediato ai contenuti.</p>}
+          {q.errore && <p role="alert" className="text-[14px] text-ceralacca">Il pagamento non è partito. Riprova tra qualche minuto.</p>}
+          {st.open && st.taken && st.price != null ? (
+            <div className="max-w-sm">
+              <CheckoutForm slug={ORAL_SLUG} label={<>Sblocca l&apos;Orale · {euro(st.price)}</>} />
+            </div>
+          ) : (
+            !st.taken && (
+              <Link href="/#corsi" className="btn-primary">
+                Scopri i corsi
+              </Link>
+            )
+          )}
+        </div>
+      </section>
     </>
   );
 }
